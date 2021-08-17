@@ -17,6 +17,8 @@ class AuthController extends Controller
 
         abort_if(!Auth::attempt($credentials), 422, 'Cannot find username and password combination.');
 
+        abort_if(!$request->user()->hasVerifiedEmail(), 401, 'Your account is not yet verified.');
+
         $token = $request->user()->createToken(env('SANCTUM_SECRET_KEY'))->plainTextToken;
 
         return response()->json(compact('token'));
