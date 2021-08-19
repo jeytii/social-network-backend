@@ -27,17 +27,18 @@ class UserFactory extends Factory
         $date = Carbon::parse($this->faker->date());
 
         return [
-            'id' => Str::uuid(),
+            'id' => (string) Str::orderedUuid(),
+            'slug' => uniqid(),
             'name' => $this->faker->name(strtolower($gender)),
             'email_address' => $this->faker->unique()->safeEmail(),
-            'username' => $this->faker->unique()->userName,
+            'username' => $this->faker->unique()->userName(),
             'gender' => $gender,
-            'location' => $this->faker->city,
+            'location' => $this->faker->city(),
             'birth_month' => $date->monthName,
             'birth_day' => $date->day,
             'birth_year' => $date->year,
             'email_verified_at' => now(),
-            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            'password' => '$2y$10$LZ3lEGrSDY7lDNzaWmHkJ.DimdflkD1oCN9XXBotJUZ1Wbbfv7wDS', // P@ssword123
         ];
     }
 
