@@ -15,12 +15,11 @@ class CreateCommentsTable extends Migration
     {
         Schema::create('comments', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->bigIncrements('slug');
+            $table->string('slug');
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignUuid('post_id')->constrained('posts')->onDelete('cascade');
             $table->tinyText('body');
             $table->timestamps();
-            $table->dropPrimary('slug');
         });
     }
 

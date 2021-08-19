@@ -15,11 +15,10 @@ class CreatePostsTable extends Migration
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->uuid('id')->primary();
-            $table->bigIncrements('slug');
+            $table->string('slug');
             $table->foreignUuid('user_id')->constrained('users')->onDelete('cascade');
             $table->tinyText('body');
             $table->timestamps();
-            $table->dropPrimary('slug');
         });
     }
 
