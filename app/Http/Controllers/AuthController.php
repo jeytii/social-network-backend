@@ -8,6 +8,14 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    /**
+     * Register any application services.
+     *
+     * @param Illuminate\Http\Request  $request
+     * @return Illuminate\Http\Response
+     * @throws Illuminate\Validation\ValidationException
+     * @throws Illuminate\Validation\UnauthorizedException
+     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
