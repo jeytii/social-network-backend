@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Tests\TestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
 class LoginTest extends TestCase
 {
@@ -16,9 +16,10 @@ class LoginTest extends TestCase
     /**
      * Generate a JSON response.
      *
+     * @param $body  array
      * @return object
      */
-    private function getResponse($body = []): object
+    private function getResponse(array $body = []): object
     {
         return $this->post(
             '/api/login',
@@ -70,15 +71,13 @@ class LoginTest extends TestCase
 
     public function testErrorIfUserIsNotYetVerified()
     {
-        $user = User::get()->random();
-
-        User::where('slug', $user->slug)->update([
+        $user = User::factory()->create([
             'email_verified_at' => null
         ]);
-        
+
         $response = $this->getResponse([
             'username' => $user->username,
-            'password' => 'password'
+            'password' => 'P@ssword123'
         ]);
 
         $response->assertUnauthorized();
@@ -93,10 +92,16 @@ class LoginTest extends TestCase
 
         $response = $this->getResponse([
             'username' => $user->username,
-            'password' => 'password'
+            'password' => 'P@ssword123'
         ]);
 
         $response->assertOk();
         $response->assertJsonStructure(['token']);
+    }
+
+    public static function tearDownAfterClass(): void
+    {
+        (new self())->setUp();
+        DB::table('users')->truncate();
     }
 }
