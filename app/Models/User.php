@@ -41,7 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'id',
         'password',
         'email_verified_at',
-        'updated_at'
+        'updated_at',
     ];
 
     /**
@@ -50,6 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $casts = [
+        'created_at' => 'date:F Y',
         'email_verified_at' => 'datetime',
     ];
 
@@ -74,5 +75,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getRouteKeyName()
     {
         return 'slug';
+    }
+
+    public function getFullBirthDateAttribute()
+    {
+        return "$this->birth_month $this->birth_day, $this->birth_year";
+    }
+
+    public function getBasicInfoAttribute()
+    {
+        return $this->only(['slug', 'name', 'username', 'gender', 'image_url']);
     }
 }
