@@ -48,7 +48,7 @@ return [
 
     'username' => 'username',
 
-    'email' => 'email_address',
+    'email' => 'email',
 
     /*
     |--------------------------------------------------------------------------
@@ -132,7 +132,7 @@ return [
 
     'features' => [
         Features::registration(),
-        // Features::resetPasswords(),
+        Features::resetPasswords(),
         Features::emailVerification(),
         // Features::updateProfileInformation(),
         // Features::updatePasswords(),
