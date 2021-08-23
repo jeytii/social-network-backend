@@ -6,9 +6,8 @@ use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Event};
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
 
 class RegistrationTest extends TestCase
 {
@@ -16,7 +15,7 @@ class RegistrationTest extends TestCase
 
     protected $seed = true;
 
-    private $requiredFields = ['name', 'email_address', 'username', 'gender', 'password'];
+    private $requiredFields = ['name', 'email', 'username', 'gender', 'password'];
     
     /**
      * Generate a JSON response.
@@ -49,7 +48,7 @@ class RegistrationTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['email_address', 'username', 'gender' ]);
+        $response->assertJsonValidationErrors(['email', 'username', 'gender' ]);
     }
 
     public function testErrorIfPasswordIsNotConfirmed()
@@ -93,16 +92,12 @@ class RegistrationTest extends TestCase
 
     public function testErrorIfEnteredValuesAlreadyExist()
     {
-        $user = DB::table('users')->first();
-
-        $response = $this->getResponse([
-            'email_address' => $user->email_address,
-            'username' => $user->username,
-        ]);
+        $body = collect(DB::table('users')->first())->only('email', 'username')->all();
+        $response = $this->getResponse($body);
 
         $response->assertStatus(422);
-        $response->assertJsonPath('errors.email_address', ['Oops! email address already exists.']);
-        $response->assertJsonPath('errors.username', ['Oops! username already exists.']);
+        $response->assertJsonPath('errors.email', ['Someone has already taken that email address.']);
+        $response->assertJsonPath('errors.username', ['Someone has already taken that username.']);
     }
     
     public function testErrorIfValuesDoNotMatchWithRegexPatterns()
@@ -130,7 +125,7 @@ class RegistrationTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'username' => $user->username,
-            'email_address' => $user->email_address,
+            'email' => $user->email,
         ]);
 
         Event::assertDispatched(fn(Registered $event) => $event->user->username === $user->username);
