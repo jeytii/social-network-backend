@@ -30,7 +30,7 @@ class UserFactory extends Factory
             'id' => (string) Str::orderedUuid(),
             'slug' => uniqid(),
             'name' => $this->faker->name(strtolower($gender)),
-            'email_address' => $this->faker->unique()->safeEmail(),
+            'email' => $this->faker->unique()->safeEmail(),
             'username' => $this->faker->unique()->userName(),
             'gender' => $gender,
             'location' => $this->faker->city(),
