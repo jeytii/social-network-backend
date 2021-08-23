@@ -20,7 +20,7 @@ class CreateNewUser implements CreatesNewUsers
     {
         return [
             'name' => ['required', 'string', 'min:2'],
-            'email_address' => [
+            'email' => [
                 'required',
                 'string',
                 'email',
@@ -48,8 +48,21 @@ class CreateNewUser implements CreatesNewUsers
         return [
             'min' => 'The :attribute must be at least :min characters long.',
             'between' => 'The :attribute must be :min to :max characters long.',
-            'unique' => 'Oops! :attribute already exists.',
+            'unique' => 'Someone has already taken that :attribute.',
+            'email' => 'Please enter a valid :attribute.',
             'username.regex' => 'Only letters, numbers, dots, and underscores are allowed.',
+        ];
+    }
+
+    /**
+     * Custom attribute names.
+     *
+     * @return array
+     */
+    private function attributes(): array
+    {
+        return [
+            'email' => 'email address'
         ];
     }
 
@@ -61,14 +74,18 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input)
     {
-        Validator::make($input, $this->rules(), $this->messages())->validate();
+        Validator::make(
+            $input,
+            $this->rules(),
+            $this->messages(),
+            $this->attributes(),
+        )->validate();
 
         return User::create([
             'name' => $input['name'],
-            'email_address' => $input['email_address'],
+            'email' => $input['email'],
             'username' => $input['username'],
             'gender' => $input['gender'],
-            'password' => $input['password'],
             'password' => Hash::make($input['password']),
         ]);
     }
