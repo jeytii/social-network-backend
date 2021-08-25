@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -48,5 +49,23 @@ class UserController extends Controller
         $data = User::inRandomOrder()->limit(3)->get($this->basic_columns);
 
         return response()->json(compact('data'));
+    }
+
+    public function update(UpdateUserRequest $request)
+    {
+        if (
+            is_null(auth()->user()->birth_month) &&
+            is_null(auth()->user()->birth_day) &&
+            is_null(auth()->user()->birth_year)
+        ) {
+            User::where('id', auth()->id())->update($request->all());
+        }
+        else {
+            User::where('id', auth()->id())->update($request->only([
+                'name', 'username', 'location', 'bio', 'image_url'
+            ]));
+        }
+
+        return response()->json(['updated' => true]);
     }
 }
