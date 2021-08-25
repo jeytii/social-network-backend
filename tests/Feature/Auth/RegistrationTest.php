@@ -21,20 +21,16 @@ class RegistrationTest extends TestCase
      * Generate a JSON response.
      *
      * @param $body  array
-     * @return object
+     * @return \Illuminate\Testing\TestResponse
      */
-    private function getResponse($body = []): object
+    private function jsonResponse(array $body = [])
     {
-        return $this->post(
-            '/register',
-            $body,
-            ['Accept' => 'application/json']
-        );
+        return $this->postJson('/register', $body);
     }
 
     public function testErrorIfAllInputsAreNotSet()
     {
-        $response = $this->getResponse();
+        $response = $this->jsonResponse();
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors($this->requiredFields);
@@ -42,7 +38,7 @@ class RegistrationTest extends TestCase
 
     public function testErrorIfSomeInputsAreNotSet()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'name' => 'John Doe',
             'password' => 'password'
         ]);
@@ -53,7 +49,7 @@ class RegistrationTest extends TestCase
 
     public function testErrorIfPasswordIsNotConfirmed()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'password' => 'User@123',
             'password_confirmation' => 'asdasdasd'
         ]);
@@ -64,7 +60,7 @@ class RegistrationTest extends TestCase
 
     public function testErrorIfValueLengthsAreLessThanMinimum()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'name' => 'z',
             'username' => 'abc',
             'password' => 'abc',
@@ -82,7 +78,7 @@ class RegistrationTest extends TestCase
 
     public function testErrorIfValueLengthsAreInRangeBetweenRequiredLengths()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'username' => 'thebigbrownfoxjumpsoverthelazydog',
         ]);
 
@@ -93,7 +89,7 @@ class RegistrationTest extends TestCase
     public function testErrorIfEnteredValuesAlreadyExist()
     {
         $body = collect(DB::table('users')->first())->only('email', 'username')->all();
-        $response = $this->getResponse($body);
+        $response = $this->jsonResponse($body);
 
         $response->assertStatus(422);
         $response->assertJsonPath('errors.email', ['Someone has already taken that email address.']);
@@ -102,7 +98,7 @@ class RegistrationTest extends TestCase
     
     public function testErrorIfValuesDoNotMatchWithRegexPatterns()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'username' => 'u$ername@123',
         ]);
 
@@ -117,7 +113,7 @@ class RegistrationTest extends TestCase
 
         Event::fake([Registered::class]);
         
-        $response = $this->getResponse(
+        $response = $this->jsonResponse(
             $body->merge(['password_confirmation' => $user->password])->toArray()
         );
 
@@ -132,6 +128,11 @@ class RegistrationTest extends TestCase
         Event::assertListening(Registered::class, SendEmailVerificationNotification::class);
     }
 
+    /**
+     * Make an execution after all tests.
+     *
+     * @return void
+     */
     public static function tearDownAfterClass(): void
     {
         (new self())->setUp();

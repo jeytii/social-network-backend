@@ -22,20 +22,16 @@ class ResetPasswordTest extends TestCase
      * @param array  $body
      * @return \Illuminate\Testing\TestResponse
      */
-    private function getResponse(array $body = [])
+    private function jsonResponse(array $body = [])
     {
-        return $this->post(
-            '/reset-password',
-            $body,
-            ['Accept' => 'application/json']
-        );
+        return $this->postJson('/reset-password', $body);
     }
 
     public function testErrorIfAllInputsAreNotSet()
     {
         Event::fake();
 
-        $response = $this->getResponse();
+        $response = $this->jsonResponse();
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['email', 'password', 'token']);
@@ -66,7 +62,7 @@ class ResetPasswordTest extends TestCase
         
         Event::fake([ PasswordReset::class ]);
         
-        $resetPasswordResponse = $this->getResponse([
+        $resetPasswordResponse = $this->jsonResponse([
             'email' => $passwordReset->first()->email,
             'password' => 'P@ssword123',
             'password_confirmation' => 'P@ssword123',
@@ -81,6 +77,11 @@ class ResetPasswordTest extends TestCase
         // Event::assertDispatched(fn(PasswordReset $event) => $event->user->id === $user->id);
     }
 
+    /**
+     * Make an execution after all tests.
+     *
+     * @return void
+     */
     public static function tearDownAfterClass(): void
     {
         (new self())->setUp();

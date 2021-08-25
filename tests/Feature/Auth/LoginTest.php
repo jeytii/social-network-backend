@@ -14,23 +14,19 @@ class LoginTest extends TestCase
     protected $seed = true;
     
     /**
-     * Generate a JSON response.
+     * Generate a JSON response from a POST request.
      *
      * @param $body  array
-     * @return object
+     * @return \Illuminate\Testing\TestResponse
      */
-    private function getResponse(array $body = []): object
+    private function jsonResponse(array $body = [])
     {
-        return $this->post(
-            '/api/login',
-            $body,
-            ['Accept' => 'application/json']
-        );
+        return $this->postJson('/api/login', $body);
     }
 
     public function testErrorIfBothAreNotSet()
     {
-        $response = $this->getResponse();
+        $response = $this->jsonResponse();
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['username', 'password']);
@@ -38,7 +34,7 @@ class LoginTest extends TestCase
 
     public function testErrorIfUsernameIsNotSet()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'password' => 'password'
         ]);
 
@@ -48,7 +44,7 @@ class LoginTest extends TestCase
 
     public function testErrorIfPasswordIsNotSet()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'username' => 'username'
         ]);
 
@@ -58,7 +54,7 @@ class LoginTest extends TestCase
 
     public function testErrorIfCredentialsDoNotExist()
     {
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'username' => 'username',
             'password' => 'password'
         ]);
@@ -75,7 +71,7 @@ class LoginTest extends TestCase
             'email_verified_at' => null
         ]);
 
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'username' => $user->username,
             'password' => 'P@ssword123'
         ]);
@@ -90,7 +86,7 @@ class LoginTest extends TestCase
     {
         $user = DB::table('users')->whereNotNull('email_verified_at')->get()->random();
 
-        $response = $this->getResponse([
+        $response = $this->jsonResponse([
             'username' => $user->username,
             'password' => 'P@ssword123'
         ]);
@@ -99,6 +95,11 @@ class LoginTest extends TestCase
         $response->assertJsonStructure(['token']);
     }
 
+    /**
+     * Make an execution after all tests.
+     *
+     * @return void
+     */
     public static function tearDownAfterClass(): void
     {
         (new self())->setUp();

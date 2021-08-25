@@ -20,20 +20,16 @@ class ForgotPasswordTest extends TestCase
      * @param string|null  $email
      * @return \Illuminate\Testing\TestResponse
      */
-    private function getResponse(?string $email = null)
+    private function jsonResponse(?string $email = null)
     {
-        return $this->post(
-            '/forgot-password',
-            ['email' => $email],
-            ['Accept' => 'application/json']
-        );
+        return $this->postJson('/forgot-password', ['email' => $email]);
     }
 
     public function testErrorIfEmailAddressIsNotSet()
     {
         Notification::fake();
 
-        $response = $this->getResponse();
+        $response = $this->jsonResponse();
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['email']);
@@ -44,7 +40,7 @@ class ForgotPasswordTest extends TestCase
     {
         Notification::fake();
 
-        $response = $this->getResponse('invalidemailaddress');
+        $response = $this->jsonResponse('invalidemailaddress');
 
         $response->assertStatus(422);
         $response->assertJsonPath('errors.email', ['The email must be a valid email address.']);
@@ -55,7 +51,7 @@ class ForgotPasswordTest extends TestCase
     {
         Notification::fake();
 
-        $response = $this->getResponse('dummy@email.com');
+        $response = $this->jsonResponse('dummy@email.com');
 
         $response->assertStatus(422);
         $response->assertJsonPath('errors.email', ["We can't find a user with that email address."]);
@@ -67,12 +63,17 @@ class ForgotPasswordTest extends TestCase
         Notification::fake();
 
         $user = User::first();
-        $response = $this->getResponse($user->email);
+        $response = $this->jsonResponse($user->email);
 
         $response->assertOk();
         Notification::assertSentToTimes($user, ResetPassword::class, 1);
     }
 
+    /**
+     * Make an execution after all tests.
+     *
+     * @return void
+     */
     public static function tearDownAfterClass(): void
     {
         (new self())->setUp();
