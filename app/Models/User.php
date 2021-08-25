@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -62,7 +61,6 @@ class User extends Authenticatable implements MustVerifyEmail
     protected static function booted()
     {
         static::creating(function ($user) {
-            $user->setAttribute($user->getKeyName(), (string) Str::orderedUuid());
             $user->setAttribute('slug', uniqid());
         });
     }
@@ -80,10 +78,5 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getFullBirthDateAttribute()
     {
         return "$this->birth_month $this->birth_day, $this->birth_year";
-    }
-
-    public function getBasicInfoAttribute()
-    {
-        return $this->only(['slug', 'name', 'username', 'gender', 'image_url']);
     }
 }
