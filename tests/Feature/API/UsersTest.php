@@ -38,32 +38,53 @@ class UsersTest extends TestCase
     public function testGetPaginatedUsers()
     {
         // First scroll to the bottom
-        $response = $this->get('/api/users');
+        $response = $this->get('/api/users?page=1');
 
         $response->assertOk();
         $response->assertJsonCount(20, 'data');
-        $response->assertJsonPath('next_page_url', env('APP_URL') . '/api/users?page=2');
+        $response->assertJsonPath('has_more', true);
+        $response->assertJsonPath('next_offset', 2);
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => ['slug', 'name', 'username', 'gender', 'image_url'],
+            ],
+        ]);
 
         // Second scroll to the bottom
         $response = $this->get('/api/users?page=2');
 
         $response->assertOk();
         $response->assertJsonCount(20, 'data');
-        $response->assertJsonPath('next_page_url', env('APP_URL') . '/api/users?page=3');
+        $response->assertJsonPath('has_more', true);
+        $response->assertJsonPath('next_offset', 3);
 
         // Third scroll to the bottom
         $response = $this->get('/api/users?page=3');
 
         $response->assertOk();
         $response->assertJsonCount(10, 'data');
-        $response->assertJsonPath('next_page_url', null);
+        $response->assertJsonPath('has_more', false);
+        $response->assertJsonPath('next_offset', null);
 
         // Fourth scroll to the bottom (Data should be empty)
         $response = $this->get('/api/users?page=4');
 
         $response->assertOk();
         $response->assertJsonCount(0, 'data');
-        $response->assertJsonPath('next_page_url', null);
+        $response->assertJsonPath('has_more', false);
+        $response->assertJsonPath('next_offset', null);
+    }
+
+    public function testShouldReturnThreeSuggestedUsers()
+    {
+        $response = $this->get('/api/users/suggested');
+
+        $response->assertJsonCount(3, 'data');
+        $response->assertJsonStructure([
+            'data' => [
+                '*' => ['slug', 'name', 'username', 'gender', 'image_url'],
+            ],
+        ]);
     }
 
     /**
