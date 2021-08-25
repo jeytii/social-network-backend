@@ -19,4 +19,5 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function() {
     Route::get('/users', [UserController::class, 'get']);
     Route::get('/users/suggested', [UserController::class, 'getSuggested']);
+    Route::put('/users/auth/update', [UserController::class, 'update']);
 });
