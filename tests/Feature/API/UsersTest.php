@@ -14,8 +14,8 @@ class UsersTest extends TestCase
     use RefreshDatabase, WithFaker;
 
     /**
-     * Seeds a particular number of fake user models.
-     * Check out database/seeders/DatabaseSeeder.php
+     * Seeds 100 fake user models.
+     * See database/seeders/DatabaseSeeder.php
      *
      * @var boolean
      */
@@ -60,15 +60,15 @@ class UsersTest extends TestCase
         $response->assertJsonPath('next_offset', 3);
 
         // Third scroll to the bottom
-        $response = $this->get('/api/users?page=3');
+        $response = $this->get('/api/users?page=5');
 
         $response->assertOk();
-        $response->assertJsonCount(10, 'data');
+        $response->assertJsonCount(19, 'data');
         $response->assertJsonPath('has_more', false);
         $response->assertJsonPath('next_offset', null);
 
         // Fourth scroll to the bottom (Data should be empty)
-        $response = $this->get('/api/users?page=4');
+        $response = $this->get('/api/users?page=6');
 
         $response->assertOk();
         $response->assertJsonCount(0, 'data');
@@ -201,6 +201,64 @@ class UsersTest extends TestCase
 
         $this->assertTrue($user->following()->where('id', 2)->count() === 1);
         $this->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
+    }
+
+    public function testErrorIfTypeQueryInConnectionsUrlIsBlank()
+    {
+        $user = User::first();
+        $response = $this->actingAs($user)->get('/api/users/connections?page=1');
+
+        $response->assertNotFound();
+    }
+
+    public function testErrorIfTypeQueryInConnectionsUrlIsNeitherFollowersNorFollowing()
+    {
+        $user = User::first();
+        $response = $this->actingAs($user)->get('/api/users/connections?type=unknown&page=1');
+
+        $response->assertNotFound();
+    }
+
+    public function testSuccessfullyGettingThePaginatedListOfFollowing()
+    {
+        $user = User::first();
+        $user->following()->sync(range(11, 50));
+
+        $firstCall = $this->actingAs($user)->get('/api/users/connections?type=following&page=1');
+
+        $firstCall->assertOk();
+        $firstCall->assertJsonCount(20, 'data');
+
+        $secondCall = $this->actingAs($user)->get('/api/users/connections?type=following&page=2');
+
+        $secondCall->assertOk();
+        $secondCall->assertJsonCount(20, 'data');
+
+        $thirdCall = $this->actingAs($user)->get('/api/users/connections?type=following&page=3');
+
+        $thirdCall->assertOk();
+        $thirdCall->assertJsonCount(0, 'data');
+    }
+    
+    public function testSuccessfullyGettingThePaginatedListOfFollowers()
+    {
+        $user = User::find(2);
+        $user->followers()->sync(range(31, 70));
+
+        $firstCall = $this->actingAs($user)->get('/api/users/connections?type=followers&page=1');
+
+        $firstCall->assertOk();
+        $firstCall->assertJsonCount(20, 'data');
+
+        $secondCall = $this->actingAs($user)->get('/api/users/connections?type=followers&page=2');
+
+        $secondCall->assertOk();
+        $secondCall->assertJsonCount(20, 'data');
+
+        $thirdCall = $this->actingAs($user)->get('/api/users/connections?type=followers&page=3');
+
+        $thirdCall->assertOk();
+        $thirdCall->assertJsonCount(0, 'data');
     }
 
     /**

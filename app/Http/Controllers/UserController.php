@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Http\Requests\UpdateUserRequest;
 
 class UserController extends Controller
 {
@@ -17,14 +17,16 @@ class UserController extends Controller
     private $basic_columns = ['slug', 'name', 'username', 'gender', 'image_url'];
 
     /**
-     * Get 20 paginated user models.
+     * Get paginated list of user models.
      *
      * @return \Illuminate\Http\Response
      */
     public function get()
     {
         // Format each user model with only the necessary columns.
-        $data = User::select($this->basic_columns)->paginate(20);
+        $data = User::where('id', '!=', auth()->id())
+                ->whereDoesntHave('followers', fn($query) => $query->where('id', auth()->id()))
+                ->paginate(20, $this->basic_columns);
         
         // If there are still remaining items.
         $hasMore = $data->hasMorePages();
@@ -40,14 +42,40 @@ class UserController extends Controller
     }
 
     /**
-     * Get 3 suggested user models.
+     * Get suggested user models.
      *
      * @return \Illuminate\Http\Response
      */
     public function getSuggested()
     {
         // Get 3 random users with basic data.
-        $data = User::inRandomOrder()->limit(3)->get($this->basic_columns);
+        $data = DB::table('users')
+                ->inRandomOrder()
+                ->limit(3)
+                ->get($this->basic_columns);
+
+        return response()->json(compact('data'));
+    }
+
+    /**
+     * Get the paginated list of followers or followed users.
+     *
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getConnections(Request $request)
+    {
+        $type = $request->query('type');
+
+        abort_if(
+            is_null($type) || !in_array($type, ['following', 'followers']),
+            404
+        );
+
+        $data = $request->user()
+                ->{$type}()
+                ->paginate(20, $this->basic_columns)
+                ->items();
 
         return response()->json(compact('data'));
     }
@@ -61,16 +89,16 @@ class UserController extends Controller
     public function update(UpdateUserRequest $request)
     {
         $this->authorize('update', $request->user());
-
+        
         if (
             is_null($request->user()->birth_month) &&
             is_null($request->user()->birth_day) &&
             is_null($request->user()->birth_year)
         ) {
-            User::where('id', $request->user()->id)->update($request->all());
+            $request->user()->update($request->all());
         }
         else {
-            User::where('id', $request->user()->id)->update($request->only([
+            $request->user()->update($request->only([
                 'name', 'username', 'location', 'bio', 'image_url'
             ]));
         }
