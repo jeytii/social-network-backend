@@ -41,6 +41,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'email_verified_at',
         'updated_at',
+        'pivot',
     ];
 
     /**
@@ -65,6 +66,10 @@ class User extends Authenticatable implements MustVerifyEmail
         });
     }
 
+    // =============================
+    // GETTERS
+    // =============================
+
     /**
      * Get the route key for the model.
      *
@@ -75,8 +80,37 @@ class User extends Authenticatable implements MustVerifyEmail
         return 'slug';
     }
 
+    /**
+     * Get the user's full birth date.
+     *
+     * @return string
+     */
     public function getFullBirthDateAttribute()
     {
         return "$this->birth_month $this->birth_day, $this->birth_year";
+    }
+
+    // =============================
+    // RELATIONSHIPS
+    // =============================
+    
+    /**
+     * People/users who follow the auth user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function followers()
+    {
+        return $this->belongsToMany('App\Models\User', 'connections', 'following_id', 'follower_id')->withPivot('created_at');
+    }
+
+    /**
+     * People/users that the auth user follows.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function following()
+    {
+        return $this->belongsToMany('App\Models\User', 'connections', 'follower_id', 'following_id')->withPivot('created_at');
     }
 }
