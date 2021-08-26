@@ -105,12 +105,9 @@ class UsersTest extends TestCase
         $response->assertJsonPath('errors.bio', ['The number of characters exceeds the maximum length.']);
     }
 
-    public function testCannotUpdateBirthDate()
+    public function testCannotUpdateBirthDateThatIsNoLongerNull()
     {
-        $user = User::factory()->create([
-            'email' => 'dummytwo@email.com',
-            'username' => 'dummy.two',
-        ]);
+        $user = User::factory()->create();
 
         $response = $this->actingAs($user)->putJson('/api/users/auth/update', [
             'name' => $user->name,
@@ -121,16 +118,14 @@ class UsersTest extends TestCase
 
         $response->assertOk();
         
-        $updatedUser = User::where('id', $user->id)->first();
+        $updatedUser = User::find($user->id);
 
         $this->assertTrue($user->full_birth_date === $updatedUser->full_birth_date);
     }
 
-    public function testSuccessfulUpdate()
+    public function testSuccessfullyUpdatedTheProfileInfo()
     {
         $user = User::factory()->create([
-            'email' => 'dummyone@email.com',
-            'username' => 'dummy.one',
             'birth_month' => null,
             'birth_day' => null,
             'birth_year' => null,
@@ -147,12 +142,65 @@ class UsersTest extends TestCase
 
         $response->assertOk();
         
-        $updatedUser = User::where('id', $user->id)->first();
+        $updatedUser = User::find($user->id);
 
         $this->assertTrue($updatedUser->name === 'John Doe');
         $this->assertTrue($updatedUser->full_birth_date === 'December 10, 1990');
         $this->assertTrue($updatedUser->location === 'Philippines');
         $this->assertTrue($updatedUser->bio === 'Hello World');
+    }
+
+    public function testCanFollowAUser()
+    {
+        $user = User::first();
+        $userToFollow = User::find(2);
+
+        $response = $this->actingAs($user)->postJson("/api/users/follow/{$userToFollow->slug}");
+
+        $response->assertOk();
+        $response->assertJson(['followed' => true]);
+        $this->assertTrue((bool) $user->following()->find($userToFollow->id));
+        $this->assertTrue((bool) $userToFollow->followers()->find($user->id));
+    }
+    
+    public function testCanUnfollowAUser()
+    {
+        $user = User::first();
+        $userToUnfollow = User::find(2);
+        
+        $response = $this->actingAs($user)->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}");
+        
+        $response->assertOk();
+        $response->assertJson(['unfollowed' => true]);
+        $this->assertFalse((bool) $user->following()->find($userToUnfollow->id));
+        $this->assertFalse((bool) $userToUnfollow->followers()->find($user->id));
+    }
+
+    public function testCannotUnfollowAUserThatIsNotFollowed()
+    {
+        $user = User::first();
+        $userToUnfollow = User::find(2);
+
+        $response = $this->actingAs($user)->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}");
+
+        $response->assertForbidden();
+        $this->assertFalse((bool) $user->following()->find($userToUnfollow->id));
+        $this->assertFalse((bool) $userToUnfollow->followers()->find($user->id));
+    }
+
+    public function testCannotFollowAUserThatIsAlreadyFollowed()
+    {
+        $user = User::first();
+        $userToFollow = User::find(2);
+
+        $firstCall = $this->actingAs($user)->postJson("/api/users/follow/{$userToFollow->slug}");
+        $secondCall = $this->actingAs($user)->postJson("/api/users/follow/{$userToFollow->slug}");
+
+        $firstCall->assertOk();
+        $secondCall->assertForbidden();
+
+        $this->assertTrue($user->following()->where('id', 2)->count() === 1);
+        $this->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
     }
 
     /**
