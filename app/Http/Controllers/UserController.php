@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -51,21 +52,61 @@ class UserController extends Controller
         return response()->json(compact('data'));
     }
 
+    /**
+     * Get 3 suggested user models.
+     *
+     * @param App\Http\Requests\UpdateUserRequest  $request
+     * @return \Illuminate\Http\Response
+     */
     public function update(UpdateUserRequest $request)
     {
+        $this->authorize('update', $request->user());
+
         if (
-            is_null(auth()->user()->birth_month) &&
-            is_null(auth()->user()->birth_day) &&
-            is_null(auth()->user()->birth_year)
+            is_null($request->user()->birth_month) &&
+            is_null($request->user()->birth_day) &&
+            is_null($request->user()->birth_year)
         ) {
-            User::where('id', auth()->id())->update($request->all());
+            User::where('id', $request->user()->id)->update($request->all());
         }
         else {
-            User::where('id', auth()->id())->update($request->only([
+            User::where('id', $request->user()->id)->update($request->only([
                 'name', 'username', 'location', 'bio', 'image_url'
             ]));
         }
 
         return response()->json(['updated' => true]);
+    }
+
+    /**
+     * Add a user to the list of followed users.
+     *
+     * @param \Illuminate\Http\Request  $request
+     * @param \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function follow(Request $request, User $user)
+    {
+        $this->authorize('follow', $user);
+        
+        $request->user()->following()->sync([$user->id]);
+
+        return response()->json(['followed' => true]);
+    }
+
+    /**
+     * Add a user to the list of followed users.
+     *
+     * @param \Illuminate\Http\Request  $request
+     * @param \App\Models\User  $user
+     * @return \Illuminate\Http\Response
+     */
+    public function unfollow(Request $request, User $user)
+    {
+        $this->authorize('unfollow', $user);
+
+        $request->user()->following()->detach($user->id);
+
+        return response()->json(['unfollowed' => true]);
     }
 }
