@@ -6,14 +6,9 @@ use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Support\Facades\{DB, Notification};
 use Illuminate\Auth\Notifications\ResetPassword;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class ForgotPasswordTest extends TestCase
 {
-    use RefreshDatabase;
-
-    protected $seed = true;
-
     /**
      * Generate forgot password response.
      *
@@ -60,9 +55,10 @@ class ForgotPasswordTest extends TestCase
 
     public function testSuccessfullySentPasswordResetRequest()
     {
+        $user = User::factory()->create();
+
         Notification::fake();
 
-        $user = User::first();
         $response = $this->jsonResponse($user->email);
 
         $response->assertOk();
