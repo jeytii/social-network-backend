@@ -99,6 +99,33 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // =============================
+    // FORMATTERS
+    // =============================
+
+    /**
+     * Format original user data for profile view.
+     *
+     * @param int  $exceptionId
+     * @return array
+     */
+    public function formatProfileInfo(int $exceptionId)
+    {
+        if ($isSelf = $this->id === $exceptionId) {
+            $columns = collect($this)->except(['birth_month', 'birth_day', 'birth_year']);
+        }
+        else {
+            $columns = collect($this)->except(['slug', 'birth_month', 'birth_day', 'birth_year']);
+        }
+
+        $data = array_merge($columns->toArray(), [
+            'birth_date' => $this->full_birth_date,
+            'is_self' => $isSelf,
+        ]);
+
+        return $data;
+    }
+
+    // =============================
     // RELATIONSHIPS
     // =============================
     
