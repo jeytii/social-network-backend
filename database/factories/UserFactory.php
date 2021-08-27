@@ -24,12 +24,13 @@ class UserFactory extends Factory
     {
         $gender = $this->faker->randomElement(['Male', 'Female']);
         $name = $this->faker->name(strtolower($gender));
+        $email = str_replace(['. ', ' '], '', strtolower($name));
         $username = str_replace(['. ', ' '], '.', strtolower($name));
         $date = Carbon::parse($this->faker->date());
 
         return [
             'name' => $name,
-            'email' => $username . '@example.com',
+            'email' => "{$email}@example.com",
             'username' => $username,
             'gender' => $gender,
             'location' => $this->faker->city(),

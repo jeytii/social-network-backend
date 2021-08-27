@@ -85,6 +85,26 @@ class UserController extends Controller
     }
 
     /**
+     * Get the profile info of a specific user model.
+     *
+     * @param string  $username
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getProfileInfo(string $username)
+    {
+        $user = User::withCount('followers', 'following')
+                ->where('username', $username)
+                ->first();
+
+        abort_if(!$user, 404, "Can't find a person with the username @{$username}.");
+
+        return response()->json([
+            'data' => $user->formatProfileInfo(auth()->id())
+        ]);
+    }
+
+    /**
      * Update the specified resource in storage.
      *
      * @param \App\Http\Requests\UpdateUserRequest  $request

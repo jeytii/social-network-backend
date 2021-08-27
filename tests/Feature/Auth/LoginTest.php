@@ -5,14 +5,9 @@ namespace Tests\Feature;
 use App\Models\User;
 use Tests\TestCase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class LoginTest extends TestCase
-{
-    use RefreshDatabase;
-
-    protected $seed = true;
-    
+{   
     /**
      * Generate a JSON response from a POST request.
      *
@@ -84,7 +79,7 @@ class LoginTest extends TestCase
 
     public function testReturnATokenIfSucceeds()
     {
-        $user = DB::table('users')->whereNotNull('email_verified_at')->get()->random();
+        $user = User::factory()->create();
 
         $response = $this->jsonResponse([
             'username' => $user->username,

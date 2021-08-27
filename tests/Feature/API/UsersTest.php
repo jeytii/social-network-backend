@@ -261,6 +261,49 @@ class UsersTest extends TestCase
         $thirdCall->assertJsonCount(0, 'data');
     }
 
+    public function testCannotFindAUserWithProvidedUsername()
+    {
+        $user = User::first();
+        $response = $this->actingAs($user)->get('/api/users/foobar/profile');
+
+        $response->assertNotFound();
+    }
+
+    public function testProfileInfoIsNotSelf()
+    {
+        $user = User::first();
+        $visitedUsername = User::find(2)->username;
+
+        $response = $this->actingAs($user)->get("/api/users/{$visitedUsername}/profile");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.is_self', false);
+    }
+
+    public function testProfileInfoIsSelf()
+    {
+        $user = User::first();
+
+        $response = $this->actingAs($user)->get("/api/users/{$user->username}/profile");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.is_self', true);
+    }
+
+    public function testProfileInfoContainsNumberOfFollowersAndFollowing()
+    {
+        $user = User::first();
+
+        $response = $this->actingAs($user)->get("/api/users/{$user->username}/profile");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.followers_count', 0);
+
+        // Given the sync() method at testSuccessfullyGettingThePaginatedListOfFollowing()
+        //that attached 40 models to its list of followed users.
+        $response->assertJsonPath('data.following_count', 40);
+    }
+
     /**
      * Make an execution after all tests.
      *

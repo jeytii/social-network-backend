@@ -7,14 +7,14 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Support\Facades\{DB, Event};
-use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class RegistrationTest extends TestCase
 {
-    use RefreshDatabase;
-
-    protected $seed = true;
-
+    /**
+     * Required form fields.
+     * 
+     * @var array
+     */
     private $requiredFields = ['name', 'email', 'username', 'gender', 'password'];
     
     /**
@@ -88,8 +88,8 @@ class RegistrationTest extends TestCase
 
     public function testErrorIfEnteredValuesAlreadyExist()
     {
-        $body = collect(DB::table('users')->first())->only('email', 'username')->all();
-        $response = $this->jsonResponse($body);
+        $user = User::factory()->create();
+        $response = $this->jsonResponse($user->only('email', 'username'));
 
         $response->assertStatus(422);
         $response->assertJsonPath('errors.email', ['Someone has already taken that email address.']);

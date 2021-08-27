@@ -19,6 +19,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function() {
     Route::get('/users', [UserController::class, 'get']);
     Route::get('/users/suggested', [UserController::class, 'getSuggested']);
+    Route::get('/users/{username}/profile', [UserController::class, 'getProfileInfo']);
     Route::put('/users/auth/update', [UserController::class, 'update']);
     Route::post('/users/follow/{user}', [UserController::class, 'follow']);
     Route::delete('/users/unfollow/{user}', [UserController::class, 'unfollow']);
