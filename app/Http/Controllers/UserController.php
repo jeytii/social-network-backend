@@ -25,14 +25,17 @@ class UserController extends Controller
     {
         // Format each user model with only the necessary columns.
         $data = User::where('id', '!=', auth()->id())
-                ->whereDoesntHave('followers', fn($query) => $query->where('id', auth()->id()))
+                ->whereDoesntHave('followers', function($query) {
+                    $query->where('id', auth()->id());
+                })
                 ->paginate(20, $this->basic_columns);
         
         // If there are still remaining items.
         $hasMore = $data->hasMorePages();
 
         // Increment the current offset/page by 1 if there are still more items left.
-        $nextOffset = $data->hasMorePages() ? $data->currentPage() + 1 : null;
+        // Otherwise, return null
+        $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
 
         return response()->json([
             'data' => $data->items(),
@@ -62,6 +65,7 @@ class UserController extends Controller
      *
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      */
     public function getConnections(Request $request)
     {
@@ -81,33 +85,28 @@ class UserController extends Controller
     }
 
     /**
-     * Get 3 suggested user models.
+     * Update the specified resource in storage.
      *
-     * @param App\Http\Requests\UpdateUserRequest  $request
+     * @param \App\Http\Requests\UpdateUserRequest  $request
      * @return \Illuminate\Http\Response
      */
     public function update(UpdateUserRequest $request)
     {
         $this->authorize('update', $request->user());
         
-        if (
-            is_null($request->user()->birth_month) &&
-            is_null($request->user()->birth_day) &&
-            is_null($request->user()->birth_year)
-        ) {
-            $request->user()->update($request->all());
-        }
-        else {
-            $request->user()->update($request->only([
-                'name', 'username', 'location', 'bio', 'image_url'
-            ]));
-        }
+        $body = is_null($request->user()->full_birth_date) ?
+                $request->all() :
+                $request->only([
+                    'name', 'username', 'location', 'bio', 'image_url'
+                ]);
+
+        $request->user()->update($body);
 
         return response()->json(['updated' => true]);
     }
 
     /**
-     * Add a user to the list of followed users.
+     * Add a user model to the list of followed users.
      *
      * @param \Illuminate\Http\Request  $request
      * @param \App\Models\User  $user
@@ -123,7 +122,7 @@ class UserController extends Controller
     }
 
     /**
-     * Add a user to the list of followed users.
+     * Remove a user model from the list of followed users.
      *
      * @param \Illuminate\Http\Request  $request
      * @param \App\Models\User  $user
