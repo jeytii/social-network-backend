@@ -2,90 +2,46 @@
 
 namespace Tests\Feature\Auth;
 
-use Tests\TestCase;
-use Illuminate\Support\Str;
-use Illuminate\Contracts\Hashing\Hasher;
+use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Auth\Passwords\PasswordBroker;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\{DB, Event, Hash, Notification};
 
-class ResetPasswordTest extends TestCase
-{
-    use RefreshDatabase;
+afterEach(function() {
+    DB::table('users')->truncate();
+    DB::table('password_resets')->truncate();
+});
 
-    protected $seed = true;
+test('Should throw an error if all inputs are not set', function() {
+    Event::fake([ PasswordReset::class ]);
 
-    /**
-     * Generate reset password response.
-     *
-     * @param array  $body
-     * @return \Illuminate\Testing\TestResponse
-     */
-    private function jsonResponse(array $body = [])
-    {
-        return $this->postJson('/reset-password', $body);
-    }
+    $this->postJson('/reset-password')
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['email', 'password', 'token']);
+    
+    Event::assertNothingDispatched();
+});
 
-    public function testErrorIfAllInputsAreNotSet()
-    {
-        Event::fake();
+test('Resetting the password successfully', function() {
+    Notification::fake();
 
-        $response = $this->jsonResponse();
+    $user = User::factory()->create();
+    
+    $this->postJson('/forgot-password', ['email' => $user->email])
+        ->assertOk();
+    
+    Event::fake([ PasswordReset::class ]);
 
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['email', 'password', 'token']);
-        Event::assertNotDispatched(PasswordReset::class);
-    }
+    $passwordReset = DB::table('password_resets')->first();
+    
+    $this->postJson('/reset-password', [
+        'email' => $passwordReset->email,
+        'password' => 'P@ssword123',
+        'password_confirmation' => 'P@ssword123',
+        'token' => $passwordReset->token,
+    ])->assertOk();
 
-    public function testSuccessfulPasswordReset()
-    {
-        Notification::fake();
+    // $user = DB::table('users')->where('email', $passwordReset->email)->first();
 
-        $emailAddress = DB::table('users')->first()->email;
-        $token = Str::random(64);
-        $hash = Hash::make($token);
-        
-        $forgotPasswordResponse = $this->post(
-            '/forgot-password',
-            ['email' => $emailAddress],
-            ['Accept' => 'application/json']
-        );
-
-        $passwordReset = DB::table('password_resets')->where('email', $emailAddress);
-        
-        $passwordReset->update([
-            'token' => Hash::make($token)
-        ]);
-        
-        $forgotPasswordResponse->assertOk();
-        
-        Event::fake([ PasswordReset::class ]);
-        
-        $resetPasswordResponse = $this->jsonResponse([
-            'email' => $passwordReset->first()->email,
-            'password' => 'P@ssword123',
-            'password_confirmation' => 'P@ssword123',
-            'token' => $token,
-        ]);
-
-        $resetPasswordResponse->assertOk();
-
-        // $user = DB::table('users')->where('email', $passwordReset->email)->first();
-
-        // $this->assertTrue(Hash::check('P@ssword12345', $user->password));
-        // Event::assertDispatched(fn(PasswordReset $event) => $event->user->id === $user->id);
-    }
-
-    /**
-     * Make an execution after all tests.
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        (new self())->setUp();
-        DB::table('users')->truncate();
-        DB::table('password_resets')->truncate();
-    }
-}
+    // $this->assertTrue(Hash::check('P@ssword12345', $user->password));
+    // Event::assertDispatched(fn(PasswordReset $event) => $event->user->id === $user->id);
+});

@@ -9,8 +9,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 
-class UsersTest extends TestCase
-{
+trait UsersTestTrait {
     use RefreshDatabase, WithFaker;
 
     /**
@@ -20,298 +19,272 @@ class UsersTest extends TestCase
      * @var boolean
      */
     protected $seed = true;
+}
 
-    /**
-     * Make an execution before each test.
-     *
-     * @return void
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
+uses(UsersTestTrait::class);
 
-        Sanctum::actingAs(
-            User::first(),
-            ['*'],
-        );
-    }
+beforeEach(function() {
+    Sanctum::actingAs(User::first(), ['*']);
+});
 
-    public function testGetPaginatedUsers()
-    {
-        // First scroll to the bottom
-        $response = $this->get('/api/users?page=1');
+afterEach(function() {
+    DB::table('users')->truncate();
+});
 
-        $response->assertOk();
-        $response->assertJsonCount(20, 'data');
-        $response->assertJsonPath('has_more', true);
-        $response->assertJsonPath('next_offset', 2);
-        $response->assertJsonStructure([
+test('Should return paginated list of users until no model is left', function() {
+    $user = test()->actingAs(User::first());
+
+    // First scroll full-page bottom
+    $user->getJson('/api/users?page=1')
+        ->assertOk()
+        ->assertJsonCount(20, 'data')
+        ->assertJsonPath('has_more', true)
+        ->assertJsonPath('next_offset', 2)
+        ->assertJsonStructure([
             'data' => [
                 '*' => ['slug', 'name', 'username', 'gender', 'image_url'],
             ],
         ]);
 
-        // Second scroll to the bottom
-        $response = $this->get('/api/users?page=2');
+    // Second scroll full-page bottom
+    $user->getJson('/api/users?page=2')
+        ->assertOk()
+        ->assertJsonCount(20, 'data')
+        ->assertJsonPath('has_more', true)
+        ->assertJsonPath('next_offset', 3);
 
-        $response->assertOk();
-        $response->assertJsonCount(20, 'data');
-        $response->assertJsonPath('has_more', true);
-        $response->assertJsonPath('next_offset', 3);
+    // The last full-page scroll that returns data
+    $user->getJson('/api/users?page=5')
+        ->assertOk()
+        ->assertJsonCount(19, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
 
-        // Third scroll to the bottom
-        $response = $this->get('/api/users?page=5');
+    // Full-page scroll attempt but should return empty list
+    $user->getJson('/api/users?page=6')
+        ->assertOk()
+        ->assertJsonCount(0, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
+});
 
-        $response->assertOk();
-        $response->assertJsonCount(19, 'data');
-        $response->assertJsonPath('has_more', false);
-        $response->assertJsonPath('next_offset', null);
-
-        // Fourth scroll to the bottom (Data should be empty)
-        $response = $this->get('/api/users?page=6');
-
-        $response->assertOk();
-        $response->assertJsonCount(0, 'data');
-        $response->assertJsonPath('has_more', false);
-        $response->assertJsonPath('next_offset', null);
-    }
-
-    public function testShouldReturnThreeSuggestedUsers()
-    {
-        $response = $this->get('/api/users/suggested');
-
-        $response->assertJsonCount(3, 'data');
-        $response->assertJsonStructure([
+test('Should successfully return 3 suggested users', function() {
+    test()->actingAs(User::first())
+        ->getJson('/api/users/suggested')
+        ->assertJsonCount(3, 'data')
+        ->assertJsonStructure([
             'data' => [
                 '*' => ['slug', 'name', 'username', 'gender', 'image_url'],
             ],
         ]);
-    }
+});
 
-    public function testValidationErrorsInUpdatingProfile()
-    {
-        $user = User::first();
-
-        $response = $this->actingAs($user)->putJson('/api/users/auth/update', [
+test('Should throw validation errors if input values are incorrect in update profile form', function() {
+    test()->actingAs(User::first())
+        ->putJson('/api/users/auth/update', [
             'birth_day' => 32,
             'bio' => $this->faker->paragraphs(5, true)
+        ])
+        ->assertStatus(422)
+        ->assertJsonFragment([
+            'errors' => [
+                'name' => ['The name field is required.'],
+                'birth_month' => ['The birth month field is required.'],
+                'birth_day' => ['Birth day must be between 1 and 31 only.'],
+                'birth_year' => ['The birth year field is required.'],
+                'bio' => ['The number of characters exceeds the maximum length.'],
+            ]
         ]);
+});
 
-        $response->assertStatus(422);
-        $response->assertJsonPath('errors.name', ['The name field is required.']);
-        $response->assertJsonPath('errors.birth_month', ['The birth month field is required.']);
-        $response->assertJsonPath('errors.birth_day', ['Birth day must be between 1 and 31 only.']);
-        $response->assertJsonPath('errors.birth_year', ['The birth year field is required.']);
-        $response->assertJsonPath('errors.bio', ['The number of characters exceeds the maximum length.']);
-    }
+test('Can\'t update the birth date that has been already set', function() {
+    $user = User::factory()->create();
 
-    public function testCannotUpdateBirthDateThatIsNoLongerNull()
-    {
-        $user = User::factory()->create();
-
-        $response = $this->actingAs($user)->putJson('/api/users/auth/update', [
+    test()->actingAs($user)
+        ->putJson('/api/users/auth/update', [
             'name' => $user->name,
             'birth_month' => 'January',
             'birth_day' => 12,
             'birth_year' => 1996,
-        ]);
+        ])
+        ->assertOk();
+    
+    $updatedUser = User::find($user->id);
 
-        $response->assertOk();
-        
-        $updatedUser = User::find($user->id);
+    test()->assertTrue($user->full_birth_date === $updatedUser->full_birth_date);
+});
 
-        $this->assertTrue($user->full_birth_date === $updatedUser->full_birth_date);
-    }
+test('Can update the profile successfully', function() {
+    $user = User::factory()->create([
+        'birth_month' => null,
+        'birth_day' => null,
+        'birth_year' => null,
+    ]);
 
-    public function testSuccessfullyUpdatedTheProfileInfo()
-    {
-        $user = User::factory()->create([
-            'birth_month' => null,
-            'birth_day' => null,
-            'birth_year' => null,
-        ]);
-
-        $response = $this->actingAs($user)->putJson('/api/users/auth/update', [
+    test()->actingAs($user)
+        ->putJson('/api/users/auth/update', [
             'name' => 'John Doe',
             'birth_month' => 'December',
             'birth_day' => 10,
             'birth_year' => 1990,
             'location' => 'Philippines',
             'bio' => 'Hello World',
-        ]);
-
-        $response->assertOk();
-        
-        $updatedUser = User::find($user->id);
-
-        $this->assertTrue($updatedUser->name === 'John Doe');
-        $this->assertTrue($updatedUser->full_birth_date === 'December 10, 1990');
-        $this->assertTrue($updatedUser->location === 'Philippines');
-        $this->assertTrue($updatedUser->bio === 'Hello World');
-    }
-
-    public function testCanFollowAUser()
-    {
-        $user = User::first();
-        $userToFollow = User::find(2);
-
-        $response = $this->actingAs($user)->postJson("/api/users/follow/{$userToFollow->slug}");
-
-        $response->assertOk();
-        $response->assertJson(['followed' => true]);
-        $this->assertTrue((bool) $user->following()->find($userToFollow->id));
-        $this->assertTrue((bool) $userToFollow->followers()->find($user->id));
-    }
+        ])
+        ->assertOk();
     
-    public function testCanUnfollowAUser()
-    {
-        $user = User::first();
-        $userToUnfollow = User::find(2);
-        
-        $response = $this->actingAs($user)->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}");
-        
-        $response->assertOk();
-        $response->assertJson(['unfollowed' => true]);
-        $this->assertFalse((bool) $user->following()->find($userToUnfollow->id));
-        $this->assertFalse((bool) $userToUnfollow->followers()->find($user->id));
-    }
+    $updatedUser = User::find($user->id);
 
-    public function testCannotUnfollowAUserThatIsNotFollowed()
-    {
-        $user = User::first();
-        $userToUnfollow = User::find(2);
+    test()->assertTrue($updatedUser->name === 'John Doe');
+    test()->assertTrue($updatedUser->full_birth_date === 'December 10, 1990');
+    test()->assertTrue($updatedUser->location === 'Philippines');
+    test()->assertTrue($updatedUser->bio === 'Hello World');
+});
 
-        $response = $this->actingAs($user)->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}");
+test('Can follow a user', function() {
+    $user = User::first();
+    $userToFollow = User::find(2);
 
-        $response->assertForbidden();
-        $this->assertFalse((bool) $user->following()->find($userToUnfollow->id));
-        $this->assertFalse((bool) $userToUnfollow->followers()->find($user->id));
-    }
+    test()->actingAs($user)
+        ->postJson("/api/users/follow/{$userToFollow->slug}")
+        ->assertOk()
+        ->assertJson(['followed' => true]);
 
-    public function testCannotFollowAUserThatIsAlreadyFollowed()
-    {
-        $user = User::first();
-        $userToFollow = User::find(2);
+    test()->assertTrue((bool) $user->following()->find($userToFollow->id));
+    test()->assertTrue((bool) $userToFollow->followers()->find($user->id));
+});
 
-        $firstCall = $this->actingAs($user)->postJson("/api/users/follow/{$userToFollow->slug}");
-        $secondCall = $this->actingAs($user)->postJson("/api/users/follow/{$userToFollow->slug}");
+test('Can unfollow a user', function() {
+    $user = User::first();
+    $userToUnfollow = User::find(2);
 
-        $firstCall->assertOk();
-        $secondCall->assertForbidden();
-
-        $this->assertTrue($user->following()->where('id', 2)->count() === 1);
-        $this->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
-    }
-
-    public function testErrorIfTypeQueryInConnectionsUrlIsBlank()
-    {
-        $user = User::first();
-        $response = $this->actingAs($user)->get('/api/users/connections?page=1');
-
-        $response->assertNotFound();
-    }
-
-    public function testErrorIfTypeQueryInConnectionsUrlIsNeitherFollowersNorFollowing()
-    {
-        $user = User::first();
-        $response = $this->actingAs($user)->get('/api/users/connections?type=unknown&page=1');
-
-        $response->assertNotFound();
-    }
-
-    public function testSuccessfullyGettingThePaginatedListOfFollowing()
-    {
-        $user = User::first();
-        $user->following()->sync(range(11, 50));
-
-        $firstCall = $this->actingAs($user)->get('/api/users/connections?type=following&page=1');
-
-        $firstCall->assertOk();
-        $firstCall->assertJsonCount(20, 'data');
-
-        $secondCall = $this->actingAs($user)->get('/api/users/connections?type=following&page=2');
-
-        $secondCall->assertOk();
-        $secondCall->assertJsonCount(20, 'data');
-
-        $thirdCall = $this->actingAs($user)->get('/api/users/connections?type=following&page=3');
-
-        $thirdCall->assertOk();
-        $thirdCall->assertJsonCount(0, 'data');
-    }
+    // Assume that the auth user is already following another user.
+    $user->following()->sync([$userToUnfollow->id]);
     
-    public function testSuccessfullyGettingThePaginatedListOfFollowers()
-    {
-        $user = User::find(2);
-        $user->followers()->sync(range(31, 70));
+    test()->actingAs($user)
+        ->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}")
+        ->assertOk()
+        ->assertJson(['unfollowed' => true]);
 
-        $firstCall = $this->actingAs($user)->get('/api/users/connections?type=followers&page=1');
+    test()->assertFalse((bool) $user->following()->find($userToUnfollow->id));
+    test()->assertFalse((bool) $userToUnfollow->followers()->find($user->id));
+});
 
-        $firstCall->assertOk();
-        $firstCall->assertJsonCount(20, 'data');
+test('Can\'t unfollow a user that\'s not included in the list of followed users', function() {
+    $user = User::first();
+    $userToUnfollow = User::find(2);
 
-        $secondCall = $this->actingAs($user)->get('/api/users/connections?type=followers&page=2');
+    test()->actingAs($user)
+        ->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}")
+        ->assertForbidden();
 
-        $secondCall->assertOk();
-        $secondCall->assertJsonCount(20, 'data');
+    test()->assertFalse((bool) $user->following()->find($userToUnfollow->id));
+    test()->assertFalse((bool) $userToUnfollow->followers()->find($user->id));
+});
 
-        $thirdCall = $this->actingAs($user)->get('/api/users/connections?type=followers&page=3');
+test('Can\'t follow a user that\'s already followed', function() {
+    $user = User::first();
+    $userToFollow = User::find(2);
 
-        $thirdCall->assertOk();
-        $thirdCall->assertJsonCount(0, 'data');
-    }
+    // Assume that the auth user is already following another user.
+    $user->following()->sync([$userToFollow->id]);
 
-    public function testCannotFindAUserWithProvidedUsername()
-    {
-        $user = User::first();
-        $response = $this->actingAs($user)->get('/api/users/foobar/profile');
+    test()->actingAs($user)
+        ->postJson("/api/users/follow/{$userToFollow->slug}")
+        ->assertForbidden();
 
-        $response->assertNotFound();
-    }
+    test()->assertTrue($user->following()->where('id', 2)->count() === 1);
+    test()->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
+});
 
-    public function testProfileInfoIsNotSelf()
-    {
-        $user = User::first();
-        $visitedUsername = User::find(2)->username;
+test('Should throw an error if the type of connection is not set', function() {
+    test()->actingAs(User::first())
+        ->getJson('/api/users/connections?page=1')
+        ->assertNotFound();
+});
 
-        $response = $this->actingAs($user)->get("/api/users/{$visitedUsername}/profile");
+test('Should throw an error if the type is neither "followers" nor "following"', function() {
+    test()->actingAs(User::first())
+        ->getJson('/api/users/connections?type=unknown&page=1')
+        ->assertNotFound();
+});
 
-        $response->assertOk();
-        $response->assertJsonPath('data.is_self', false);
-    }
+test('Should return the paginated list of followed users', function() {
+    $user = User::first();
+    $user->following()->sync(range(11, 50));
+    
+    $mockedUser = $this->actingAs($user);
 
-    public function testProfileInfoIsSelf()
-    {
-        $user = User::first();
+    // First full-page scroll
+    $mockedUser->getJson('/api/users/connections?type=following&page=1')
+        ->assertOk()
+        ->assertJsonCount(20, 'data');
 
-        $response = $this->actingAs($user)->get("/api/users/{$user->username}/profile");
+    // Second full-page scroll
+    $mockedUser->getJson('/api/users/connections?type=following&page=2')
+        ->assertOk()
+        ->assertJsonCount(20, 'data');
 
-        $response->assertOk();
-        $response->assertJsonPath('data.is_self', true);
-    }
+    // The last full-page scroll that returns data
+    $mockedUser->getJson('/api/users/connections?type=following&page=3')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+});
 
-    public function testProfileInfoContainsNumberOfFollowersAndFollowing()
-    {
-        $user = User::first();
+test('Should return the paginated list of followers', function() {
+    $user = User::find(2);
+    $user->followers()->sync(range(31, 70));
 
-        $response = $this->actingAs($user)->get("/api/users/{$user->username}/profile");
+    $mockedUser = $this->actingAs($user);
 
-        $response->assertOk();
-        $response->assertJsonPath('data.followers_count', 0);
+    // First full-page scroll
+    $mockedUser->getJson('/api/users/connections?type=followers&page=1')
+        ->assertOk()
+        ->assertJsonCount(20, 'data');
 
-        // Given the sync() method at testSuccessfullyGettingThePaginatedListOfFollowing()
-        //that attached 40 models to its list of followed users.
-        $response->assertJsonPath('data.following_count', 40);
-    }
+    // Second full-page scroll
+    $mockedUser->getJson('/api/users/connections?type=followers&page=2')
+        ->assertOk()
+        ->assertJsonCount(20, 'data');
 
-    /**
-     * Make an execution after all tests.
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        (new self())->setUp();
-        DB::table('users')->truncate();
-    }
-}
+    // The last full-page scroll that returns data
+    $mockedUser->getJson('/api/users/connections?type=followers&page=3')
+        ->assertOk()
+        ->assertJsonCount(0, 'data');
+});
+
+test('Should return an error if the visited user profile doesn\'t exist', function() {
+    test()->actingAs(User::first())
+        ->get('/api/users/foobar/profile')
+        ->assertNotFound();
+});
+
+test('The visited user profile is not self', function() {
+    $visitedUsername = User::find(2)->username;
+
+    test()->actingAs(User::first())
+        ->get("/api/users/{$visitedUsername}/profile")
+        ->assertOk()
+        ->assertJsonPath('data.is_self', false);
+});
+
+test('The visited user profile is self', function() {
+    $user = User::first();
+
+    test()->actingAs($user)
+        ->get("/api/users/{$user->username}/profile")
+        ->assertOk()
+        ->assertJsonPath('data.is_self', true);
+});
+
+test('Should return the profile data with the number of followers and followed users', function() {
+    $user = User::first();
+
+    // Assume that the auth user is already following 40 users.
+    $user->following()->sync(range(61, 100));
+
+    test()->actingAs($user)
+        ->get("/api/users/{$user->username}/profile")
+        ->assertOk()
+        ->assertJsonPath('data.followers_count', 0)
+        ->assertJsonPath('data.following_count', 40);
+});

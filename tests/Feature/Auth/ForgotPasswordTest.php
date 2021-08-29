@@ -7,73 +7,47 @@ use App\Models\User;
 use Illuminate\Support\Facades\{DB, Notification};
 use Illuminate\Auth\Notifications\ResetPassword;
 
-class ForgotPasswordTest extends TestCase
-{
-    /**
-     * Generate forgot password response.
-     *
-     * @param string|null  $email
-     * @return \Illuminate\Testing\TestResponse
-     */
-    private function jsonResponse(?string $email = null)
-    {
-        return $this->postJson('/forgot-password', ['email' => $email]);
-    }
+afterEach(function() {
+    DB::table('users')->truncate();
+    DB::table('password_resets')->truncate();
+});
 
-    public function testErrorIfEmailAddressIsNotSet()
-    {
-        Notification::fake();
+test('Should throw an error if email address is not set', function() {
+    Notification::fake();
 
-        $response = $this->jsonResponse();
+    $this->postJson('/forgot-password')
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['email']);
+    
+    Notification::assertNothingSent();
+});
 
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['email']);
-        Notification::assertNothingSent();
-    }
+test('Should throw an error if email address has invalid format', function() {
+    Notification::fake();
 
-    public function testErrorIfEmailAddressIsInvalid()
-    {
-        Notification::fake();
+    $this->postJson('/forgot-password', ['email' => 'invalidemailaddress'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['email']);
+    
+    Notification::assertNothingSent();
+});
 
-        $response = $this->jsonResponse('invalidemailaddress');
+test('Should throw an error if the entered email address doesn\'t exist', function() {
+    Notification::fake();
 
-        $response->assertStatus(422);
-        $response->assertJsonPath('errors.email', ['The email must be a valid email address.']);
-        Notification::assertNothingSent();
-    }
+    $this->postJson('/forgot-password', ['email' => 'dummy@email.com'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.email', ["We can't find a user with that email address."]);
 
-    public function testErrorIfEmailAddressDoesNotExist()
-    {
-        Notification::fake();
+    Notification::assertNothingSent();
+});
 
-        $response = $this->jsonResponse('dummy@email.com');
+test('Should send password reset request successfully', function() {
+    Notification::fake();
 
-        $response->assertStatus(422);
-        $response->assertJsonPath('errors.email', ["We can't find a user with that email address."]);
-        Notification::assertNothingSent();
-    }
+    $user = User::factory()->create();
 
-    public function testSuccessfullySentPasswordResetRequest()
-    {
-        $user = User::factory()->create();
+    $this->postJson('/forgot-password', ['email' => $user->email])->assertOk();
 
-        Notification::fake();
-
-        $response = $this->jsonResponse($user->email);
-
-        $response->assertOk();
-        Notification::assertSentToTimes($user, ResetPassword::class, 1);
-    }
-
-    /**
-     * Make an execution after all tests.
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        (new self())->setUp();
-        DB::table('users')->truncate();
-        DB::table('password_resets')->truncate();
-    }
-}
+    Notification::assertSentToTimes($user, ResetPassword::class, 1);
+});

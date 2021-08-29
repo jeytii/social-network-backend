@@ -3,101 +3,81 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Tests\TestCase;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 
-class LoginTest extends TestCase
-{   
-    /**
-     * Generate a JSON response from a POST request.
-     *
-     * @param $body  array
-     * @return \Illuminate\Testing\TestResponse
-     */
-    private function jsonResponse(array $body = [])
-    {
-        return $this->postJson('/api/login', $body);
-    }
+afterEach(fn() => DB::table('users')->truncate());
 
-    public function testErrorIfBothAreNotSet()
-    {
-        $response = $this->jsonResponse();
+test('Should throw an error if the username and password fields are not set', function() {
+    Event::fake([ Login::class ]);
 
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['username', 'password']);
-    }
+    $this->postJson('/api/login')
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['username', 'password']);
 
-    public function testErrorIfUsernameIsNotSet()
-    {
-        $response = $this->jsonResponse([
-            'password' => 'password'
-        ]);
+    Event::assertNothingDispatched();
+});
 
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['username']);
-    }
+test('Should throw an error if the username is not set', function() {
+    Event::fake([ Login::class ]);
 
-    public function testErrorIfPasswordIsNotSet()
-    {
-        $response = $this->jsonResponse([
-            'username' => 'username'
-        ]);
+    $this->postJson('/api/login', [ 'password' => 'password' ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['username']);
 
-        $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['password']);
-    }
+    Event::assertNothingDispatched();
+});
 
-    public function testErrorIfCredentialsDoNotExist()
-    {
-        $response = $this->jsonResponse([
-            'username' => 'username',
-            'password' => 'password'
-        ]);
+test('Should throw an error if the password is not set', function() {
+    Event::fake([ Login::class ]);
 
-        $response->assertStatus(422);
-        $response->assertJsonFragment([
-            'message' => 'Cannot find username and password combination.'
-        ]);
-    }
+    $this->postJson('/api/login', [ 'username' => 'username' ])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['password']);
 
-    public function testErrorIfUserIsNotYetVerified()
-    {
-        $user = User::factory()->create([
-            'email_verified_at' => null
-        ]);
+    Event::assertNothingDispatched();
+});
 
-        $response = $this->jsonResponse([
-            'username' => $user->username,
-            'password' => 'P@ssword123'
-        ]);
+test('Should throw an error if the entered credentials don\'t exist', function() {
+    Event::fake([ Login::class ]);
 
-        $response->assertUnauthorized();
-        $response->assertJsonFragment([
-            'message' => 'Your account is not yet verified.'
-        ]);
-    }
+    $this->postJson('/api/login', [
+        'username' => 'username',
+        'password' => 'password'
+    ])
+        ->assertStatus(422)
+        ->assertJsonFragment([ 'message' => 'Cannot find username and password combination.' ]);
 
-    public function testReturnATokenIfSucceeds()
-    {
-        $user = User::factory()->create();
+    Event::assertNothingDispatched();
+});
 
-        $response = $this->jsonResponse([
-            'username' => $user->username,
-            'password' => 'P@ssword123'
-        ]);
+test('Should throw an error if a user is not yet verified', function() {
+    Event::fake([ Login::class ]);
+    
+    $user = User::factory()->create([ 'email_verified_at' => null ]);
 
-        $response->assertOk();
-        $response->assertJsonStructure(['token']);
-    }
+    $this->postJson('/api/login', [
+        'username' => $user->username,
+        'password' => 'P@ssword123'
+    ])
+        ->assertUnauthorized()
+        ->assertJsonFragment([ 'message' => 'Your account is not yet verified.' ]);
 
-    /**
-     * Make an execution after all tests.
-     *
-     * @return void
-     */
-    public static function tearDownAfterClass(): void
-    {
-        (new self())->setUp();
-        DB::table('users')->truncate();
-    }
-}
+    Event::assertNothingDispatched();
+});
+
+test('Should return an auth token if successful', function() {
+    Event::fake([ Login::class ]);
+
+    $user = User::factory()->create();
+
+    $this->postJson('/api/login', [
+        'username' => $user->username,
+        'password' => 'P@ssword123'
+    ])
+        ->assertOk()
+        ->assertJsonStructure(['token']);
+
+    Event::assertDispatched(fn(Login $event) => $event->user->id === $user->id);
+});
