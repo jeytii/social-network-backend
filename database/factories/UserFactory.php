@@ -15,6 +15,11 @@ class UserFactory extends Factory
      */
     protected $model = User::class;
 
+    private function dotCase(string $string, string $separator): string
+    {
+        return str_replace(['. ', ' '], $separator, strtolower($string));
+    }
+
     /**
      * Define the model's default state.
      *
@@ -24,8 +29,8 @@ class UserFactory extends Factory
     {
         $gender = $this->faker->randomElement(['Male', 'Female']);
         $name = $this->faker->name(strtolower($gender));
-        $email = str_replace(['. ', ' '], '', strtolower($name));
-        $username = str_replace(['. ', ' '], '.', strtolower($name));
+        $email = $this->dotCase($name, '');
+        $username = $this->dotCase($name, '.');
         $date = Carbon::parse($this->faker->date());
 
         return [

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\UpdateUserRequest;
+use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
@@ -25,10 +26,10 @@ class UserController extends Controller
     {
         // Format each user model with only the necessary columns.
         $data = User::where('id', '!=', auth()->id())
-                ->whereDoesntHave('followers', function($query) {
-                    $query->where('id', auth()->id());
-                })
-                ->paginate(20, $this->basic_columns);
+                    ->whereDoesntHave('followers', function($query) {
+                        $query->where('id', auth()->id());
+                    })
+                    ->paginate(20, $this->basic_columns);
         
         // If there are still remaining items.
         $hasMore = $data->hasMorePages();
@@ -53,10 +54,10 @@ class UserController extends Controller
     {
         // Get 3 random users with basic data.
         $data = DB::table('users')
-                ->where('id', '!=', auth()->id())
-                ->inRandomOrder()
-                ->limit(3)
-                ->get($this->basic_columns);
+                    ->where('id', '!=', auth()->id())
+                    ->inRandomOrder()
+                    ->limit(3)
+                    ->get($this->basic_columns);
 
         return response()->json(compact('data'));
     }
@@ -78,9 +79,9 @@ class UserController extends Controller
         );
 
         $data = $request->user()
-                ->{$type}()
-                ->paginate(20, $this->basic_columns)
-                ->items();
+                    ->{$type}()
+                    ->paginate(20, $this->basic_columns)
+                    ->items();
 
         return response()->json(compact('data'));
     }
@@ -95,14 +96,40 @@ class UserController extends Controller
     public function getProfileInfo(string $username)
     {
         $user = User::withCount('followers', 'following')
-                ->where('username', $username)
-                ->first();
+                    ->where('username', $username)
+                    ->first();
 
         abort_if(!$user, 404, "Can't find a person with the username @{$username}.");
 
         return response()->json([
             'data' => $user->formatProfileInfo(auth()->id())
         ]);
+    }
+
+    /**
+     * Get user models with name or username containing a specific pattern.
+     *
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function search(Request $request)
+    {
+        $query = $request->query('query');
+
+        if (!isset($query) || is_null($query) || empty($query)) {
+            throw ValidationException::withMessages([
+                'query' => 'Please provide a pattern for the search query.'
+            ]);
+        }
+
+        $data = DB::table('users')
+                    ->where('name', 'ilike', "%$query%")
+                    ->orWhere('username', 'like', "%$query%")
+                    ->limit(5)
+                    ->get($this->basic_columns);
+
+        return response()->json(compact('data'));
     }
 
     /**
