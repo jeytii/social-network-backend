@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\API;
 
-use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -31,7 +30,7 @@ afterEach(function() {
     DB::table('users')->truncate();
 });
 
-test('Should return paginated list of users until no model is left', function() {
+test('Should return paginated list of users', function() {
     $user = $this->actingAs(User::first());
 
     // First scroll full-page bottom
@@ -62,6 +61,28 @@ test('Should return paginated list of users until no model is left', function() 
 
     // Full-page scroll attempt but should return empty list
     $user->getJson('/api/users?page=6')
+        ->assertOk()
+        ->assertJsonCount(0, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
+});
+
+test('Should return paginated list of users with query data', function() {
+    User::factory(5)
+        ->sequence(
+            fn($sequence) => ['name' => 'Dummy User ' . $sequence->index]
+        )
+        ->create();
+
+    $user = $this->actingAs(User::first());
+
+    $user->getJson('/api/users?page=1&query=dummy%20user')
+        ->assertOk()
+        ->assertJsonCount(5, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
+
+    $user->getJson('/api/users?page=2&query=dummy%20user')
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)
@@ -303,60 +324,27 @@ test('Should return empty list if user doesn\'t exist', function() {
 });
 
 test('Searching by name should return list of users', function() {
-    $first = User::factory()->create([
-        'name' => 'Emilio Aguinaldo',
-        'username' => 'aguinaldo',
-        'gender' => 'Male',
-    ]);
-    $second = User::factory()->create([
-        'name' => 'Emilio Jacinto',
-        'username' => 'jacinto',
-        'gender' => 'Male',
-    ]);
+    User::factory(5)
+        ->sequence(
+            fn($sequence) => ['name' => 'Dummy User ' . $sequence->index]
+        )
+        ->create();
 
     $this->actingAs(User::first())
-        ->getJson('/api/users/search?query=emilio')
+        ->getJson('/api/users/search?query=dummy%20user')
         ->assertOk()
-        ->assertExactJson([
-            'data' => [
-                [
-                    'slug' => $first->slug,
-                    'name' => 'Emilio Aguinaldo',
-                    'username' => 'aguinaldo',
-                    'gender' => 'Male',
-                    'image_url' => null,
-                ],
-                [
-                    'slug' => $second->slug,
-                    'name' => 'Emilio Jacinto',
-                    'username' => 'jacinto',
-                    'gender' => 'Male',
-                    'image_url' => null,
-                ],
-            ]
-        ]);
+        ->assertJsonCount(5, 'data');
 });
 
 test('Searching by username should return list of users', function() {
-    $dummyUser = User::factory()->create([
-        'name' => 'Melchora Aquino',
-        'username' => 'melchora1900',
-        'gender' => 'Female',
-    ]);
+    User::factory(3)
+        ->sequence(
+            fn($sequence) => ['username' => 'dummyuser00' . $sequence->index]
+        )
+        ->create();
 
     $this->actingAs(User::first())
-        ->getJson('/api/users/search?query=melchora1900')
+        ->getJson('/api/users/search?query=dummyuser0')
         ->assertOk()
-        ->assertJsonCount(1, 'data')
-        ->assertExactJson([
-            'data' => [
-                [
-                    'slug' => $dummyUser->slug,
-                    'name' => 'Melchora Aquino',
-                    'username' => 'melchora1900',
-                    'gender' => 'Female',
-                    'image_url' => null,
-                ],
-            ]
-        ]);
+        ->assertJsonCount(3, 'data');
 });

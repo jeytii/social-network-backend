@@ -20,14 +20,20 @@ class UserController extends Controller
     /**
      * Get paginated list of user models.
      *
+     * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function get()
+    public function get(Request $request)
     {
         // Format each user model with only the necessary columns.
+        $query = $request->query('query');
         $data = User::where('id', '!=', auth()->id())
                     ->whereDoesntHave('followers', function($query) {
                         $query->where('id', auth()->id());
+                    })
+                    ->when(isset($query), function($q) use ($query) {
+                        return $q->where('name', 'ilike', "%$query%")
+                                ->orWhere('username', 'like', "%$query%");
                     })
                     ->paginate(20, $this->basic_columns);
         
