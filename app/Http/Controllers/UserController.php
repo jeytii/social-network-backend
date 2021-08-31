@@ -53,6 +53,7 @@ class UserController extends Controller
     {
         // Get 3 random users with basic data.
         $data = DB::table('users')
+                ->where('id', '!=', auth()->id())
                 ->inRandomOrder()
                 ->limit(3)
                 ->get($this->basic_columns);
