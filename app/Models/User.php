@@ -110,19 +110,17 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function formatProfileInfo(int $exceptionId)
     {
-        if ($isSelf = $this->id === $exceptionId) {
-            $columns = collect($this)->except(['birth_month', 'birth_day', 'birth_year']);
-        }
-        else {
-            $columns = collect($this)->except(['slug', 'birth_month', 'birth_day', 'birth_year']);
-        }
-
-        $data = array_merge($columns->toArray(), [
+        $isSelf = $this->id === $exceptionId;
+        $data = collect($this)->merge([
             'birth_date' => $this->full_birth_date,
             'is_self' => $isSelf,
         ]);
 
-        return $data;
+        if (!$isSelf) {
+            $data->put('slug', $this->slug);
+        }
+
+        return $data->toArray();
     }
 
     // =============================
