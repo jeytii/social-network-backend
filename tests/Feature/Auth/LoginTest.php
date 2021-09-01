@@ -4,10 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Login;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
-
-afterEach(fn() => DB::table('users')->truncate());
+use Illuminate\Support\Facades\{DB, Event};
 
 test('Should throw an error if the username and password fields are not set', function() {
     Event::fake([ Login::class ]);
@@ -65,6 +62,8 @@ test('Should throw an error if a user is not yet verified', function() {
         ->assertJsonFragment([ 'message' => 'Your account is not yet verified.' ]);
 
     Event::assertNothingDispatched();
+
+    DB::table('users')->truncate();
 });
 
 test('Should return an auth token if successful', function() {
@@ -80,4 +79,6 @@ test('Should return an auth token if successful', function() {
         ->assertJsonStructure(['token']);
 
     Event::assertDispatched(fn(Login $event) => $event->user->id === $user->id);
+
+    DB::table('users')->truncate();
 });

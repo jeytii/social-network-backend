@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\{DB, Event};
  */
 $requiredFields = ['name', 'email', 'username', 'gender', 'password'];
 
-afterEach(fn() => DB::table('users')->truncate());
-
 test('Should throw an error if all inputs are not set', function() use ($requiredFields) {
     Event::fake([Registered::class]);
 
@@ -86,7 +84,10 @@ test('Should throw character length range error', function() {
 test('Should throw "already exists" error', function() {
     Event::fake([Registered::class]);
     
-    $user = User::factory()->create();
+    $user = User::factory()->create([
+        'email' => 'email@example.com',
+        'username' => 'dummy.user123',
+    ]);
     
     $this->postJson('/register', $user->only('email', 'username'))
         ->assertStatus(422)
@@ -94,6 +95,8 @@ test('Should throw "already exists" error', function() {
         ->assertJsonPath('errors.username', ['Someone has already taken that username.']);
 
     Event::assertNothingDispatched();
+
+    DB::table('users')->truncate();
 });
 
 test('Should throw regex pattern error', function() {
@@ -126,4 +129,6 @@ test('Successful registration', function() use ($requiredFields) {
 
     Event::assertDispatched(fn(Registered $event) => $event->user->username === $user->username);
     Event::assertListening(Registered::class, SendEmailVerificationNotification::class);
+
+    DB::table('users')->truncate();
 });

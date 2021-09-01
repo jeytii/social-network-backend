@@ -6,11 +6,6 @@ use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\{DB, Event, Hash, Notification};
 
-afterEach(function() {
-    DB::table('users')->truncate();
-    DB::table('password_resets')->truncate();
-});
-
 test('Should throw an error if all inputs are not set', function() {
     Event::fake([ PasswordReset::class ]);
 
@@ -39,6 +34,9 @@ test('Resetting the password successfully', function() {
         'password_confirmation' => 'P@ssword123',
         'token' => $passwordReset->token,
     ])->assertOk();
+
+    DB::table('users')->truncate();
+    DB::table('password_resets')->truncate();
 
     // $user = DB::table('users')->where('email', $passwordReset->email)->first();
 

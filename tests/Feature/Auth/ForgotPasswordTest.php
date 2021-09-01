@@ -2,15 +2,9 @@
 
 namespace Tests\Feature\Auth;
 
-use Tests\TestCase;
 use App\Models\User;
 use Illuminate\Support\Facades\{DB, Notification};
 use Illuminate\Auth\Notifications\ResetPassword;
-
-afterEach(function() {
-    DB::table('users')->truncate();
-    DB::table('password_resets')->truncate();
-});
 
 test('Should throw an error if email address is not set', function() {
     Notification::fake();
@@ -50,4 +44,7 @@ test('Should send password reset request successfully', function() {
     $this->postJson('/forgot-password', ['email' => $user->email])->assertOk();
 
     Notification::assertSentToTimes($user, ResetPassword::class, 1);
+
+    DB::table('users')->truncate();
+    DB::table('password_resets')->truncate();
 });
