@@ -5,6 +5,7 @@ namespace App\Models;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
@@ -75,7 +76,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return string
      */
-    public function getRouteKeyName()
+    public function getRouteKeyName(): string
     {
         return 'slug';
     }
@@ -85,7 +86,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return string
      */
-    public function getFullBirthDateAttribute()
+    public function getFullBirthDateAttribute(): string
     {
         if (
             is_null($this->birth_month) &&
@@ -108,7 +109,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @param int  $exceptionId
      * @return array
      */
-    public function formatProfileInfo(int $exceptionId)
+    public function formatProfileInfo(int $exceptionId): array
     {
         $isSelf = $this->id === $exceptionId;
         $data = collect($this)->merge([
@@ -128,22 +129,42 @@ class User extends Authenticatable implements MustVerifyEmail
     // =============================
     
     /**
-     * People/users who follow the auth user.
+     * Get the followers of a user.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function followers()
+    public function followers(): BelongsToMany
     {
         return $this->belongsToMany('App\Models\User', 'connections', 'following_id', 'follower_id')->withPivot('created_at');
     }
 
     /**
-     * People/users that the auth user follows.
+     * Get the followed people of a user.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function following()
+    public function following(): BelongsToMany
     {
         return $this->belongsToMany('App\Models\User', 'connections', 'follower_id', 'following_id')->withPivot('created_at');
+    }
+
+    /**
+     * Get the posts for a user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany('App\Models\Post');
+    }
+
+    /**
+     * Get the posts liked by a user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function likes(): BelongsToMany
+    {
+        return $this->belongsToMany('App\Models\Post', 'likes', 'user_id', 'post_id');
     }
 }
