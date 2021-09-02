@@ -1,7 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{AuthController, UserController};
+use App\Http\Controllers\{
+    AuthController,
+    UserController,
+    PostController
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -17,12 +21,18 @@ use App\Http\Controllers\{AuthController, UserController};
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function() {
-    Route::get('/users', [UserController::class, 'get']);
-    Route::get('/users/suggested', [UserController::class, 'getSuggested']);
-    Route::get('/users/{username}/profile', [UserController::class, 'getProfileInfo']);
-    Route::put('/users/auth/update', [UserController::class, 'update']);
-    Route::post('/users/follow/{user}', [UserController::class, 'follow']);
-    Route::delete('/users/unfollow/{user}', [UserController::class, 'unfollow']);
-    Route::get('/users/connections', [UserController::class, 'getConnections']);
-    Route::get('/users/search', [UserController::class, 'search']);
+    Route::prefix('users')->group(function() {
+        Route::get('/', [UserController::class, 'get']);
+        Route::get('/suggested', [UserController::class, 'getSuggested']);
+        Route::get('/{username}/profile', [UserController::class, 'getProfileInfo']);
+        Route::put('/auth/update', [UserController::class, 'update']);
+        Route::post('/follow/{user}', [UserController::class, 'follow']);
+        Route::delete('/unfollow/{user}', [UserController::class, 'unfollow']);
+        Route::get('/connections', [UserController::class, 'getConnections']);
+        Route::get('/search', [UserController::class, 'search']);
+    });
+
+    Route::prefix('posts')->group(function() {
+        Route::get('/', [PostController::class, 'get']);
+    });
 });
