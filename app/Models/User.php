@@ -165,6 +165,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function likes(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\Post', 'likes', 'user_id', 'post_id');
+        return $this->belongsToMany('App\Models\Post', 'likes', 'user_id', 'post_id')->withPivot('created_at');
     }
 }
