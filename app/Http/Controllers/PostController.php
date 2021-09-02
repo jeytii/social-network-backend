@@ -10,18 +10,19 @@ class PostController extends Controller
     /**
      * Get paginated news feed posts.
      * 
+     * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function get()
+    public function get(Request $request)
     {
+        $sortByLikes = $request->query('sort') === 'likes';
         $ids = auth()->user()->following()->pluck('id')->merge(auth()->id());
+
         $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
                     ->with('user:id,slug,name,username,gender,image_url')
-                    ->withCount([
-                        'likers as likes_count',
-                        'comments'
-                    ])
-                    ->orderByDesc('created_at')
+                    ->withCount(['likers as likes_count', 'comments'])
+                    ->when(!$sortByLikes, fn($q) => $q->orderByDesc('created_at'))
+                    ->when($sortByLikes, fn($q) => $q->orderByDesc('likes_count'))
                     ->paginate(20);
 
         $hasMore = $data->hasMorePages();
