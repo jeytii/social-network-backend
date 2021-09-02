@@ -5,10 +5,15 @@ use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function() {
-    $this->user = User::factory()->create();
-    $this->response = $this->actingAs($this->user);
+    User::factory(10)->hasPosts(5)->create();
 
-    Sanctum::actingAs($this->user, ['*']);
+    $user = User::first();
+    
+    $user->following()->sync(range(2, 6));
+    
+    $this->response = $this->actingAs($user);
+
+    Sanctum::actingAs($user, ['*']);
 });
 
 afterEach(function() {
@@ -16,9 +21,6 @@ afterEach(function() {
 });
 
 test('Should return the paginated list of posts from followed users', function() {
-    User::factory(10)->hasPosts(5)->create();
-    $this->user->following()->sync(range(2, 6));
-
     $this->response
         ->getJson('/api/posts')
         ->assertOk()
@@ -50,7 +52,7 @@ test('Should return the paginated list of posts from followed users', function()
     $this->response
         ->getJson('/api/posts?page=2')
         ->assertOk()
-        ->assertJsonCount(5, 'data')
+        ->assertJsonCount(10, 'data')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
@@ -60,4 +62,30 @@ test('Should return the paginated list of posts from followed users', function()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
+});
+
+test('Should sort posts by number of likes', function() {
+    $firstMostLiked = User::find(2)->posts()->first();
+    $secondMostLiked = User::find(3)->posts()->first();
+
+    $firstMostLiked->likers()->sync(range(1, 10));
+    $secondMostLiked->likers()->sync(range(1, 5));
+
+    $this->response
+        ->getJson('/api/posts?sort=likes')
+        ->assertOk()
+        ->assertJson([
+            'data' => [
+                [
+                    'slug' => $firstMostLiked->slug,
+                    'body' => $firstMostLiked->body,
+                    'likes_count' => 10,
+                ],
+                [
+                    'slug' => $secondMostLiked->slug,
+                    'body' => $secondMostLiked->body,
+                    'likes_count' => 5,
+                ],
+            ]
+        ]);
 });

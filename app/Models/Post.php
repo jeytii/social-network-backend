@@ -132,6 +132,6 @@ class Post extends Model
      */
     public function likers(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\User', 'likes', 'post_id', 'user_id');
+        return $this->belongsToMany('App\Models\User', 'likes', 'post_id', 'user_id')->withPivot('created_at');
     }
 }
