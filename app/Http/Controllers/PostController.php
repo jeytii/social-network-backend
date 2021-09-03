@@ -61,6 +61,14 @@ class PostController extends Controller
         );
     }
 
+    /**
+     * Update an existing post.
+     * 
+     * @param \App\Http\Requests\CreateOrUpdatePostRequest  $request
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
     public function update(CreateOrUpdatePostRequest $request, Post $post)
     {
         $this->authorize('update', $post);
@@ -72,6 +80,25 @@ class PostController extends Controller
         return response()->json([
             'updated' => true,
             'message' => 'Post successfully updated.'
+        ]);
+    }
+
+    /**
+     * Delete an existing post.
+     * 
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function destroy(Post $post)
+    {
+        $this->authorize('delete', $post);
+
+        auth()->user()->posts()->find($post->id)->delete();
+
+        return response()->json([
+            'deleted' => true,
+            'message' => 'Post successfully deleted.'
         ]);
     }
 }

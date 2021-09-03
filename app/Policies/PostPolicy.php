@@ -55,7 +55,7 @@ class PostPolicy
     {
         return $post->user_id === $user->id;
     }
-
+    
     /**
      * Determine whether the user can delete the model.
      *
@@ -65,7 +65,7 @@ class PostPolicy
      */
     public function delete(User $user, Post $post)
     {
-        //
+        return (bool) $user->posts()->find($post->id) && $post->user_id === $user->id;
     }
 
     /**
