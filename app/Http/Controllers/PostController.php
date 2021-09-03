@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CreateOrUpdatePostRequest;
 use App\Models\Post;
 use Illuminate\Http\Request;
 
@@ -33,5 +34,30 @@ class PostController extends Controller
             'has_more' => $hasMore,
             'next_offset' => $nextOffset,
         ]);
+    }
+
+    /**
+     * Store a new post.
+     * 
+     * @param \App\Http\Requests\CreateOrUpdatePostRequest  $request
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function store(CreateOrUpdatePostRequest $request)
+    {
+        $data = auth()->user()->posts()
+                    ->create($request->only('body'))
+                    ->with('user:id,slug,name,username,gender,image_url')
+                    ->first();
+
+        $post = collect($data)->merge([
+            'likes_count' => 0,
+            'comments_count' => 0,
+        ]);
+
+        return response()->json(
+            ['data' => compact('post')],
+            201
+        );
     }
 }
