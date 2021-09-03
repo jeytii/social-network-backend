@@ -7,11 +7,11 @@ use Illuminate\Support\Facades\DB;
 beforeEach(function() {
     User::factory()->hasPosts(5)->create();
 
-    $user = User::first();
+    $this->user = User::first();
     
-    $this->response = $this->actingAs($user);
+    $this->response = $this->actingAs($this->user);
 
-    Sanctum::actingAs($user, ['*']);
+    Sanctum::actingAs($this->user, ['*']);
 });
 
 afterEach(function() {
@@ -49,6 +49,7 @@ test('Should successfully create a post', function() {
                     'comments_count',
                     'timestamp',
                     'is_own_post',
+                    'is_edited',
                     'user' => [
                         'slug',
                         'name',
@@ -59,4 +60,22 @@ test('Should successfully create a post', function() {
                 ],
             ]
         ]);
+});
+
+test('Should successfully update a post', function() {
+    $slug = $this->user->posts()->first()->slug;
+
+    $this->response
+        ->putJson("/api/posts/$slug", [
+            'body' => 'Hello World'
+        ])
+        ->assertStatus(200)
+        ->assertExactJson([
+            'updated' => true,
+            'message' => 'Post successfully updated.',
+        ]);
+
+    $this->assertDatabaseHas('posts', [
+        'body' => 'Hello World'
+    ]);
 });
