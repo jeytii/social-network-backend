@@ -36,6 +36,7 @@ class Post extends Model
      */
     protected $appends = [
         'is_own_post',
+        'is_edited',
         'timestamp',
     ];
 
@@ -69,6 +70,16 @@ class Post extends Model
     public function getIsOwnPostAttribute(): bool
     {
         return $this->user_id === auth()->id();
+    }
+
+    /**
+     * Check if the post's body attribute has been updated.
+     *
+     * @return bool
+     */
+    public function getIsEditedAttribute(): bool
+    {
+        return $this->isDirty('body');
     }
 
     /**

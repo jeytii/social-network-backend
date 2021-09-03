@@ -60,4 +60,18 @@ class PostController extends Controller
             201
         );
     }
+
+    public function update(CreateOrUpdatePostRequest $request, Post $post)
+    {
+        $this->authorize('update', $post);
+        
+        auth()->user()->posts()
+            ->find($post->id)
+            ->update($request->only('body'));
+
+        return response()->json([
+            'updated' => true,
+            'message' => 'Post successfully updated.'
+        ]);
+    }
 }

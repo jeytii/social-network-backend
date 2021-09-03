@@ -35,5 +35,6 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::prefix('posts')->group(function() {
         Route::get('/', [PostController::class, 'get']);
         Route::post('/', [PostController::class, 'store']);
+        Route::put('{post}', [PostController::class, 'update']);
     });
 });
