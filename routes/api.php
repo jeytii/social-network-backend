@@ -39,5 +39,7 @@ Route::middleware('auth:sanctum')->group(function() {
         Route::delete('{post}', [PostController::class, 'destroy']);
         Route::post('{post}/like', [PostController::class, 'like']);
         Route::delete('{post}/dislike', [PostController::class, 'dislike']);
+        Route::post('{post}/bookmark', [PostController::class, 'bookmark']);
+        Route::delete('{post}/unbookmark', [PostController::class, 'unbookmark']);
     });
 });
