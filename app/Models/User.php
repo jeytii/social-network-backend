@@ -84,9 +84,9 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get the user's full birth date.
      *
-     * @return string
+     * @return string|null
      */
-    public function getFullBirthDateAttribute(): string
+    public function getFullBirthDateAttribute(): string|null
     {
         if (
             is_null($this->birth_month) &&
