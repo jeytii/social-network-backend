@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\DB;
 beforeEach(function() {
     User::factory()->hasPosts(5)->create();
 
-    $this->user = User::first();
-    
+    $this->user = User::first();    
     $this->response = $this->actingAs($this->user);
 
     Sanctum::actingAs($this->user, ['*']);
@@ -78,4 +77,18 @@ test('Should successfully update a post', function() {
     $this->assertDatabaseHas('posts', [
         'body' => 'Hello World'
     ]);
+});
+
+test('Should successfully delete a post', function() {
+    $slug = $this->user->posts()->first()->slug;
+
+    $this->response
+        ->deleteJson("/api/posts/$slug")
+        ->assertStatus(200)
+        ->assertExactJson([
+            'deleted' => true,
+            'message' => 'Post successfully deleted.',
+        ]);
+
+    $this->assertDatabaseMissing('posts', compact('slug'));
 });
