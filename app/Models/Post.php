@@ -145,4 +145,14 @@ class Post extends Model
     {
         return $this->belongsToMany('App\Models\User', 'likes', 'post_id', 'user_id')->withPivot('created_at');
     }
+
+    /**
+     * Get the users who bookmarked the post.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function bookmarkers(): BelongsToMany
+    {
+        return $this->belongsToMany('App\Models\User', 'bookmarks', 'bookmark_id', 'user_id')->withPivot('created_at');
+    }
 }
