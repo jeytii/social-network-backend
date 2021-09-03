@@ -91,4 +91,28 @@ class PostPolicy
     {
         //
     }
+
+    /**
+     * Determine whether the user can like the post.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Post  $post
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function like(User $user, Post $post)
+    {
+        return !$user->likes()->find($post->id);
+    }
+
+    /**
+     * Determine whether the user can dislike the post.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Post  $post
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function dislike(User $user, Post $post)
+    {
+        return (bool) $user->likes()->find($post->id);
+    }
 }
