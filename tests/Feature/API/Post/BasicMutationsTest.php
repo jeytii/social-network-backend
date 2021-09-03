@@ -79,6 +79,25 @@ test('Should successfully update a post', function() {
     ]);
 });
 
+test('Should not be able to update other user\'s post', function() {
+    $user = User::factory()->hasPosts(5)->create();
+    $slug = $user->posts()->first()->slug;
+    
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id
+    ]);
+
+    $this->response
+        ->putJson("/api/posts/$slug", [
+            'body' => 'Hello World'
+        ])
+        ->assertForbidden();
+    
+    $this->assertDatabaseMissing('posts', [
+        'body' => 'Hello World'
+    ]);
+});
+
 test('Should successfully delete a post', function() {
     $slug = $this->user->posts()->first()->slug;
 
@@ -91,4 +110,19 @@ test('Should successfully delete a post', function() {
         ]);
 
     $this->assertDatabaseMissing('posts', compact('slug'));
+});
+
+test('Should not be able to delete other user\'s post', function() {
+    $user = User::factory()->hasPosts(5)->create();
+    $slug = $user->posts()->first()->slug;
+
+    $this->assertDatabaseHas('users', [
+        'id' => $user->id
+    ]);
+
+    $this->response
+        ->deleteJson("/api/posts/$slug")
+        ->assertForbidden();
+
+    $this->assertDatabaseHas('posts', compact('slug'));
 });
