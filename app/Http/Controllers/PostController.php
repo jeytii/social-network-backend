@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\CreateOrUpdatePostRequest;
-use App\Models\Post;
+use App\Models\{User, Post};
 use Illuminate\Http\Request;
+use App\Http\Requests\CreateOrUpdatePostRequest;
 
 class PostController extends Controller
 {
@@ -20,11 +20,44 @@ class PostController extends Controller
         $ids = auth()->user()->following()->pluck('id')->merge(auth()->id());
 
         $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
-                    ->with('user:id,slug,name,username,gender,image_url')
-                    ->withCount(['likers as likes_count', 'comments'])
+                    ->withFormattedPosts()
                     ->when(!$sortByLikes, fn($q) => $q->orderByDesc('created_at'))
                     ->when($sortByLikes, fn($q) => $q->orderByDesc('likes_count'))
                     ->paginate(20);
+
+        $hasMore = $data->hasMorePages();
+        $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
+
+        return response()->json([
+            'data' => $data->items(),
+            'has_more' => $hasMore,
+            'next_offset' => $nextOffset,
+        ]);
+    }
+
+    public function getProfilePosts(Request $request)
+    {
+        $section = $request->query('section');
+        $user = User::where('username', $request->query('username'));
+
+        abort_if(
+            !$user->exists() || !in_array($section, ['own', 'likes', 'comments', 'bookmarks']),
+            404
+        );
+
+        if ($section === 'own') {
+            $data = $user->first()->posts()
+                ->withFormattedPosts()
+                ->orderByDesc('created_at')
+                ->paginate(10);
+        }
+
+        if ($section === 'likes' || $section === 'bookmarks') {
+            $data = $user->first()->{$section}()
+                ->withFormattedPosts()
+                ->orderByPivot('created_at', 'desc')
+                ->paginate(10);
+        }
 
         $hasMore = $data->hasMorePages();
         $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
@@ -45,15 +78,10 @@ class PostController extends Controller
      */
     public function store(CreateOrUpdatePostRequest $request)
     {
-        $data = auth()->user()->posts()
+        $post = auth()->user()->posts()
                     ->create($request->only('body'))
-                    ->with('user:id,slug,name,username,gender,image_url')
+                    ->withFormattedPosts()
                     ->first();
-
-        $post = collect($data)->merge([
-            'likes_count' => 0,
-            'comments_count' => 0,
-        ]);
 
         return response()->json(
             ['data' => compact('post')],

@@ -25,6 +25,7 @@ class Post extends Model
     protected $hidden = [
         'id',
         'user_id',
+        'pivot',
         'created_at',
         'updated_at',
     ];
@@ -37,6 +38,7 @@ class Post extends Model
     protected $appends = [
         'is_own_post',
         'is_edited',
+        'is_bookmarked',
         'timestamp',
     ];
 
@@ -80,6 +82,16 @@ class Post extends Model
     public function getIsEditedAttribute(): bool
     {
         return $this->isDirty('body');
+    }
+
+    /**
+     * Check if the post is bookmarked by the user.
+     *
+     * @return bool
+     */
+    public function getIsBookmarkedAttribute(): bool
+    {
+        return (bool) $this->bookmarkers()->find(auth()->id());
     }
 
     /**

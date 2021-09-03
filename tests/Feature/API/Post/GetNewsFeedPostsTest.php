@@ -37,6 +37,7 @@ test('Should return the paginated list of posts from followed users', function()
                     'timestamp',
                     'is_own_post',
                     'is_edited',
+                    'is_bookmarked',
                     'user' => [
                         'slug',
                         'name',
@@ -48,7 +49,7 @@ test('Should return the paginated list of posts from followed users', function()
             ],
             'has_more',
             'next_offset'
-        ]);;
+        ]);
 
     $this->response
         ->getJson('/api/posts?page=2')
