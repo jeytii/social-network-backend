@@ -115,4 +115,28 @@ class PostPolicy
     {
         return (bool) $user->likes()->find($post->id);
     }
+
+    /**
+     * Determine whether the user can bookmark the post.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Post  $post
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function bookmark(User $user, Post $post)
+    {
+        return !$user->bookmarks()->find($post->id);
+    }
+
+    /**
+     * Determine whether the user can unbookmark the post.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Post  $post
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function unbookmark(User $user, Post $post)
+    {
+        return (bool) $user->bookmarks()->find($post->id);
+    }
 }
