@@ -101,4 +101,42 @@ class PostController extends Controller
             'message' => 'Post successfully deleted.'
         ]);
     }
+
+    /**
+     * Add the post to the list of likes.
+     * 
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function like(Post $post)
+    {
+        $this->authorize('like', $post);
+
+        auth()->user()->likes()->attach($post->id);
+
+        return response()->json([
+            'liked' => true,
+            'message' => 'Post successfully liked.'
+        ]);
+    }
+
+    /**
+     * Remove the post from the list of likes.
+     * 
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function dislike(Post $post)
+    {
+        $this->authorize('dislike', $post);
+
+        auth()->user()->likes()->detach($post->id);
+
+        return response()->json([
+            'disliked' => true,
+            'message' => 'Post successfully disliked.'
+        ]);
+    }
 }
