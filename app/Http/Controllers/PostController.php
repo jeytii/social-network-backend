@@ -139,4 +139,42 @@ class PostController extends Controller
             'message' => 'Post successfully disliked.'
         ]);
     }
+
+    /**
+     * Add the post to the list of bookmarks.
+     * 
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function bookmark(Post $post)
+    {
+        $this->authorize('bookmark', $post);
+
+        auth()->user()->bookmarks()->attach($post->id);
+
+        return response()->json([
+            'bookmarked' => true,
+            'message' => 'Post successfully bookmarked.'
+        ]);
+    }
+
+    /**
+     * Remove the post from the list of bookmarks.
+     * 
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function unbookmark(Post $post)
+    {
+        $this->authorize('unbookmark', $post);
+
+        auth()->user()->bookmarks()->detach($post->id);
+
+        return response()->json([
+            'unbookmarked' => true,
+            'message' => 'Post successfully unbookmarked.'
+        ]);
+    }
 }
