@@ -49,6 +49,7 @@ test('Should successfully create a post', function() {
                     'timestamp',
                     'is_own_post',
                     'is_edited',
+                    'is_bookmarked',
                     'user' => [
                         'slug',
                         'name',
