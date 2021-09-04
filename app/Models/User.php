@@ -159,6 +159,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the comments for a user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany('App\Models\Comment');
+    }
+
+    /**
      * Get the posts liked by the user.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
