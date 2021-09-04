@@ -80,7 +80,7 @@ class PostController extends Controller
     {
         $post = auth()->user()->posts()
                     ->create($request->only('body'))
-                    ->withFormattedPosts()
+                    ->withFormatted()
                     ->first();
 
         return response()->json(
