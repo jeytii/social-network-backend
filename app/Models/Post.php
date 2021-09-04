@@ -167,4 +167,10 @@ class Post extends Model
     {
         return $this->belongsToMany('App\Models\User', 'bookmarks', 'bookmark_id', 'user_id')->withPivot('created_at');
     }
+
+    public function withFormatted()
+    {
+        return $this->with('user:id,slug,name,username,gender,image_url')
+                ->withCount(['likers as likes_count', 'comments']);
+    }
 }
