@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     AuthController,
     UserController,
-    PostController
+    PostController,
+    CommentController
 };
 
 /*
@@ -42,5 +43,9 @@ Route::middleware('auth:sanctum')->group(function() {
         Route::delete('{post}/dislike', [PostController::class, 'dislike']);
         Route::post('{post}/bookmark', [PostController::class, 'bookmark']);
         Route::delete('{post}/unbookmark', [PostController::class, 'unbookmark']);
+    });
+    
+    Route::prefix('comments')->group(function() {
+        Route::post('/', [CommentController::class, 'store']);
     });
 });
