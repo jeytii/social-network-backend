@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\{Post, Comment};
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrUpdateCommentRequest;
-use App\Models\Comment;
-use App\Models\Post;
-use Illuminate\Support\Facades\DB;
 
 class CommentController extends Controller
 {
@@ -24,8 +22,9 @@ class CommentController extends Controller
 
         abort_if(!$post->exists(), 404, 'Post not found.');
         
-        $comment = Comment::create([
-                        'user_id' => auth()->id(),
+        $comment = $request->user()
+                    ->comments()
+                    ->create([
                         'post_id' => $post->first()->id,
                         'body' => $request->body,
                     ])
@@ -36,5 +35,27 @@ class CommentController extends Controller
             ['data' => compact('comment')],
             201
         );
+    }
+
+    /**
+     * Update an existing comment.
+     * 
+     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @param \App\Models\Comment  $comment
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function update(CreateOrUpdateCommentRequest $request, Comment $comment)
+    {
+        $this->authorize('update', $comment);
+        
+        $request->user()->comments()
+            ->find($comment->id)
+            ->update($request->only('body'));
+
+        return response()->json([
+            'updated' => true,
+            'message' => 'Comment successfully updated.'
+        ]);
     }
 }

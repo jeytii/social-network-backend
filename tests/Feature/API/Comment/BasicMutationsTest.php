@@ -2,19 +2,16 @@
 
 use App\Models\{User, Comment, Post};
 use Laravel\Sanctum\Sanctum;
-use Illuminate\Support\Facades\DB;
 
-beforeEach(function() {
-    User::factory(3)->hasPosts(5)->create();
-
+uses()->beforeAll(function() {
+    (new self(function() {}, '', []))->setUp();
+    
+    User::factory(2)->hasPosts(3)->hasComments(3)->create();
+})->beforeEach(function() {
     $this->user = User::first();
     $this->response = $this->actingAs($this->user);
-
+  
     Sanctum::actingAs($this->user, ['*']);
-});
-
-afterEach(function() {
-    DB::table('users')->truncate();
 });
 
 test('Should not create a comment if body is blank or not set', function () {
@@ -33,14 +30,14 @@ test('Should not create a comment if body length is greater than maximum length'
         ->assertJsonPath('errors.body', ['Maximum character length is 180.']);
 });
 
-test('Should successfully create a comment', function() {
-    $slug = Post::first()->slug;
+test('Should successfully comment on a post', function() {
+    $slug = User::find(2)->posts()->first()->slug;
     
     $this->response
         ->postJson("/api/comments?user=$slug", [
             'body' => 'Hello World'
         ])
-        ->assertStatus(201)
+        ->assertCreated()
         ->assertJsonStructure([
             'data' => [
                 'comment' => [
@@ -59,4 +56,37 @@ test('Should successfully create a comment', function() {
                 ],
             ]
         ]);
+});
+
+test('Should successfully update a comment', function() {
+    $slug = $this->user->comments()->first()->slug;
+
+    $this->response
+        ->putJson("/api/comments/$slug", [
+            'body' => 'Hello World'
+        ])
+        ->assertStatus(200)
+        ->assertExactJson([
+            'updated' => true,
+            'message' => 'Comment successfully updated.',
+        ]);
+
+    $this->assertDatabaseHas('comments', [
+        'body' => 'Hello World'
+    ]);
+});
+
+test('Should not be able to update other user\'s comment', function() {
+    $user = User::whereHas('comments')->where('id', '!=', $this->user->id)->first();
+    $slug = $user->comments()->first()->slug;
+    
+    $this->response
+        ->putJson("/api/comments/$slug", [
+            'body' => 'This comment has been edited'
+        ])
+        ->assertForbidden();
+    
+    $this->assertDatabaseMissing('comments', [
+        'body' => 'This comment has been edited'
+    ]);
 });

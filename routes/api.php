@@ -47,5 +47,6 @@ Route::middleware('auth:sanctum')->group(function() {
     
     Route::prefix('comments')->group(function() {
         Route::post('/', [CommentController::class, 'store']);
+        Route::put('{comment}', [CommentController::class, 'update']);
     });
 });
