@@ -28,13 +28,8 @@ class UserController extends Controller
         // Format each user model with only the necessary columns.
         $query = $request->query('query');
         $data = User::where('id', '!=', auth()->id())
-                    ->whereDoesntHave('followers', function($query) {
-                        $query->where('id', auth()->id());
-                    })
-                    ->when(isset($query), function($q) use ($query) {
-                        return $q->where('name', 'ilike', "%$query%")
-                                ->orWhere('username', 'like', "%$query%");
-                    })
+                    ->whereDoesntHave('followers', fn($q) => $q->where('id', auth()->id()))
+                    ->when(isset($query), fn($q) => $q->searchUser($query))
                     ->paginate(20, $this->basic_columns);
         
         // If there are still remaining items.
@@ -130,8 +125,7 @@ class UserController extends Controller
         }
 
         $data = DB::table('users')
-                    ->where('name', 'ilike', "%$query%")
-                    ->orWhere('username', 'like', "%$query%")
+                    ->searchUser($query)
                     ->limit(5)
                     ->get($this->basic_columns);
 

@@ -17,13 +17,13 @@ class PostController extends Controller
     public function get(Request $request)
     {
         $sortByLikes = $request->query('sort') === 'likes';
-        $ids = auth()->user()->following()->pluck('id')->merge(auth()->id());
+        $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
 
         $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
                     ->withFormattedPosts()
                     ->when(!$sortByLikes, fn($q) => $q->orderByDesc('created_at'))
                     ->when($sortByLikes, fn($q) => $q->orderByDesc('likes_count'))
-                    ->paginate(20);
+                    ->paginate();
 
         $hasMore = $data->hasMorePages();
         $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
@@ -49,14 +49,14 @@ class PostController extends Controller
             $data = $user->first()->posts()
                 ->withFormattedPosts()
                 ->orderByDesc('created_at')
-                ->paginate(10);
+                ->paginate();
         }
 
         if ($section === 'likes' || $section === 'bookmarks') {
             $data = $user->first()->{$section}()
                 ->withFormattedPosts()
                 ->orderByPivot('created_at', 'desc')
-                ->paginate(10);
+                ->paginate();
         }
 
         $hasMore = $data->hasMorePages();
@@ -78,9 +78,9 @@ class PostController extends Controller
      */
     public function store(CreateOrUpdatePostRequest $request)
     {
-        $post = auth()->user()->posts()
+        $post = $request->user()->posts()
                     ->create($request->only('body'))
-                    ->withFormatted()
+                    ->withFormattedPosts()
                     ->first();
 
         return response()->json(
@@ -101,7 +101,7 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
         
-        auth()->user()->posts()
+        $request->user()->posts()
             ->find($post->id)
             ->update($request->only('body'));
 
@@ -115,14 +115,15 @@ class PostController extends Controller
      * Delete an existing post.
      * 
      * @param \App\Models\Post  $post
+     * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function destroy(Post $post)
+    public function destroy(Request $request, Post $post)
     {
         $this->authorize('delete', $post);
 
-        auth()->user()->posts()->find($post->id)->delete();
+        $request->user()->posts()->find($post->id)->delete();
 
         return response()->json([
             'deleted' => true,
@@ -134,14 +135,15 @@ class PostController extends Controller
      * Add the post to the list of likes.
      * 
      * @param \App\Models\Post  $post
+     * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function like(Post $post)
+    public function like(Request $request, Post $post)
     {
         $this->authorize('like', $post);
 
-        auth()->user()->likes()->attach($post->id);
+        $request->user()->likes()->attach($post->id);
 
         return response()->json([
             'liked' => true,
@@ -153,14 +155,15 @@ class PostController extends Controller
      * Remove the post from the list of likes.
      * 
      * @param \App\Models\Post  $post
+     * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function dislike(Post $post)
+    public function dislike(Request $request, Post $post)
     {
         $this->authorize('dislike', $post);
 
-        auth()->user()->likes()->detach($post->id);
+        $request->user()->likes()->detach($post->id);
 
         return response()->json([
             'disliked' => true,
@@ -172,14 +175,15 @@ class PostController extends Controller
      * Add the post to the list of bookmarks.
      * 
      * @param \App\Models\Post  $post
+     * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function bookmark(Post $post)
+    public function bookmark(Request $request, Post $post)
     {
         $this->authorize('bookmark', $post);
 
-        auth()->user()->bookmarks()->attach($post->id);
+        $request->user()->bookmarks()->attach($post->id);
 
         return response()->json([
             'bookmarked' => true,
@@ -191,14 +195,15 @@ class PostController extends Controller
      * Remove the post from the list of bookmarks.
      * 
      * @param \App\Models\Post  $post
+     * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function unbookmark(Post $post)
+    public function unbookmark(Request $request, Post $post)
     {
         $this->authorize('unbookmark', $post);
 
-        auth()->user()->bookmarks()->detach($post->id);
+        $request->user()->bookmarks()->detach($post->id);
 
         return response()->json([
             'unbookmarked' => true,
