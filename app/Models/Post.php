@@ -43,6 +43,13 @@ class Post extends Model
     ];
 
     /**
+     * The number of items per page.
+     * 
+     * @var int
+     */
+    protected $perPage = 20;
+
+    /**
      * The "booted" method of the model.
      *
      * @return void
@@ -166,11 +173,5 @@ class Post extends Model
     public function bookmarkers(): BelongsToMany
     {
         return $this->belongsToMany('App\Models\User', 'bookmarks', 'bookmark_id', 'user_id')->withPivot('created_at');
-    }
-
-    public function withFormatted()
-    {
-        return $this->with('user:id,slug,name,username,gender,image_url')
-                ->withCount(['likers as likes_count', 'comments']);
     }
 }
