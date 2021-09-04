@@ -17,6 +17,9 @@
         <testsuite name="Feature.Api.Post">
             <directory suffix="Test.php">./tests/Feature/API/Post</directory>
         </testsuite>
+        <testsuite name="Feature.Api.Comment">
+            <directory suffix="Test.php">./tests/Feature/API/Comment</directory>
+        </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">
         <include>
