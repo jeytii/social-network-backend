@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
@@ -26,24 +25,15 @@ class UserController extends Controller
     public function get(Request $request)
     {
         // Format each user model with only the necessary columns.
-        $query = $request->query('query');
-        $data = User::where('id', '!=', auth()->id())
-                    ->whereDoesntHave('followers', fn($q) => $q->where('id', auth()->id()))
-                    ->when(isset($query), fn($q) => $q->searchUser($query))
-                    ->paginate(20, $this->basic_columns);
-        
-        // If there are still remaining items.
-        $hasMore = $data->hasMorePages();
+        $sq = $request->query('search');
+        $data = User::when(!isset($sq), fn($q) => (
+                    $q->where('id', '!=', auth()->id())
+                        ->whereDoesntHave('followers', fn($q) => $q->where('id', auth()->id()))
+                ))
+                ->when(isset($sq), fn($q) => $q->searchUser($sq))
+                ->withPaginated(20, $this->basic_columns);
 
-        // Increment the current offset/page by 1 if there are still more items left.
-        // Otherwise, return null
-        $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
-
-        return response()->json([
-            'data' => $data->items(),
-            'has_more' => $hasMore,
-            'next_offset' => $nextOffset,
-        ]);
+        return response()->json($data);
     }
 
     /**
@@ -53,58 +43,12 @@ class UserController extends Controller
      */
     public function getSuggested()
     {
-        // Get 3 random users with basic data.
-        $data = DB::table('users')
-                    ->where('id', '!=', auth()->id())
+        $data = User::where('id', '!=', auth()->id())
                     ->inRandomOrder()
                     ->limit(3)
                     ->get($this->basic_columns);
 
         return response()->json(compact('data'));
-    }
-
-    /**
-     * Get the paginated list of followers or followed users.
-     *
-     * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-     */
-    public function getConnections(Request $request)
-    {
-        $type = $request->query('type');
-
-        abort_if(
-            is_null($type) || !in_array($type, ['following', 'followers']),
-            404
-        );
-
-        $data = $request->user()
-                    ->{$type}()
-                    ->paginate(20, $this->basic_columns)
-                    ->items();
-
-        return response()->json(compact('data'));
-    }
-
-    /**
-     * Get the profile info of a specific user model.
-     *
-     * @param string  $username
-     * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
-    public function getProfileInfo(string $username)
-    {
-        $user = User::withCount('followers', 'following')
-                    ->where('username', $username)
-                    ->first();
-
-        abort_if(!$user, 404, "Can't find a person with the username @{$username}.");
-
-        return response()->json([
-            'data' => $user->formatProfileInfo(auth()->id())
-        ]);
     }
 
     /**
@@ -130,27 +74,6 @@ class UserController extends Controller
                     ->get($this->basic_columns);
 
         return response()->json(compact('data'));
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \App\Http\Requests\UpdateUserRequest  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function update(UpdateUserRequest $request)
-    {
-        $this->authorize('update', $request->user());
-        
-        $body = is_null($request->user()->full_birth_date) ?
-                $request->all() :
-                $request->only([
-                    'name', 'username', 'location', 'bio', 'image_url'
-                ]);
-
-        $request->user()->update($body);
-
-        return response()->json(['updated' => true]);
     }
 
     /**

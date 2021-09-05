@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Post};
+use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrUpdatePostRequest;
 
@@ -23,50 +23,9 @@ class PostController extends Controller
                     ->withFormattedPosts()
                     ->when(!$sortByLikes, fn($q) => $q->orderByDesc('created_at'))
                     ->when($sortByLikes, fn($q) => $q->orderByDesc('likes_count'))
-                    ->paginate();
+                    ->withPaginated();
 
-        $hasMore = $data->hasMorePages();
-        $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
-
-        return response()->json([
-            'data' => $data->items(),
-            'has_more' => $hasMore,
-            'next_offset' => $nextOffset,
-        ]);
-    }
-
-    public function getProfilePosts(Request $request)
-    {
-        $section = $request->query('section');
-        $user = User::where('username', $request->query('username'));
-
-        abort_if(
-            !$user->exists() || !in_array($section, ['own', 'likes', 'comments', 'bookmarks']),
-            404
-        );
-
-        if ($section === 'own') {
-            $data = $user->first()->posts()
-                ->withFormattedPosts()
-                ->orderByDesc('created_at')
-                ->paginate();
-        }
-
-        if ($section === 'likes' || $section === 'bookmarks') {
-            $data = $user->first()->{$section}()
-                ->withFormattedPosts()
-                ->orderByPivot('created_at', 'desc')
-                ->paginate();
-        }
-
-        $hasMore = $data->hasMorePages();
-        $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
-
-        return response()->json([
-            'data' => $data->items(),
-            'has_more' => $hasMore,
-            'next_offset' => $nextOffset,
-        ]);
+        return response()->json($data);
     }
 
     /**
