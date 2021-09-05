@@ -5,7 +5,8 @@ use App\Http\Controllers\{
     AuthController,
     UserController,
     PostController,
-    CommentController
+    CommentController,
+    ProfileController
 };
 
 /*
@@ -25,17 +26,14 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::prefix('users')->group(function() {
         Route::get('/', [UserController::class, 'get']);
         Route::get('/suggested', [UserController::class, 'getSuggested']);
-        Route::get('/{username}/profile', [UserController::class, 'getProfileInfo']);
+        Route::get('/search', [UserController::class, 'search']);
         Route::put('/auth/update', [UserController::class, 'update']);
         Route::post('/follow/{user}', [UserController::class, 'follow']);
         Route::delete('/unfollow/{user}', [UserController::class, 'unfollow']);
-        Route::get('/connections', [UserController::class, 'getConnections']);
-        Route::get('/search', [UserController::class, 'search']);
     });
 
     Route::prefix('posts')->group(function() {
         Route::get('/', [PostController::class, 'get']);
-        Route::get('/profile', [PostController::class, 'getProfilePosts']);
         Route::post('/', [PostController::class, 'store']);
         Route::put('{post}', [PostController::class, 'update']);
         Route::delete('{post}', [PostController::class, 'destroy']);
@@ -48,5 +46,12 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::prefix('comments')->group(function() {
         Route::post('/', [CommentController::class, 'store']);
         Route::put('{comment}', [CommentController::class, 'update']);
+    });
+
+    Route::prefix('profile')->group(function() {
+        Route::get('{username}/{section}', [ProfileController::class, 'get'])
+            ->where('section', 'posts|likes|comments|bookmarks|followers|following');
+        Route::get('{username}', [ProfileController::class, 'getInfo']);
+        Route::put('update', [ProfileController::class, 'update']);
     });
 });
