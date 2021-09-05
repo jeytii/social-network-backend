@@ -3,9 +3,13 @@
 namespace App\Providers;
 
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Database\Eloquent\Relations\{
+    Relation,
+    HasMany,
+    BelongsToMany
+};
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -35,6 +39,45 @@ class AppServiceProvider extends ServiceProvider
             $this->with('user:id,slug,name,username,gender,image_url')
                 ->withCount(['likers as likes_count', 'comments'])
         ));
+
+        Builder::macro('withPaginated', function(int $perPage = 20, array $columns = ['*']) {
+            $data = $this->paginate($perPage, $columns);
+
+            $hasMore = $data->hasMorePages();
+            $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
+
+            return [
+                'data' => $data->items(),
+                'has_more' => $hasMore,
+                'next_offset' => $nextOffset,
+            ];
+        });
+
+        HasMany::macro('withPaginated', function(int $perPage = 20, array $columns = ['*']) {
+            $data = $this->paginate($perPage, $columns);
+
+            $hasMore = $data->hasMorePages();
+            $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
+
+            return [
+                'data' => $data->items(),
+                'has_more' => $hasMore,
+                'next_offset' => $nextOffset,
+            ];
+        });
+
+        BelongsToMany::macro('withPaginated', function(int $perPage = 20, array $columns = ['*']) {
+            $data = $this->paginate($perPage, $columns);
+
+            $hasMore = $data->hasMorePages();
+            $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
+
+            return [
+                'data' => $data->items(),
+                'has_more' => $hasMore,
+                'next_offset' => $nextOffset,
+            ];
+        });
 
         QueryBuilder::macro('searchUser', fn(string $query) => (
             $this->where('name', 'ilike', "%$query%")
