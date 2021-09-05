@@ -1,5 +1,8 @@
 <?php
 
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -12,6 +15,15 @@
 */
 
 uses(Tests\TestCase::class)->in('Feature');
+
+uses()->beforeAll(function() {
+    (new self(function() {}, '', []))->setUp();
+})->beforeEach(function() {
+    $this->user = User::first();
+    $this->response = $this->actingAs($this->user);
+    
+    Sanctum::actingAs($this->user, ['*']);
+})->in('Feature/API');
 
 /*
 |--------------------------------------------------------------------------
