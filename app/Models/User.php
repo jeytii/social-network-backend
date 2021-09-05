@@ -46,6 +46,16 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'is_self',
+        'is_followed',
+    ];
+
+    /**
      * The attributes that should be cast to native types.
      *
      * @var array
@@ -99,29 +109,26 @@ class User extends Authenticatable implements MustVerifyEmail
         return "$this->birth_month $this->birth_day, $this->birth_year";
     }
 
-    // =============================
-    // FORMATTERS
-    // =============================
+    /**
+     * Check if the user is the authenticated one.
+     *
+     * @return bool
+     */
+    public function getIsSelfAttribute(): bool
+    {
+        return auth()->check() && $this->id === auth()->id();
+    }
 
     /**
-     * Format original user data for profile view.
+     * Check if the user followed by the authenticated user.
      *
-     * @param int  $exceptionId
-     * @return array
+     * @return bool|null
      */
-    public function formatProfileInfo(int $exceptionId): array
+    public function getIsFollowedAttribute(): bool|null
     {
-        $isSelf = $this->id === $exceptionId;
-        $data = collect($this)->merge([
-            'birth_date' => $this->full_birth_date,
-            'is_self' => $isSelf,
-        ]);
-
-        if (!$isSelf) {
-            $data->put('slug', $this->slug);
-        }
-
-        return $data->toArray();
+        return $this->is_self ?
+                null :
+                (bool) $this->following()->find($this->id);
     }
 
     // =============================
