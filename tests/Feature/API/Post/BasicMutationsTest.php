@@ -1,19 +1,14 @@
 <?php
 
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function() {
-    User::factory()->hasPosts(5)->create();
-
-    $this->user = User::first();    
-    $this->response = $this->actingAs($this->user);
-
-    Sanctum::actingAs($this->user, ['*']);
+beforeAll(function() {
+    User::factory(5)->hasPosts(5)->create();
 });
 
-afterEach(function() {
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
@@ -36,9 +31,9 @@ test('Should not create a post if body length is greater than maximum length', f
 test('Should successfully create a post', function() {
     $this->response
         ->postJson('/api/posts', [
-            'body' => 'Hello World'
+            'body' => 'A newly-created post'
         ])
-        ->assertStatus(201)
+        ->assertCreated()
         ->assertJsonStructure([
             'data' => [
                 'post' => [
@@ -69,7 +64,7 @@ test('Should successfully update a post', function() {
         ->putJson("/api/posts/$slug", [
             'body' => 'Hello World'
         ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertExactJson([
             'updated' => true,
             'message' => 'Post successfully updated.',
@@ -81,12 +76,7 @@ test('Should successfully update a post', function() {
 });
 
 test('Should not be able to update other user\'s post', function() {
-    $user = User::factory()->hasPosts(5)->create();
-    $slug = $user->posts()->first()->slug;
-    
-    $this->assertDatabaseHas('users', [
-        'id' => $user->id
-    ]);
+    $slug = User::find(3)->posts()->first()->slug;
 
     $this->response
         ->putJson("/api/posts/$slug", [
@@ -95,7 +85,8 @@ test('Should not be able to update other user\'s post', function() {
         ->assertForbidden();
     
     $this->assertDatabaseMissing('posts', [
-        'body' => 'Hello World'
+        'user_id' => 3,
+        'body' => 'Hello World',
     ]);
 });
 
@@ -104,7 +95,7 @@ test('Should successfully delete a post', function() {
 
     $this->response
         ->deleteJson("/api/posts/$slug")
-        ->assertStatus(200)
+        ->assertOk()
         ->assertExactJson([
             'deleted' => true,
             'message' => 'Post successfully deleted.',
@@ -114,12 +105,7 @@ test('Should successfully delete a post', function() {
 });
 
 test('Should not be able to delete other user\'s post', function() {
-    $user = User::factory()->hasPosts(5)->create();
-    $slug = $user->posts()->first()->slug;
-
-    $this->assertDatabaseHas('users', [
-        'id' => $user->id
-    ]);
+    $slug = User::find(3)->posts()->first()->slug;
 
     $this->response
         ->deleteJson("/api/posts/$slug")

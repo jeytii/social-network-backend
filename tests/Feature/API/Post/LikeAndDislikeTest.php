@@ -1,27 +1,24 @@
 <?php
 
-use App\Models\{User, Post};
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Laravel\Sanctum\Sanctum;
 
-beforeEach(function() {
+beforeAll(function() {
     User::factory(3)->hasPosts(5)->create();
-
-    $this->user = User::first();
-    $this->response = $this->actingAs($this->user);
-
-    Sanctum::actingAs($this->user, ['*']);
 });
 
-afterEach(function() {
+beforeEach(function() {
+    $this->post = DB::table('posts')->find(10);
+});
+
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
 test('Can like a post', function() {
-    $post = Post::find(10);
-
     $this->response
-        ->postJson("/api/posts/$post->slug/like")
+        ->postJson("/api/posts/{$this->post->slug}/like")
         ->assertOk()
         ->assertExactJson([
             'liked' => true,
@@ -30,35 +27,24 @@ test('Can like a post', function() {
 
     $this->assertDatabaseHas('likes', [
         'user_id' => $this->user->id,
-        'post_id' => $post->id
+        'post_id' => $this->post->id
     ]);
 });
 
 test('Can\'t like a post more than once', function() {
-    $post = Post::find(10);
-
+    // Suppose the user has already liked the selected post based from the test above.
     $this->response
-        ->postJson("/api/posts/$post->slug/like")
-        ->assertOk()
-        ->assertExactJson([
-            'liked' => true,
-            'message' => 'Post successfully liked.',
-        ]);
-
-    $this->response
-        ->postJson("/api/posts/$post->slug/like")
+        ->postJson("/api/posts/{$this->post->slug}/like")
         ->assertForbidden();
 
     $this->assertDatabaseCount('likes', 1);
 });
 
 test('Can dislike a post', function() {
-    $post = Post::find(10);
-
-    $this->user->likes()->attach($post->id);
+    $this->user->likes()->attach($this->post->id);
 
     $this->response
-        ->deleteJson("/api/posts/$post->slug/dislike")
+        ->deleteJson("/api/posts/{$this->post->slug}/dislike")
         ->assertOk()
         ->assertExactJson([
             'disliked' => true,
@@ -67,17 +53,15 @@ test('Can dislike a post', function() {
 
     $this->assertDatabaseMissing('likes', [
         'user_id' => $this->user->id,
-        'post_id' => $post->id
+        'post_id' => $this->post->id
     ]);
 });
 
 test('Can\'t dislike a post more than once', function() {
-    $post = Post::find(10);
-
-    $this->user->likes()->attach($post->id);
+    $this->user->likes()->attach($this->post->id);
 
     $this->response
-        ->deleteJson("/api/posts/$post->slug/dislike")
+        ->deleteJson("/api/posts/{$this->post->slug}/dislike")
         ->assertOk()
         ->assertExactJson([
             'disliked' => true,
@@ -85,11 +69,11 @@ test('Can\'t dislike a post more than once', function() {
         ]);
 
     $this->response
-        ->deleteJson("/api/posts/$post->slug/dislike")
+        ->deleteJson("/api/posts/{$this->post->slug}/dislike")
         ->assertForbidden();
 
     $this->assertDatabaseMissing('likes', [
         'user_id' => $this->user->id,
-        'post_id' => $post->id
+        'post_id' => $this->post->id
     ]);
 });

@@ -1,26 +1,20 @@
 <?php
 
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function() {
+beforeAll(function() {
     User::factory(10)->hasPosts(5)->create();
-
-    $user = User::first();
-    
-    $user->following()->sync(range(2, 6));
-    
-    $this->response = $this->actingAs($user);
-
-    Sanctum::actingAs($user, ['*']);
 });
 
-afterEach(function() {
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
 test('Should return the paginated list of posts from followed users', function() {
+    $this->user->following()->sync(range(2, 6));
+    
     $this->response
         ->getJson('/api/posts')
         ->assertOk()

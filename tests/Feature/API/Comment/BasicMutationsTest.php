@@ -1,17 +1,15 @@
 <?php
 
-use App\Models\{User, Comment, Post};
-use Laravel\Sanctum\Sanctum;
+use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
-uses()->beforeAll(function() {
-    (new self(function() {}, '', []))->setUp();
-    
+beforeAll(function() {
     User::factory(2)->hasPosts(3)->hasComments(3)->create();
-})->beforeEach(function() {
-    $this->user = User::first();
-    $this->response = $this->actingAs($this->user);
-  
-    Sanctum::actingAs($this->user, ['*']);
+});
+
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
+    DB::table('users')->truncate();
 });
 
 test('Should not create a comment if body is blank or not set', function () {
@@ -77,7 +75,7 @@ test('Should successfully update a comment', function() {
 });
 
 test('Should not be able to update other user\'s comment', function() {
-    $user = User::whereHas('comments')->where('id', '!=', $this->user->id)->first();
+    $user = User::has('comments')->where('id', '!=', $this->user->id)->first();
     $slug = $user->comments()->first()->slug;
     
     $this->response

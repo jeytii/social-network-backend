@@ -1,35 +1,30 @@
 <?php
 
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function() {
+beforeAll(function() {
     User::factory(10)->hasPosts(5)->create();
-
-    $this->user = User::first();
-    $this->response = $this->actingAs($this->user);
-
-    Sanctum::actingAs($this->user, ['*']);
 });
 
-afterEach(function() {
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
 test('Should throw a 404 error if username doesn\'t exist or the section is wrong', function() {
     $this->response
-        ->getJson("/api/posts/profile?username=unknownuser123&section=own")
+        ->getJson("/api/profile/unknownuser123/posts")
         ->assertNotFound();
 
     $this->response
-        ->getJson("/api/posts/profile?username={$this->user->username}&section=wrongsection")
+        ->getJson("/api/profile/{$this->user->username}/wrongsection")
         ->assertNotFound();
 });
 
 test('Should return the paginated list of owned posts', function() {
     $this->response
-        ->getJson("/api/posts/profile?username={$this->user->username}&section=own")
+        ->getJson("/api/profile/{$this->user->username}/posts")
         ->assertOk()
         ->assertJsonCount(5, 'data')
         ->assertJsonPath('has_more', false)
@@ -59,7 +54,7 @@ test('Should return the paginated list of owned posts', function() {
         ]);
 
     $this->response
-        ->getJson("/api/posts/profile?page=2&username={$this->user->username}&section=own")
+        ->getJson("/api/profile/{$this->user->username}/posts?page=2")
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)
@@ -70,7 +65,7 @@ test('Should return the paginated list of liked posts', function() {
     $this->user->likes()->sync(range(11, 15));
 
     $this->response
-        ->getJson("/api/posts/profile?username={$this->user->username}&section=likes")
+        ->getJson("/api/profile/{$this->user->username}/likes")
         ->assertOk()
         ->assertJsonCount(5, 'data')
         ->assertJsonPath('has_more', false)
@@ -100,7 +95,7 @@ test('Should return the paginated list of liked posts', function() {
         ]);
 
     $this->response
-        ->getJson("/api/posts/profile?page=2&username={$this->user->username}&section=likes")
+        ->getJson("/api/profile/{$this->user->username}/likes?page=2")
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)
@@ -111,7 +106,7 @@ test('Should return the paginated list of bookmarked posts', function() {
     $this->user->bookmarks()->sync(range(11, 15));
 
     $this->response
-        ->getJson("/api/posts/profile?username={$this->user->username}&section=bookmarks")
+        ->getJson("/api/profile/{$this->user->username}/bookmarks")
         ->assertOk()
         ->assertJsonCount(5, 'data')
         ->assertJsonPath('has_more', false)
@@ -141,7 +136,7 @@ test('Should return the paginated list of bookmarked posts', function() {
         ]);
 
     $this->response
-        ->getJson("/api/posts/profile?page=2&username={$this->user->username}&section=bookmarks")
+        ->getJson("/api/profile/{$this->user->username}/bookmarks?page=2")
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)

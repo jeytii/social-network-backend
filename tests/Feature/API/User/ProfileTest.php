@@ -1,48 +1,43 @@
 <?php
 
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\WithFaker;
 
 uses(WithFaker::class);
 
-beforeEach(function() {
-    $this->user = User::factory()->create();
-    $this->response = $this->actingAs($this->user);
-
-    Sanctum::actingAs($this->user, ['*']);
+beforeAll(function() {
+    User::factory(60)->create();
 });
 
-afterEach(function() {
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
 test('The visited user profile is not self', function() {
-    $visitedUsername = User::factory()->create()->username;
+    $username = DB::table('users')->find(3)->username;
 
     $this->response
-        ->getJson("/api/users/{$visitedUsername}/profile")
+        ->getJson("/api/profile/{$username}")
         ->assertOk()
         ->assertJsonPath('data.is_self', false);
 });
 
 test('The visited user profile is self', function() {
     $this->response
-        ->getJson("/api/users/{$this->user->username}/profile")
+        ->getJson("/api/profile/{$this->user->username}")
         ->assertOk()
         ->assertJsonPath('data.is_self', true);
 });
 
 test('Should return the profile data with followers count and following count', function() {
-    User::factory(60)->create();
-    
     // Assume that the auth user is already following 40 users.
     $this->user->following()->sync(range(2, 41));
     $this->user->followers()->sync(range(51, 55));
 
     $this->response
-        ->getJson("/api/users/{$this->user->username}/profile")
+        ->getJson("/api/profile/{$this->user->username}")
         ->assertOk()
         ->assertJsonPath('data.followers_count', 5)
         ->assertJsonPath('data.following_count', 40);
@@ -50,7 +45,7 @@ test('Should return the profile data with followers count and following count', 
 
 test('Should throw validation errors if input values are incorrect in update profile form', function() {
     $this->response
-        ->putJson('/api/users/auth/update', [
+        ->putJson('/api/profile/update', [
             'birth_day' => 32,
             'bio' => $this->faker->paragraphs(5, true)
         ])
@@ -68,7 +63,7 @@ test('Should throw validation errors if input values are incorrect in update pro
 
 test('Can\'t update the birth date that has been already set', function() {
     $this->response
-        ->putJson('/api/users/auth/update', [
+        ->putJson('/api/profile/update', [
             'name' => $this->user->name,
             'birth_month' => 'January',
             'birth_day' => 12,
@@ -89,7 +84,7 @@ test('Can update the profile successfully', function() {
     ]);
 
     $this->actingAs($user)
-        ->putJson('/api/users/auth/update', [
+        ->putJson('/api/profile/update', [
             'name' => 'John Doe',
             'birth_month' => 'December',
             'birth_day' => 10,

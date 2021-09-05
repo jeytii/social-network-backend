@@ -1,22 +1,19 @@
 <?php
 
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function() {
-    $this->user = User::factory()->create();
-    $this->response = $this->actingAs($this->user);
-
-    Sanctum::actingAs($this->user, ['*']);
+beforeAll(function() {
+    User::factory(50)->create();
 });
 
-afterEach(function() {
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
 test('Can follow a user', function() {
-    $userToFollow = User::factory()->create();
+    $userToFollow = User::find(2);
 
     $this->response
         ->postJson("/api/users/follow/{$userToFollow->slug}")
@@ -27,11 +24,21 @@ test('Can follow a user', function() {
     $this->assertTrue((bool) $userToFollow->followers()->find($this->user->id));
 });
 
-test('Can unfollow a user', function() {
-    $userToUnfollow = User::factory()->create();
+test('Can\'t follow a user that\'s already followed', function() {
+    // Suppose the auth user already follows another user with the ID of 2 based on the test above.
+    $userToFollow = User::find(2);
 
-    // Assume that the auth user is already following another user.
-    $this->user->following()->sync([$userToUnfollow->id]);
+    $this->response
+        ->postJson("/api/users/follow/{$userToFollow->slug}")
+        ->assertForbidden();
+
+    $this->assertTrue($this->user->following()->where('id', 2)->count() === 1);
+    $this->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
+});
+
+test('Can unfollow a user', function() {
+    // Suppose the auth user already follows another user with the ID of 2 based on the test above.
+    $userToUnfollow = User::find(2);
     
     $this->response
         ->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}")
@@ -43,7 +50,7 @@ test('Can unfollow a user', function() {
 });
 
 test('Can\'t unfollow a user that\'s not included in the list of followed users', function() {
-    $userToUnfollow = User::factory()->create();
+    $userToUnfollow = User::find(2);
 
     $this->response
         ->deleteJson("/api/users/unfollow/{$userToUnfollow->slug}")
@@ -53,82 +60,48 @@ test('Can\'t unfollow a user that\'s not included in the list of followed users'
     $this->assertFalse((bool) $userToUnfollow->followers()->find($this->user->id));
 });
 
-test('Can\'t follow a user that\'s already followed', function() {
-    $userToFollow = User::factory()->create();
-
-    // Assume that the auth user is already following another user.
-    $this->user->following()->sync([$userToFollow->id]);
-
-    $this->response
-        ->postJson("/api/users/follow/{$userToFollow->slug}")
-        ->assertForbidden();
-
-    $this->assertTrue($this->user->following()->where('id', 2)->count() === 1);
-    $this->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
-});
-
-test('Should throw an error if the type of connection is not set', function() {
-    $this->response
-        ->getJson('/api/users/connections?page=1')
-        ->assertNotFound();
-});
-
-test('Should throw an error if the type is neither "followers" nor "following"', function() {
-    $this->response
-        ->getJson('/api/users/connections?type=unknown&page=1')
-        ->assertNotFound();
-});
-
 test('Should return the paginated list of followed users', function() {
-    User::factory(40)->create();
-
-    $this->user->following()->sync(range(2, 41));
+    $this->user->following()->sync(range(2, 21));
 
     // First full-page scroll
     $this->response
-        ->getJson('/api/users/connections?type=following&page=1')
+        ->getJson("/api/profile/{$this->user->username}/following?page=1")
         ->assertOk()
-        ->assertJsonCount(20, 'data');
+        ->assertJsonCount(20, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
 
-    // Second full-page scroll
+    // The last full-page scroll that returns an empty list
     $this->response
-        ->getJson('/api/users/connections?type=following&page=2')
+        ->getJson("/api/profile/{$this->user->username}/following?page=2")
         ->assertOk()
-        ->assertJsonCount(20, 'data');
-
-    // The last full-page scroll that returns data
-    $this->response
-        ->getJson('/api/users/connections?type=following&page=3')
-        ->assertOk()
-        ->assertJsonCount(0, 'data');
+        ->assertJsonCount(0, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
 });
 
 test('Should return the paginated list of followers', function() {
-    User::factory(40)->create();
-
-    $this->user->followers()->sync(range(2, 41));
+    $this->user->followers()->sync(range(26, 45));
 
     // First full-page scroll
     $this->response
-        ->getJson('/api/users/connections?type=followers&page=1')
+        ->getJson("/api/profile/{$this->user->username}/followers?page=1")
         ->assertOk()
-        ->assertJsonCount(20, 'data');
+        ->assertJsonCount(20, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
 
-    // Second full-page scroll
+    // The last full-page scroll that returns an empty list
     $this->response
-        ->getJson('/api/users/connections?type=followers&page=2')
+        ->getJson("/api/profile/{$this->user->username}/followers?page=2")
         ->assertOk()
-        ->assertJsonCount(20, 'data');
-
-    // The last full-page scroll that returns data
-    $this->response
-        ->getJson('/api/users/connections?type=followers&page=3')
-        ->assertOk()
-        ->assertJsonCount(0, 'data');
+        ->assertJsonCount(0, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
 });
 
 test('Should return an error if the visited user profile doesn\'t exist', function() {
     $this->response
-        ->getJson('/api/users/foobar/profile')
+        ->getJson('/api/profile/foobar')
         ->assertNotFound();
 });

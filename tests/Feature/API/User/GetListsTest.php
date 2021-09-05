@@ -3,24 +3,22 @@
 namespace Tests\Feature\API\User;
 
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 use Illuminate\Support\Facades\DB;
 
-beforeEach(function() {
-    $user = User::factory()->create();
-
-    $this->response = $this->actingAs($user);
-
-    Sanctum::actingAs($user, ['*']);
+beforeAll(function() {
+    User::factory(50)->create();
 });
 
-afterEach(function() {
+beforeEach(function() {
+    $this->columns = ['slug', 'name', 'username', 'gender', 'image_url', 'is_followed', 'is_self'];
+});
+
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
 test('Should return paginated list of users', function() {
-    User::factory(100)->create();
-
     // First scroll full-page bottom
     $this->response
         ->getJson('/api/users?page=1')
@@ -30,7 +28,7 @@ test('Should return paginated list of users', function() {
         ->assertJsonPath('next_offset', 2)
         ->assertJsonStructure([
             'data' => [
-                '*' => ['slug', 'name', 'username', 'gender', 'image_url'],
+                '*' => $this->columns,
             ],
         ]);
 
@@ -44,15 +42,15 @@ test('Should return paginated list of users', function() {
 
     // The last full-page scroll that returns data
     $this->response
-        ->getJson('/api/users?page=5')
+        ->getJson('/api/users?page=3')
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(9, 'data')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
     // Full-page scroll attempt but should return empty list
     $this->response
-        ->getJson('/api/users?page=6')
+        ->getJson('/api/users?page=4')
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)
@@ -60,14 +58,12 @@ test('Should return paginated list of users', function() {
 });
 
 test('Should successfully return 3 suggested users', function() {
-    User::factory(10)->create();
-
     $this->response
         ->getJson('/api/users/suggested')
         ->assertJsonCount(3, 'data')
         ->assertJsonStructure([
             'data' => [
-                '*' => ['slug', 'name', 'username', 'gender', 'image_url'],
+                '*' => $this->columns,
             ],
         ]);
 });

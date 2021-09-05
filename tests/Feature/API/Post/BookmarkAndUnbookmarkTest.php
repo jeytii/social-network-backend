@@ -1,24 +1,19 @@
 <?php
 
-use App\Models\{User, Post};
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
-use Laravel\Sanctum\Sanctum;
 
-beforeEach(function() {
+beforeAll(function() {
     User::factory(3)->hasPosts(5)->create();
-
-    $this->user = User::first();
-    $this->response = $this->actingAs($this->user);
-
-    Sanctum::actingAs($this->user, ['*']);
 });
 
-afterEach(function() {
+afterAll(function() {
+    (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
 });
 
 test('Can bookmark a post', function() {
-    $post = Post::find(10);
+    $post = DB::table('posts')->find(10);
 
     $this->response
         ->postJson("/api/posts/$post->slug/bookmark")
@@ -35,15 +30,8 @@ test('Can bookmark a post', function() {
 });
 
 test('Can\'t bookmark a post more than once', function() {
-    $post = Post::find(10);
-
-    $this->response
-        ->postJson("/api/posts/$post->slug/bookmark")
-        ->assertOk()
-        ->assertExactJson([
-            'bookmarked' => true,
-            'message' => 'Post successfully bookmarked.',
-        ]);
+    // Suppose the selected post is already bookmarked based on the test above.
+    $post = DB::table('posts')->find(10);
 
     $this->response
         ->postJson("/api/posts/$post->slug/bookmark")
@@ -53,7 +41,7 @@ test('Can\'t bookmark a post more than once', function() {
 });
 
 test('Can unbookmark a post', function() {
-    $post = Post::find(10);
+    $post = DB::table('posts')->find(10);
 
     $this->user->bookmarks()->attach($post->id);
 
@@ -72,7 +60,7 @@ test('Can unbookmark a post', function() {
 });
 
 test('Can\'t unbookmark a post more than once', function() {
-    $post = Post::find(10);
+    $post = DB::table('posts')->find(10);
 
     $this->user->bookmarks()->attach($post->id);
 
