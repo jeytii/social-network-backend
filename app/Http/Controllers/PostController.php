@@ -20,7 +20,8 @@ class PostController extends Controller
         $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
 
         $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
-                    ->withFormattedPosts()
+                    ->withUser()
+                    ->withCount(['likers as likes_count', 'comments'])
                     ->when(!$sortByLikes, fn($q) => $q->orderByDesc('created_at'))
                     ->when($sortByLikes, fn($q) => $q->orderByDesc('likes_count'))
                     ->withPaginated();
@@ -39,7 +40,8 @@ class PostController extends Controller
     {
         $post = $request->user()->posts()
                     ->create($request->only('body'))
-                    ->withFormattedPosts()
+                    ->withUser()
+                    ->withCount(['likers as likes_count', 'comments'])
                     ->first();
 
         return response()->json(

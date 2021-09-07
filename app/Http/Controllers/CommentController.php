@@ -5,9 +5,30 @@ namespace App\Http\Controllers;
 use App\Models\{Post, Comment};
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrUpdateCommentRequest;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CommentController extends Controller
 {
+    /**
+     * Store a new comment.
+     * 
+     * @return \Illuminate\Http\Response  $request
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function get(Request $request)
+    {
+        try {
+            $post = Post::where('slug', $request->query('pid'))->firstOrFail();
+            $data = $post->comments()->withUser()->orderByDesc('created_at')->withPaginated();
+
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            abort(404, $exception->getMessage());
+        }
+    }
+
     /**
      * Store a new comment.
      * 
@@ -28,7 +49,7 @@ class CommentController extends Controller
                         'post_id' => $post->first()->id,
                         'body' => $request->body,
                     ])
-                    ->with('user:id,slug,name,username,gender,image_url')
+                    ->withUser()
                     ->first();
 
         return response()->json(

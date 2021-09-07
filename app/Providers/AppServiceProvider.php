@@ -35,9 +35,8 @@ class AppServiceProvider extends ServiceProvider
                 ->orWhere('username', 'like', "%$query%")
         ));
 
-        Builder::macro('withFormattedPosts', fn() => (
+        Builder::macro('withUser', fn() => (
             $this->with('user:id,slug,name,username,gender,image_url')
-                ->withCount(['likers as likes_count', 'comments'])
         ));
 
         Builder::macro('withPaginated', function(int $perPage = 20, array $columns = ['*']) {
@@ -84,9 +83,8 @@ class AppServiceProvider extends ServiceProvider
                 ->orWhere('username', 'like', "%$query%")
         ));
 
-        Relation::macro('withFormattedPosts', fn() => (
+        Relation::macro('withUser', fn() => (
             $this->with('user:id,slug,name,username,gender,image_url')
-                ->withCount(['likers as likes_count', 'comments'])
         ));
     }
 }
