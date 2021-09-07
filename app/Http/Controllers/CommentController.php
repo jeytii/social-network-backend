@@ -18,7 +18,7 @@ class CommentController extends Controller
      */
     public function store(CreateOrUpdateCommentRequest $request)
     {
-        $post = Post::where('slug', $request->query('user'));
+        $post = Post::where('slug', $request->query('uid'));
 
         abort_if(!$post->exists(), 404, 'Post not found.');
         
@@ -56,6 +56,26 @@ class CommentController extends Controller
         return response()->json([
             'updated' => true,
             'message' => 'Comment successfully updated.'
+        ]);
+    }
+
+    /**
+     * Update an existing comment.
+     * 
+     * @return \Illuminate\Http\Request  $request
+     * @param \App\Models\Comment  $comment
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function destroy(Request $request, Comment $comment)
+    {
+        $this->authorize('delete', $comment);
+        
+        $request->user()->comments()->find($comment->id)->delete();
+
+        return response()->json([
+            'deleted' => true,
+            'message' => 'Comment successfully deleted.'
         ]);
     }
 }
