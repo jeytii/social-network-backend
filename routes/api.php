@@ -42,10 +42,11 @@ Route::middleware('auth:sanctum')->group(function() {
         Route::post('{post}/bookmark', [PostController::class, 'bookmark']);
         Route::delete('{post}/unbookmark', [PostController::class, 'unbookmark']);
     });
-    
+
     Route::prefix('comments')->group(function() {
         Route::post('/', [CommentController::class, 'store']);
         Route::put('{comment}', [CommentController::class, 'update']);
+        Route::delete('{comment}', [CommentController::class, 'destroy']);
     });
 
     Route::prefix('profile')->group(function() {
