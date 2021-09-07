@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
+use App\Models\{User, Post};
 use App\Http\Requests\UpdateUserRequest;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -18,7 +17,9 @@ class ProfileController extends Controller
      */
     private function getConnections(User $user, string $type)
     {
-        return $user->{$type}()->withPaginated(20, ['slug', 'name', 'username', 'gender', 'image_url']);
+        return $user->{$type}()->withPaginated(20, [
+            'slug', 'name', 'username', 'gender', 'image_url'
+        ]);
     }
 
     /**
@@ -30,7 +31,8 @@ class ProfileController extends Controller
     private function getOwnPosts(User $user)
     {
         return $user->posts()
-                ->withFormattedPosts()
+                ->withUser()
+                ->withCount(['likers as likes_count', 'comments'])
                 ->orderByDesc('created_at')
                 ->withPaginated();
     }
@@ -45,7 +47,8 @@ class ProfileController extends Controller
     private function getLikesOrBookmarks(User $user, string $type)
     {
         return $user->{$type}()
-                ->withFormattedPosts()
+                ->withUser()
+                ->withCount(['likers as likes_count', 'comments'])
                 ->orderByPivot('created_at', 'desc')
                 ->withPaginated();
     }
@@ -53,15 +56,28 @@ class ProfileController extends Controller
     /**
      * Get the paginated list of user's comments on posts.
      *
-     * @param \App\Models\User  $user
-     * @param string  $type
+     * @param int  $userId
      * @return array
      */
-    private function getComments()
+    private function getCommentsOnPosts($userId)
     {
-        //
+        return Post::whereHas('comments', fn($q) => $q->where('user_id', $userId))
+                    ->withUser()
+                    ->with([
+                        'comments' => fn($q) => $q->withUser()->orderByDesc('created_at')
+                    ])
+                    ->withCount(['likers as likes_count', 'comments'])
+                    ->withPaginated();
     }
 
+    /**
+     * Get all posts that the user owns and interacted with.
+     *
+     * @param string  $username
+     * @param string  $section
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
     public function get(string $username, string $section)
     {
         try {
@@ -75,6 +91,10 @@ class ProfileController extends Controller
                 $data = $this->getOwnPosts($user);
             }
             
+            if ($section === 'comments') {
+                $data = $this->getCommentsOnPosts($user->id);
+            }
+
             if (in_array($section, ['likes', 'bookmarks'])) {
                 $data = $this->getLikesOrBookmarks($user, $section);
             }
@@ -117,11 +137,9 @@ class ProfileController extends Controller
      */
     public function update(UpdateUserRequest $request)
     {   
-        $body = is_null($request->user()->full_birth_date) ?
-                $request->all() :
-                $request->only([
-                    'name', 'username', 'location', 'bio', 'image_url'
-                ]);
+        $body = $request->user()->no_birthdate ?
+                $request->validated() :
+                $request->only(['name', 'location', 'bio', 'image_url']);
 
         $request->user()->update($body);
 
