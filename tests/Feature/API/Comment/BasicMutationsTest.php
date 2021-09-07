@@ -32,7 +32,7 @@ test('Should successfully comment on a post', function() {
     $slug = User::find(2)->posts()->first()->slug;
     
     $this->response
-        ->postJson("/api/comments?user=$slug", [
+        ->postJson("/api/comments?uid={$slug}", [
             'body' => 'Hello World'
         ])
         ->assertCreated()
@@ -60,10 +60,10 @@ test('Should successfully update a comment', function() {
     $slug = $this->user->comments()->first()->slug;
 
     $this->response
-        ->putJson("/api/comments/$slug", [
+        ->putJson("/api/comments/{$slug}", [
             'body' => 'Hello World'
         ])
-        ->assertStatus(200)
+        ->assertOk()
         ->assertExactJson([
             'updated' => true,
             'message' => 'Comment successfully updated.',
@@ -79,7 +79,7 @@ test('Should not be able to update other user\'s comment', function() {
     $slug = $user->comments()->first()->slug;
     
     $this->response
-        ->putJson("/api/comments/$slug", [
+        ->putJson("/api/comments/{$slug}", [
             'body' => 'This comment has been edited'
         ])
         ->assertForbidden();
@@ -87,4 +87,29 @@ test('Should not be able to update other user\'s comment', function() {
     $this->assertDatabaseMissing('comments', [
         'body' => 'This comment has been edited'
     ]);
+});
+
+test('Should successfully delete a comment', function() {
+    $slug = $this->user->comments()->first()->slug;
+
+    $this->response
+        ->deleteJson("/api/comments/{$slug}")
+        ->assertOk()
+        ->assertExactJson([
+            'deleted' => true,
+            'message' => 'Comment successfully deleted.',
+        ]);
+
+    $this->assertDatabaseMissing('comments', compact('slug'));
+});
+
+test('Should not be able to delete other user\'s comment', function() {
+    $user = User::has('comments')->where('id', '!=', $this->user->id)->first();
+    $slug = $user->comments()->first()->slug;
+    
+    $this->response
+        ->deleteJson("/api/comments/{$slug}")
+        ->assertForbidden();
+    
+    $this->assertDatabaseHas('comments', compact('slug'));
 });
