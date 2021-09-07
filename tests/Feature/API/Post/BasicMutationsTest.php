@@ -43,6 +43,7 @@ test('Should successfully create a post', function() {
                     'comments_count',
                     'timestamp',
                     'is_own_post',
+                    'is_liked',
                     'is_edited',
                     'is_bookmarked',
                     'user' => [

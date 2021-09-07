@@ -39,23 +39,26 @@ class CommentController extends Controller
      */
     public function store(CreateOrUpdateCommentRequest $request)
     {
-        $post = Post::where('slug', $request->query('uid'));
-
-        abort_if(!$post->exists(), 404, 'Post not found.');
+        try {
+            $post = Post::where('slug', $request->query('uid'))->firstOrFail();
         
-        $comment = $request->user()
-                    ->comments()
-                    ->create([
-                        'post_id' => $post->first()->id,
-                        'body' => $request->body,
-                    ])
-                    ->withUser()
-                    ->first();
+            $comment = $request->user()
+                        ->comments()
+                        ->create([
+                            'post_id' => $post->first()->id,
+                            'body' => $request->body,
+                        ])
+                        ->withUser()
+                        ->first();
 
-        return response()->json(
-            ['data' => compact('comment')],
-            201
-        );
+            return response()->json(
+                ['data' => compact('comment')],
+                201
+            );
+        }
+        catch (ModelNotFoundException $exception) {
+            abort(404, $exception->getMessage());
+        }
     }
 
     /**
@@ -98,5 +101,25 @@ class CommentController extends Controller
             'deleted' => true,
             'message' => 'Comment successfully deleted.'
         ]);
+    }
+
+    /**
+     * Get more comments from the user under a specific post.
+     * 
+     * @return \Illuminate\Http\Response  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function getMoreOwnComments(Request $request)
+    {
+        $data = $request->user()
+                    ->comments()
+                    ->whereHas('post', fn($q) => (
+                        $q->where('slug', $request->query('pid'))
+                    ))
+                    ->orderByDesc('created_at')
+                    ->withUser()
+                    ->withPaginated(5);
+
+            return response()->json($data);
     }
 }

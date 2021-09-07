@@ -110,7 +110,11 @@ class Comment extends Model
 
         $hours = now()->diffInHours($this->created_at);
 
-        if ($hours >= 1 && $hours <= 23) {
+        if ($hours === 1) {
+            return '1 hour ago';
+        }
+
+        if ($hours <= 23) {
             return "{$hours} hours ago";
         }
 

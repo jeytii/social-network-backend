@@ -30,6 +30,7 @@ test('Should return the paginated list of posts from followed users', function()
                     'comments_count',
                     'timestamp',
                     'is_own_post',
+                    'is_liked',
                     'is_edited',
                     'is_bookmarked',
                     'user' => [

@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function() {
 
     Route::prefix('comments')->group(function() {
         Route::get('/', [CommentController::class, 'get']);
+        Route::get('/more', [CommentController::class, 'getMoreOwnComments']);
         Route::post('/', [CommentController::class, 'store']);
         Route::put('{comment}', [CommentController::class, 'update']);
         Route::delete('{comment}', [CommentController::class, 'destroy']);

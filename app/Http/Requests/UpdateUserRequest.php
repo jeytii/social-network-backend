@@ -24,8 +24,8 @@ class UpdateUserRequest extends FormRequest
      */
     public function rules()
     {
-        $currentYear = now()->subYear(1)->year;
-        $centuryAgo = $currentYear - 100;
+        $latestYear = now()->subYear(1)->year;
+        $centuryAgo = $latestYear - 100;
 
         $months = [
             'January',
@@ -45,19 +45,19 @@ class UpdateUserRequest extends FormRequest
         return [
             'name' => ['required', 'string'],
             'birth_month' => [
+                Rule::requiredIf(auth()->user()->no_birthdate),
                 'string',
                 Rule::in($months),
-                Rule::requiredIf(request()->has('birth_day') || request()->has('birth_year')),
             ],
             'birth_day' => [
+                Rule::requiredIf(auth()->user()->no_birthdate),
                 'numeric',
                 'between:1,31',
-                Rule::requiredIf(request()->has('birth_month') || request()->has('birth_year')),
             ],
             'birth_year' => [
+                Rule::requiredIf(auth()->user()->no_birthdate),
                 'numeric',
-                "between:{$centuryAgo},{$currentYear}",
-                Rule::requiredIf(request()->has('birth_month') || request()->has('birth_day')),
+                "between:{$centuryAgo},{$latestYear}",
             ],
             'location' => ['string'],
             'bio' => ['string', 'max:130'],

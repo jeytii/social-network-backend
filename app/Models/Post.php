@@ -37,6 +37,7 @@ class Post extends Model
      */
     protected $appends = [
         'is_own_post',
+        'is_liked',
         'is_edited',
         'is_bookmarked',
         'timestamp',
@@ -82,6 +83,16 @@ class Post extends Model
     }
 
     /**
+     * Check if the post is liked by the auth user.
+     *
+     * @return bool
+     */
+    public function getIsLikedAttribute(): bool
+    {
+        return (bool) $this->likers()->find(auth()->id());
+    }
+
+    /**
      * Check if the post's body attribute has been updated.
      *
      * @return bool
@@ -124,7 +135,11 @@ class Post extends Model
 
         $hours = now()->diffInHours($this->created_at);
 
-        if ($hours >= 1 && $hours <= 23) {
+        if ($hours === 1) {
+            return '1 hour ago';
+        }
+
+        if ($hours <= 23) {
             return "{$hours} hours ago";
         }
 
