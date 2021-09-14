@@ -20,7 +20,14 @@ use App\Http\Controllers\{
 |
 */
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('guest')->group(function() {
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::put('/verify', [AuthController::class, 'verify']);
+    Route::post('/verify/resend', [AuthController::class, 'resendVerificationCode'])->middleware('throttle:3,30');
+    Route::post('/forgot-password', [AuthController::class, 'requestPasswordReset']);
+    Route::put('/reset-password', [AuthController::class, 'resetPassword']);
+});
 
 Route::middleware('auth:sanctum')->group(function() {
     Route::prefix('users')->group(function() {
