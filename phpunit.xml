@@ -11,6 +11,9 @@
         <testsuite name="Feature">
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
+        <testsuite name="Feature.Auth">
+            <directory suffix="Test.php">./tests/Feature/Auth</directory>
+        </testsuite>
         <testsuite name="Feature.Api">
             <directory suffix="Test.php">./tests/Feature/API</directory>
         </testsuite>
@@ -33,7 +36,7 @@
         <server name="APP_ENV" value="testing"/>
         <server name="BCRYPT_ROUNDS" value="4"/>
         <server name="CACHE_DRIVER" value="array"/>
-        <server name="DB_CONNECTION" value="pgsql"/>
+        <!-- <server name="DB_CONNECTION" value="sqlite"/> -->
         <server name="DB_DATABASE" value=":memory:"/>
         <server name="MAIL_MAILER" value="array"/>
         <server name="QUEUE_CONNECTION" value="sync"/>
