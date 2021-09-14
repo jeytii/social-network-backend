@@ -121,7 +121,7 @@ class ProfileController extends Controller
                         ->firstOrFail();
 
             return response()->json([
-                'data' => $data->append('full_birth_date')
+                'data' => $data->append('birth_date')
             ]);
         }
         catch (ModelNotFoundException $e) {

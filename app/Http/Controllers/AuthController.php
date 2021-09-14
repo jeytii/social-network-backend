@@ -2,32 +2,124 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Repositories\Contracts\AuthRepositoryInterface;
+use App\Http\Requests\{RegistrationRequest, ResetPasswordRequest};
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AuthController extends Controller
 {
+    protected $authRepository;
+
+    /**
+     * Create a new event instance.
+     *
+     * @param  \App\Repositories\Contracts\AuthRepositoryInterface  $authRepository
+     * @return void
+     */
+    public function __construct(AuthRepositoryInterface $authRepository)
+    {
+        $this->authRepository = $authRepository;
+    }
+
     /**
      * Register any application services.
      *
-     * @param Illuminate\Http\Request  $request
-     * @return Illuminate\Http\Response
-     * @throws Illuminate\Validation\ValidationException
-     * @throws Illuminate\Validation\UnauthorizedException
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
      */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'username' => 'required',
-            'password' => 'required',
-        ]);
+        try {
+            $data = $this->authRepository->logInUser($request);
 
-        abort_if(!Auth::attempt($credentials), 422, 'Cannot find username and password combination.');
+            return response()->json($data);
+        }
+        catch (AuthorizationException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'data' => [
+                    'resend_code_url' => config('app.url') . '/api/verify/resend',
+                    'username' => $request->username,
+                ],
+            ], $exception->getCode());
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], $exception->getCode());    
+        }
+    }
 
-        abort_if(!$request->user()->hasVerifiedEmail(), 401, 'Your account is not yet verified.');
+    /**
+     * Register a user.
+     * 
+     * @param \App\Http\Requests\RegistrationRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function register(RegistrationRequest $request) {
+        $data = $this->authRepository->registerUser($request);
 
-        $token = $request->user()->createToken(env('SANCTUM_SECRET_KEY'))->plainTextToken;
+        return response()->json($data, 201);
+    }
 
-        return response()->json(compact('token'));
+    /**
+     * Verify a user.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function verify(Request $request)
+    {
+        $data = $this->authRepository->verifyUser($request);
+
+        return response()->json($data);
+    }
+
+    /**
+     * Resend another verification code to the user.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function resendVerificationCode(Request $request)
+    {
+        $data = $this->authRepository->resendCode($request);
+
+        return response()->json($data);
+    }
+
+    /**
+     * Send a password-reset request link to the user.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function requestPasswordReset(Request $request)
+    {
+        $data = $this->authRepository->sendPasswordResetLink($request);
+
+        return response()->json($data);
+    }
+
+     /**
+     * Reset user's password.
+     * 
+     * @param \App\Http\Requests\ResetPasswordRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function resetPassword(ResetPasswordRequest $request)
+    {
+        $data = $this->authRepository->resetPassword($request);
+
+        return response()->json($data);
     }
 }

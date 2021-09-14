@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany};
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany};
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -22,6 +24,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'username',
+        'phone_number',
         'gender',
         'birth_month',
         'birth_day',
@@ -39,6 +42,9 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $hidden = [
         'id',
+        'birth_month',
+        'birth_day',
+        'birth_year',
         'password',
         'email_verified_at',
         'updated_at',
@@ -73,7 +79,10 @@ class User extends Authenticatable implements MustVerifyEmail
     protected static function booted()
     {
         static::creating(function ($user) {
+            $formattedPhoneNumber = (string) Str::of($user->phone_number)->replaceMatches('/^0?9/', '639');
+
             $user->setAttribute('slug', uniqid());
+            $user->phone_number = $formattedPhoneNumber;
         });
     }
 
@@ -96,7 +105,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return string
      */
-    public function getFullBirthDateAttribute(): string
+    public function getBirthDateAttribute(): string
     {
         return "$this->birth_month $this->birth_day, $this->birth_year";
     }
@@ -131,6 +140,34 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->is_self ?
                 null :
                 (bool) $this->following()->find($this->id);
+    }
+
+    // =============================
+    // OVERRIDE DEFAULT METHODS
+    // =============================
+
+    /**
+     * Route notifications for the Nexmo channel.
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return string
+     */
+    public function routeNotificationForNexmo($notification)
+    {
+        return $this->phone_number;
+    }
+
+    /**
+     * Send a password reset notification to the user.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $url = config('app.url') . "/api/reset-password/{$token}";
+
+        $this->notify(new ResetPasswordNotification($url));
     }
 
     // =============================

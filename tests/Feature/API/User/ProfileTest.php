@@ -73,7 +73,7 @@ test('Can\'t update the birth date that has been already set', function() {
     
     $updatedUser = User::find($this->user->id);
 
-    $this->assertTrue($this->user->full_birth_date === $updatedUser->full_birth_date);
+    $this->assertTrue($this->user->birth_date === $updatedUser->birth_date);
 });
 
 test('Can update the profile successfully', function() {
@@ -97,7 +97,7 @@ test('Can update the profile successfully', function() {
     $updatedUser = User::find($user->id);
 
     $this->assertTrue($updatedUser->name === 'John Doe');
-    $this->assertTrue($updatedUser->full_birth_date === 'December 10, 1990');
+    $this->assertTrue($updatedUser->birth_date === 'December 10, 1990');
     $this->assertTrue($updatedUser->location === 'Philippines');
     $this->assertTrue($updatedUser->bio === 'Hello World');
 });
