@@ -8,6 +8,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use App\Repositories\Contracts\AuthRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -127,6 +128,12 @@ class AuthController extends Controller
             $data = $this->authRepository->sendPasswordResetLink($request);
 
             return response()->json($data);
+        }
+        catch (ValidationException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'errors' => $exception->errors(),
+            ], 422);
         }
         catch (Exception $exception) {
             return response()->json([
