@@ -12,6 +12,7 @@ use App\Repositories\Contracts\AuthRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
+use Illuminate\Validation\ValidationException;
 
 class AuthRepository implements AuthRepositoryInterface
 {
@@ -55,6 +56,7 @@ class AuthRepository implements AuthRepositoryInterface
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
@@ -65,7 +67,7 @@ class AuthRepository implements AuthRepositoryInterface
             'password' => 'required',
         ]);
 
-        $user = User::where('username', $request->username)->orWhere('email', $request->username);
+        $user = User::whereUser($request->username);
 
         if (
             !$user->exists() ||
@@ -148,14 +150,21 @@ class AuthRepository implements AuthRepositoryInterface
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function resendCode(Request $request): array
     {
         $request->validate([
-            'username' => ['required', 'exists:users,username'],
-            'prefersSMS' => ['required', 'boolean'],
+            'username' => ['required'],
+            'prefers_sms' => ['required', 'boolean'],
         ]);
+
+        if (!User::whereUser($request->username)->exists()) {
+            throw ValidationException::withMessages([
+                'username' => 'User does not exist.'
+            ]);
+        }
 
         $user = User::firstWhere('username', $request->username);
         
@@ -163,9 +172,9 @@ class AuthRepository implements AuthRepositoryInterface
             throw new Exception('You have already verified your account.', 409);
         }
 
-        $type = $request->prefersSMS ? 'phone number' : 'email address';
+        $type = $request->prefers_sms ? 'phone number' : 'email address';
 
-        $this->generateVerificationCode($user, $request->prefersSMS);
+        $this->generateVerificationCode($user, $request->prefers_sms);
 
         return [
             'message' => "A verification code has been sent your {$type}."
@@ -177,6 +186,7 @@ class AuthRepository implements AuthRepositoryInterface
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function sendPasswordResetLink(Request $request): array
