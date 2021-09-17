@@ -79,9 +79,16 @@ class AuthController extends Controller
      */
     public function verify(Request $request)
     {
-        $data = $this->authRepository->verifyUser($request);
+        try {
+            $data = $this->authRepository->verifyUser($request);
 
-        return response()->json($data);
+            return response()->json($data);
+        }
+        catch (Exception $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], $exception->getCode());
+        }
     }
 
     /**
@@ -94,9 +101,16 @@ class AuthController extends Controller
      */
     public function resendVerificationCode(ResendCodeRequest $request)
     {
-        $data = $this->authRepository->resendCode($request);
+        try {
+            $data = $this->authRepository->resendCode($request);
 
-        return response()->json($data);
+            return response()->json($data);
+        }
+        catch (Exception $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], $exception->getCode());
+        }
     }
 
     /**
@@ -109,9 +123,16 @@ class AuthController extends Controller
      */
     public function requestPasswordReset(Request $request)
     {
-        $data = $this->authRepository->sendPasswordResetLink($request);
+        try {
+            $data = $this->authRepository->sendPasswordResetLink($request);
 
-        return response()->json($data);
+            return response()->json($data);
+        }
+        catch (Exception $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], $exception->getCode());
+        }
     }
 
      /**
@@ -124,8 +145,15 @@ class AuthController extends Controller
      */
     public function resetPassword(ResetPasswordRequest $request)
     {
-        $data = $this->authRepository->resetPassword($request);
+        try {
+            $data = $this->authRepository->resetPassword($request);
 
-        return response()->json($data);
+            return response()->json($data);
+        }
+        catch (Exception $exception) {
+            return response()->json([
+                'message' => $exception->getMessage()
+            ], $exception->getCode());
+        }
     }
 }
