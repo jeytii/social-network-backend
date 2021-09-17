@@ -5,11 +5,8 @@ namespace App\Providers;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Database\Eloquent\Relations\{
-    Relation,
-    HasMany,
-    BelongsToMany
-};
+use Illuminate\Database\Eloquent\Relations\Relation;
+use App\Mixins\{UserMixin, PaginationMixin};
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,61 +27,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Builder::macro('searchUser', fn(string $query) => (
-            $this->where('name', 'ilike', "%$query%")
-                ->orWhere('username', 'like', "%$query%")
-        ));
+        Builder::mixin(new UserMixin);
+        Builder::mixin(new PaginationMixin);
 
-        Builder::macro('withUser', fn() => (
-            $this->with('user:id,slug,name,username,gender,image_url')
-        ));
+        Relation::mixin(new UserMixin);
+        Relation::mixin(new PaginationMixin);
 
-        Builder::macro('withPaginated', function(int $perPage = 20, array $columns = ['*']) {
-            $data = $this->paginate($perPage, $columns);
-
-            $hasMore = $data->hasMorePages();
-            $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
-
-            return [
-                'data' => $data->items(),
-                'has_more' => $hasMore,
-                'next_offset' => $nextOffset,
-            ];
-        });
-
-        HasMany::macro('withPaginated', function(int $perPage = 20, array $columns = ['*']) {
-            $data = $this->paginate($perPage, $columns);
-
-            $hasMore = $data->hasMorePages();
-            $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
-
-            return [
-                'data' => $data->items(),
-                'has_more' => $hasMore,
-                'next_offset' => $nextOffset,
-            ];
-        });
-
-        BelongsToMany::macro('withPaginated', function(int $perPage = 20, array $columns = ['*']) {
-            $data = $this->paginate($perPage, $columns);
-
-            $hasMore = $data->hasMorePages();
-            $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
-
-            return [
-                'data' => $data->items(),
-                'has_more' => $hasMore,
-                'next_offset' => $nextOffset,
-            ];
-        });
-
-        QueryBuilder::macro('searchUser', fn(string $query) => (
-            $this->where('name', 'ilike', "%$query%")
-                ->orWhere('username', 'like', "%$query%")
-        ));
-
-        Relation::macro('withUser', fn() => (
-            $this->with('user:id,slug,name,username,gender,image_url')
-        ));
+        QueryBuilder::mixin(new UserMixin);
     }
 }
