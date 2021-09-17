@@ -2,8 +2,12 @@
 
 namespace App\Repositories\Contracts;
 
-use App\Http\Requests\{RegistrationRequest, ResetPasswordRequest};
 use Illuminate\Http\Request;
+use App\Http\Requests\{
+    RegistrationRequest,
+    ResendCodeRequest,
+    ResetPasswordRequest
+};
 
 interface AuthRepositoryInterface
 {
@@ -40,12 +44,12 @@ interface AuthRepositoryInterface
     /**
      * Resend another verification code to the user.
      * 
-     * @param \Illuminate\Http\Request  $request
+     * @param \App\Http\Requests\ResendCodeRequest  $request
      * @return array
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function resendCode(Request $request): array;
+    public function resendCode(ResendCodeRequest $request): array;
 
     /**
      * Send a password-reset request link to the user.

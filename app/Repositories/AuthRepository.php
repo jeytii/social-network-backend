@@ -6,13 +6,12 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Hash, Password};
 use Illuminate\Auth\Events\{Login, Registered, PasswordReset};
-use App\Http\Requests\{RegistrationRequest, ResetPasswordRequest};
+use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
 use App\Notifications\SendVerificationCode;
 use App\Repositories\Contracts\AuthRepositoryInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
-use Illuminate\Validation\ValidationException;
 
 class AuthRepository implements AuthRepositoryInterface
 {
@@ -148,25 +147,14 @@ class AuthRepository implements AuthRepositoryInterface
     /**
      * Resend another verification code to the user.
      * 
-     * @param \Illuminate\Http\Request  $request
+     * @param \App\Http\Requests\ResendCodeRequest  $request
      * @return array
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function resendCode(Request $request): array
+    public function resendCode(ResendCodeRequest $request): array
     {
-        $request->validate([
-            'username' => ['required'],
-            'prefers_sms' => ['required', 'boolean'],
-        ]);
-
-        if (!User::whereUser($request->username)->exists()) {
-            throw ValidationException::withMessages([
-                'username' => 'User does not exist.'
-            ]);
-        }
-
-        $user = User::firstWhere('username', $request->username);
+        $user = User::whereUser($request->username)->first();
         
         if ($user->hasVerifiedEmail()) {
             throw new Exception('You have already verified your account.', 409);

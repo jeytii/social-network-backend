@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
 use Illuminate\Http\Request;
-use App\Repositories\Contracts\AuthRepositoryInterface;
-use App\Http\Requests\{RegistrationRequest, ResetPasswordRequest};
+use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
 use Illuminate\Auth\Access\AuthorizationException;
+use App\Repositories\Contracts\AuthRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Exception;
 
 class AuthController extends Controller
 {
@@ -87,12 +87,12 @@ class AuthController extends Controller
     /**
      * Resend another verification code to the user.
      * 
-     * @param \Illuminate\Http\Request  $request
+     * @param \App\Http\Requests\ResendCodeRequest  $request
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function resendVerificationCode(Request $request)
+    public function resendVerificationCode(ResendCodeRequest $request)
     {
         $data = $this->authRepository->resendCode($request);
 
