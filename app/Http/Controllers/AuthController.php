@@ -29,7 +29,9 @@ class AuthController extends Controller
      *
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @throws \Illuminate\Validation\ValidationException
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function login(Request $request)
     {
@@ -72,6 +74,7 @@ class AuthController extends Controller
      * 
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function verify(Request $request)
@@ -86,6 +89,7 @@ class AuthController extends Controller
      * 
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function resendVerificationCode(Request $request)
@@ -100,6 +104,7 @@ class AuthController extends Controller
      * 
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function requestPasswordReset(Request $request)
@@ -114,6 +119,7 @@ class AuthController extends Controller
      * 
      * @param \App\Http\Requests\ResetPasswordRequest  $request
      * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function resetPassword(ResetPasswordRequest $request)

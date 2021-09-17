@@ -12,6 +12,7 @@ interface AuthRepositoryInterface
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException 
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
@@ -41,6 +42,7 @@ interface AuthRepositoryInterface
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function resendCode(Request $request): array;
@@ -50,6 +52,7 @@ interface AuthRepositoryInterface
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
     public function sendPasswordResetLink(Request $request): array;
