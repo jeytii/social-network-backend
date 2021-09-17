@@ -46,16 +46,12 @@ test('Should return the profile data with followers count and following count', 
 test('Should throw validation errors if input values are incorrect in update profile form', function() {
     $this->response
         ->putJson('/api/profile/update', [
-            'birth_day' => 32,
             'bio' => $this->faker->paragraphs(5, true)
         ])
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
                 'name' => ['The name field is required.'],
-                'birth_month' => ['The birth month field is required.'],
-                'birth_day' => ['Birth day must be between 1 and 31 only.'],
-                'birth_year' => ['The birth year field is required.'],
                 'bio' => ['The number of characters exceeds the maximum length.'],
             ]
         ]);
@@ -77,27 +73,22 @@ test('Can\'t update the birth date that has been already set', function() {
 });
 
 test('Can update the profile successfully', function() {
-    $user = User::factory()->create([
-        'birth_month' => null,
-        'birth_day' => null,
-        'birth_year' => null,
-    ]);
+    $user = User::factory()->create();
 
     $this->actingAs($user)
         ->putJson('/api/profile/update', [
             'name' => 'John Doe',
-            'birth_month' => 'December',
-            'birth_day' => 10,
-            'birth_year' => 1990,
             'location' => 'Philippines',
             'bio' => 'Hello World',
         ])
         ->assertOk();
     
-    $updatedUser = User::find($user->id);
+    $updatedUser = User::where([
+        ['id', '=', $user->id],
+        ['name', '=', 'John Doe'],
+        ['location', '=', 'Philippines'],
+        ['bio', '=', 'Hello World'],
+    ]);
 
-    $this->assertTrue($updatedUser->name === 'John Doe');
-    $this->assertTrue($updatedUser->birth_date === 'December 10, 1990');
-    $this->assertTrue($updatedUser->location === 'Philippines');
-    $this->assertTrue($updatedUser->bio === 'Hello World');
+    $this->assertTrue($updatedUser->exists());
 });
