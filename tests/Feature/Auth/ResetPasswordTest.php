@@ -1,7 +1,5 @@
 <?php
 
-namespace Tests\Feature\Auth;
-
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\{DB, Event, Hash, Notification};
@@ -16,7 +14,7 @@ afterAll(function() {
 test('Should throw an error if all inputs are not set', function() {
     Event::fake([ PasswordReset::class ]);
 
-    $this->putJson('/api/reset-password')
+    $this->putJson('/reset-password')
         ->assertStatus(422)
         ->assertJsonValidationErrors(['email', 'password', 'token']);
     
@@ -28,14 +26,14 @@ test('Should throw an error if all inputs are not set', function() {
 
 //     $user = User::factory()->create();
     
-//     $this->postJson('/api/forgot-password', ['email' => $user->email])
+//     $this->postJson('/forgot-password', ['email' => $user->email])
 //         ->assertOk();
     
 //     Event::fake([ PasswordReset::class ]);
 
 //     $passwordReset = DB::table('password_resets')->where('email', $user->email)->first();
     
-//     $this->putJson('/api/reset-password', [
+//     $this->putJson('/reset-password', [
 //         'email' => $passwordReset->email,
 //         'password' => 'P@ssword12345',
 //         'password_confirmation' => 'P@ssword12345',
