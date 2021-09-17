@@ -11,19 +11,19 @@
         <testsuite name="Feature">
             <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
-        <testsuite name="Feature.Auth">
+        <testsuite name="Auth">
             <directory suffix="Test.php">./tests/Feature/Auth</directory>
         </testsuite>
-        <testsuite name="Feature.Api">
+        <testsuite name="API">
             <directory suffix="Test.php">./tests/Feature/API</directory>
         </testsuite>
-        <testsuite name="Feature.Api.User">
+        <testsuite name="API.User">
             <directory suffix="Test.php">./tests/Feature/API/User</directory>
         </testsuite>
-        <testsuite name="Feature.Api.Post">
+        <testsuite name="API.Post">
             <directory suffix="Test.php">./tests/Feature/API/Post</directory>
         </testsuite>
-        <testsuite name="Feature.Api.Comment">
+        <testsuite name="API.Comment">
             <directory suffix="Test.php">./tests/Feature/API/Comment</directory>
         </testsuite>
     </testsuites>
