@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Notifications\UserFollowed;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -88,6 +89,8 @@ class UserController extends Controller
         $this->authorize('follow', $user);
         
         $request->user()->following()->sync([$user->id]);
+
+        $user->notify(new UserFollowed($request->user()));
 
         return response()->json(['followed' => true]);
     }
