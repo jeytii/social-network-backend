@@ -1,7 +1,8 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Notification};
+use App\Notifications\UserFollowed;
 
 beforeAll(function() {
     User::factory(50)->create();
@@ -10,11 +11,14 @@ beforeAll(function() {
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
+    DB::table('notifications')->truncate();
 });
 
 test('Can follow a user', function() {
-    $userToFollow = User::find(2);
+    Notification::fake();
 
+    $userToFollow = User::find(2);
+    
     $this->response
         ->postJson("/api/users/follow/{$userToFollow->slug}")
         ->assertOk()
@@ -22,9 +26,21 @@ test('Can follow a user', function() {
 
     $this->assertTrue((bool) $this->user->following()->find($userToFollow->id));
     $this->assertTrue((bool) $userToFollow->followers()->find($this->user->id));
+
+    Notification::assertSentTo(
+        $userToFollow,
+        UserFollowed::class,
+        fn($notification, $channels, $notifiable) => (
+            $notification->user->id === $this->user->id &&
+            $channels === ['database', 'broadcast'] &&
+            $notifiable->id === $userToFollow->id
+        )
+    );
 });
 
 test('Can\'t follow a user that\'s already followed', function() {
+    Notification::fake();
+
     // Suppose the auth user already follows another user with the ID of 2 based on the test above.
     $userToFollow = User::find(2);
 
@@ -34,6 +50,8 @@ test('Can\'t follow a user that\'s already followed', function() {
 
     $this->assertTrue($this->user->following()->where('id', 2)->count() === 1);
     $this->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
+
+    Notification::assertNothingSent();
 });
 
 test('Can unfollow a user', function() {
