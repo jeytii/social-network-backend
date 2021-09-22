@@ -2,9 +2,9 @@
 
 return [
     'notifications' => [
-        'user_follow' => 1,
-        'post_like' => 2,
-        'comment_on_post' => 3,
-        'op_comment' => 4,
+        'user_followed' => 1,
+        'post_liked' => 2,
+        'commented_on_post' => 3,
+        'op_commented' => 4,
     ]
 ];
