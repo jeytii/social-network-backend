@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use Illuminate\Support\Facades\{DB, Notification};
-use App\Notifications\UserFollowed;
+use App\Notifications\NotifyUponAction;
 
 beforeAll(function() {
     User::factory(50)->create();
@@ -10,8 +10,8 @@ beforeAll(function() {
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
+    
     DB::table('users')->truncate();
-    DB::table('notifications')->truncate();
 });
 
 test('Can follow a user', function() {
@@ -29,11 +29,10 @@ test('Can follow a user', function() {
 
     Notification::assertSentTo(
         $userToFollow,
-        UserFollowed::class,
-        fn($notification, $channels, $notifiable) => (
+        NotifyUponAction::class,
+        fn($notification) => (
             $notification->user->id === $this->user->id &&
-            $channels === ['database', 'broadcast'] &&
-            $notifiable->id === $userToFollow->id
+            $notification->actionType === config('constants.notifications.user_followed')
         )
     );
 });

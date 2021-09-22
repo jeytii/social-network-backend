@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrUpdatePostRequest;
+use App\Notifications\NotifyUponAction;
 
 class PostController extends Controller
 {
@@ -105,6 +106,11 @@ class PostController extends Controller
         $this->authorize('like', $post);
 
         $request->user()->likes()->attach($post->id);
+        
+        $post->user->notify(new NotifyUponAction(
+            $request->user(),
+            config('constants.notifications.post_liked')
+        ));
 
         return response()->json([
             'liked' => true,

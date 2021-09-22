@@ -1,22 +1,26 @@
 <?php
 
-use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use App\Models\{User, Post};
+use App\Notifications\NotifyUponAction;
+use Illuminate\Support\Facades\{DB, Notification};
 
 beforeAll(function() {
     User::factory(3)->hasPosts(5)->create();
 });
 
 beforeEach(function() {
-    $this->post = DB::table('posts')->find(10);
+    $this->post = Post::find(10);
 });
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
+
     DB::table('users')->truncate();
 });
 
 test('Can like a post', function() {
+    Notification::fake();
+
     $this->response
         ->postJson("/api/posts/{$this->post->slug}/like")
         ->assertOk()
@@ -25,6 +29,15 @@ test('Can like a post', function() {
             'message' => 'Post successfully liked.',
         ]);
 
+    Notification::assertSentTo(
+        $this->post->user,
+        NotifyUponAction::class,
+        fn($notification) => (
+            $notification->user->id === $this->user->id &&
+            $notification->actionType === config('constants.notifications.post_liked')
+        )
+    );
+
     $this->assertDatabaseHas('likes', [
         'user_id' => $this->user->id,
         'post_id' => $this->post->id
@@ -32,10 +45,14 @@ test('Can like a post', function() {
 });
 
 test('Can\'t like a post more than once', function() {
+    Notification::fake();
+
     // Suppose the user has already liked the selected post based from the test above.
     $this->response
         ->postJson("/api/posts/{$this->post->slug}/like")
         ->assertForbidden();
+
+    Notification::assertNothingSent();
 
     $this->assertDatabaseCount('likes', 1);
 });

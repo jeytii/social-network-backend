@@ -8,21 +8,35 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class UserFollowed extends Notification
+class NotifyUponAction extends Notification
 {
     use Queueable;
 
+    /**
+     * The user that receives the notification.
+     * 
+     * @var \App\Models\User
+     */
     public $user;
+
+    /**
+     * The type of action.
+     * 
+     * @var int
+     */
+    public $actionType;
 
     /**
      * Create a new notification instance.
      *
      * @param \App\Models\User  $user
+     * @param int  $actionType
      * @return void
      */
-    public function __construct(User $user)
+    public function __construct(User $user, int $actionType)
     {
         $this->user = $user;
+        $this->actionType = $actionType;
     }
 
     /**
@@ -46,7 +60,7 @@ class UserFollowed extends Notification
     {
         return [
             'user' => $this->user->only(['name', 'username', 'gender', 'image_url']),
-            'action' => config('constants.notifications.user_follow'),
+            'action' => $this->actionType,
         ];
     }
 
@@ -60,7 +74,7 @@ class UserFollowed extends Notification
     {
         return new BroadcastMessage([
             'user' => $this->user->only(['name', 'username', 'gender', 'image_url']),
-            'action' => config('constants.notifications.user_follow'),
+            'action' => $this->actionType,
         ]);
     }
 
@@ -71,6 +85,6 @@ class UserFollowed extends Notification
      */
     public function broadcastType()
     {
-        return 'users.follow';
+        return 'action.notification';
     }
 }
