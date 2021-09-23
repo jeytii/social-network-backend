@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\{Post, Comment};
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrUpdateCommentRequest;
+use App\Notifications\NotifyUponAction;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CommentController extends Controller
@@ -45,11 +46,16 @@ class CommentController extends Controller
             $comment = $request->user()
                         ->comments()
                         ->create([
-                            'post_id' => $post->first()->id,
+                            'post_id' => $post->id,
                             'body' => $request->body,
                         ])
                         ->withUser()
                         ->first();
+
+            $post->user->notify(new NotifyUponAction(
+                $request->user(),
+                config('constants.notifications.commented_on_post')
+            ));
 
             return response()->json(
                 ['data' => compact('comment')],
