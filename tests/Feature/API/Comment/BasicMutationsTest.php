@@ -2,11 +2,10 @@
 
 use App\Models\User;
 use App\Notifications\NotifyUponAction;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\{DB, Notification};
 
 beforeAll(function() {
-    User::factory(2)->hasPosts(3)->hasComments(3)->create();
+    User::factory(6)->hasPosts(3)->hasComments(3)->create();
 });
 
 afterAll(function() {
@@ -41,7 +40,7 @@ test('Should not create a comment if body length is greater than maximum length'
 test('Should successfully comment on a post', function() {
     Notification::fake();
 
-    $user = User::find(2);
+    $user = User::has('posts')->where('id', '!=', $this->user->id)->first();
     $slug = $user->posts()->first()->slug;
     
     $this->response
@@ -77,6 +76,23 @@ test('Should successfully comment on a post', function() {
             $notifiable->id === $user->id
         )
     );
+});
+
+test('Should notify the mentioned users along with OP upon commenting', function() {
+    Notification::fake();
+
+    $user = User::has('posts')->where('id', '!=', $this->user->id)->first();
+    $slug = $user->posts()->first()->slug;
+    $exceptIds = [$this->user->id, $user->id];
+    $usernames = User::whereNotIn('id', $exceptIds)->limit(3)->pluck('username');
+    
+    $this->response
+        ->postJson("/api/comments?uid={$slug}", [
+            'body' => "Shoutout to @{$usernames[0]}, @{$usernames[1]}, and @{$usernames[2]}"
+        ])
+        ->assertCreated();
+
+    Notification::assertTimesSent(4, NotifyUponAction::class);
 });
 
 test('Should successfully update a comment', function() {
