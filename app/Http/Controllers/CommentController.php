@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Post, Comment};
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrUpdateCommentRequest;
+use App\Models\{User, Post, Comment};
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\NotifyUponAction;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -42,6 +44,9 @@ class CommentController extends Controller
     {
         try {
             $post = Post::where('slug', $request->query('uid'))->firstOrFail();
+            $mentions = Str::of($request->body)->matchAll('/@[a-zA-Z0-9_]+/');
+            $usernames = $mentions->map(fn($mention) => Str::replace('@', '', $mention))->toArray();
+            $mentionedUsers = User::whereIn('username', $usernames)->get();
         
             $comment = $request->user()
                         ->comments()
@@ -52,9 +57,16 @@ class CommentController extends Controller
                         ->withUser()
                         ->first();
 
-            $post->user->notify(new NotifyUponAction(
+            if (!$mentionedUsers->contains('username', $post->user->username)) {
+                $post->user->notify(new NotifyUponAction(
+                    $request->user(),
+                    config('constants.notifications.commented_on_post')
+                ));
+            }
+            
+            Notification::send($mentionedUsers, new NotifyUponAction(
                 $request->user(),
-                config('constants.notifications.commented_on_post')
+                config('constants.notifications.mentioned_on_comment')
             ));
 
             return response()->json(
@@ -79,7 +91,8 @@ class CommentController extends Controller
     {
         $this->authorize('update', $comment);
         
-        $request->user()->comments()
+        $request->user()
+            ->comments()
             ->find($comment->id)
             ->update($request->only('body'));
 
