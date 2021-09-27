@@ -1,19 +1,18 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{DB, Hash, Password};
-use Illuminate\Auth\Events\{Login, Registered, PasswordReset};
 use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
+use Illuminate\Support\Facades\{DB, Hash, Password};
 use App\Notifications\SendVerificationCode;
-use App\Repositories\Contracts\AuthRepositoryInterface;
+use Illuminate\Auth\Events\{Login, Registered, PasswordReset};
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
-class AuthRepository implements AuthRepositoryInterface
+class AuthService
 {
     /**
      * Give access to a user.
@@ -25,8 +24,9 @@ class AuthRepository implements AuthRepositoryInterface
     private function authenticateUser(User $user, string $message): array
     {
         $token = $user->createToken($user->username)->plainTextToken;
+        $status = 200;
 
-        return compact('user', 'token', 'message');
+        return compact('status', 'message', 'user', 'token');
     }
 
     /**
@@ -34,20 +34,24 @@ class AuthRepository implements AuthRepositoryInterface
      * 
      * @param \App\Models\User  $user
      * @param bool  $prefersSMS
-     * @return void
+     * @return string
      */
-    private function generateVerificationCode(User $user, bool $prefersSMS)
+    private function sendVerificationCode(User $user, bool $prefersSMS): string
     {
         $code = random_int(100000, 999999);
 
-        DB::table('verifications')->insert([
-            'user_id' => $user->id,
-            'code' => $code,
-            'prefers_sms' => $prefersSMS,
-            'expiration' => now()->addMinutes(10),
-        ]);
+        DB::table('verifications')->updateOrInsert(
+            ['user_id' => $user->id],
+            [
+                'code' => $code,
+                'prefers_sms' => $prefersSMS,
+                'expiration' => now()->addMinutes(10),
+            ]
+        );
 
         $user->notify(new SendVerificationCode($code, $prefersSMS));
+
+        return $prefersSMS ? 'phone number' : 'email address';
     }
 
     /**
@@ -59,7 +63,7 @@ class AuthRepository implements AuthRepositoryInterface
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function logInUser(Request $request): array
+    public function login(Request $request): array
     {
         $request->validate([
             'username' => 'required',
@@ -79,12 +83,9 @@ class AuthRepository implements AuthRepositoryInterface
             throw new AuthorizationException('Your account is not yet verified.', 401);
         }
 
-        $user = $user->first(['id', 'name', 'username', 'gender', 'image_url'])
-                    ->setHidden(['is_followed', 'is_self']);
+        event(new Login('api', $user->firstWithBasicOnly(), true));
 
-        event(new Login('api', $user, true));
-
-        return $this->authenticateUser($user, 'Login successful');
+        return $this->authenticateUser($user->firstWithBasicOnly(), 'Login successful');
     }
 
     /**
@@ -94,20 +95,22 @@ class AuthRepository implements AuthRepositoryInterface
      * @return array
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function registerUser(RegistrationRequest $request): array
+    public function register(RegistrationRequest $request): array
     {
         $body = $request->only([
-            'name', 'email', 'username', 'phone_number', 'gender',
-            'birth_month', 'birth_day', 'birth_year'
+            'name', 'email', 'username', 'phone_number',
+            'gender', 'birth_month', 'birth_day', 'birth_year'
         ]);
         $password = Hash::make($request->password);
         $user = User::create(array_merge($body, compact('password')));
 
         event(new Registered($user));
-        $this->generateVerificationCode($user, $request->verification == 1);
+        
+        $type = $this->sendVerificationCode($user, $request->prefers_sms_verification);
 
         return [
-            'message' => 'Account successfully created. Please check for an email that was to your email address for verification.'
+            'status' => 200,
+            'message' => "Account successfully created. Please enter the verification code that was sent to your {$type}.",
         ];
     }
 
@@ -119,7 +122,7 @@ class AuthRepository implements AuthRepositoryInterface
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function verifyUser(Request $request): array
+    public function verify(Request $request): array
     {
         $request->validate([
             'code' => ['required', 'exists:verifications,code']
@@ -140,7 +143,8 @@ class AuthRepository implements AuthRepositoryInterface
         $user->markEmailAsVerified();
 
         return [
-            'message' => 'You have successfully verified your account.'
+            'status' => 200,
+            'message' => 'You have successfully verified your account.',
         ];
     }
 
@@ -152,7 +156,7 @@ class AuthRepository implements AuthRepositoryInterface
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function resendCode(ResendCodeRequest $request): array
+    public function resendVerificationCode(ResendCodeRequest $request): array
     {
         $user = User::whereUser($request->username)->first();
         
@@ -160,12 +164,11 @@ class AuthRepository implements AuthRepositoryInterface
             throw new Exception('You have already verified your account.', 409);
         }
 
-        $type = $request->prefers_sms ? 'phone number' : 'email address';
-
-        $this->generateVerificationCode($user, $request->prefers_sms);
+        $type = $this->sendVerificationCode($user, $request->prefers_sms_verification);
 
         return [
-            'message' => "A verification code has been sent your {$type}."
+            'status' => 200,
+            'message' => "A verification code has been sent your {$type}.",
         ];
     }
 
@@ -187,10 +190,11 @@ class AuthRepository implements AuthRepositoryInterface
             throw new Exception('You have already verified your account.', 409);
         }
 
-        Password::sendResetLink(['email' => $request->email]);
+        Password::sendResetLink($request->only('email'));
 
         return [
-            'message' => 'A password-reset email was successfully sent to your email address.'
+            'status' => 200,
+            'message' => 'Please check for the link that has been sent to your email address.',
         ];
     }
 
@@ -204,9 +208,7 @@ class AuthRepository implements AuthRepositoryInterface
      */
     public function resetPassword(ResetPasswordRequest $request): array
     {
-        $user = User::where('email', $request->email)
-                    ->first(['id', 'name', 'username', 'gender', 'image_url'])
-                    ->setHidden(['is_followed', 'is_self']);
+        $user = User::where('email', $request->email)->firstWithBasicOnly();
 
         $status = Password::reset($request->validated(), function($user, $password) {
             $user->forceFill([
