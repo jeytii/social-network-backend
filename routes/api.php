@@ -5,6 +5,7 @@ use App\Http\Controllers\{
     UserController,
     PostController,
     CommentController,
+    NotificationController,
     ProfileController
 };
 
@@ -52,4 +53,8 @@ Route::prefix('profile')->group(function() {
         ->where('section', 'posts|likes|comments|bookmarks|followers|following');
     Route::get('{username}', [ProfileController::class, 'getInfo']);
     Route::put('update', [ProfileController::class, 'update']);
+});
+
+Route::prefix('notifications')->name('notifications.')->group(function() {
+    Route::put('/peek', [NotificationController::class, 'peek'])->name('peek');
 });
