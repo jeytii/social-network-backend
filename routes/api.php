@@ -56,6 +56,7 @@ Route::prefix('profile')->group(function() {
 });
 
 Route::prefix('notifications')->name('notifications.')->group(function() {
+    Route::get('/', [NotificationController::class, 'get'])->name('get');
     Route::put('/peek', [NotificationController::class, 'peek'])->name('peek');
     Route::put('/{id}/read', [NotificationController::class, 'read'])->name('read');
     Route::put('/read/all', [NotificationController::class, 'readAll'])->name('read.all');

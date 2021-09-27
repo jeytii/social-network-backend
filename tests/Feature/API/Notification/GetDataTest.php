@@ -30,28 +30,18 @@ afterAll(function() {
     DB::table('notifications')->truncate();
 });
 
-test('Should successfully peek at new notifications', function() {
+test('Should return a paginated list of notifications', function() {
     $this->response
-        ->putJson(route('notifications.peek'))
-        ->assertOk();
-
-    $this->assertTrue($this->user->notifications()->where('peeked_at', null)->count() === 0);
-});
-
-test('Should successfully marked a specific notification as read', function() {
-    $notificationId = $this->user->notifications()->first()->id;
-
-    $this->response
-        ->putJson(route('notifications.read', ['id' => $notificationId]))
-        ->assertOk();
-
-    $this->assertTrue($this->user->notifications()->where('read_at', '!=', null)->count() === 1);
-});
-
-test('Should successfully marked all notifications as read', function() {
-    $this->response
-        ->putJson(route('notifications.read.all'))
-        ->assertOk();
-
-    $this->assertTrue($this->user->unreadNotifications()->count() === 0);
+        ->getJson(route('notifications.get'))
+        ->assertOk()
+        ->assertJsonCount(4, 'data')
+        ->assertJsonStructure([
+            'data' => [
+                '*' => ['data', 'read_at']
+            ],
+            'has_more',
+            'next_offset',
+            'status',
+            'message',
+        ]);
 });
