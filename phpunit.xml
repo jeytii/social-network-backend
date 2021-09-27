@@ -26,6 +26,9 @@
         <testsuite name="API.Comment">
             <directory suffix="Test.php">./tests/Feature/API/Comment</directory>
         </testsuite>
+        <testsuite name="API.Notification">
+            <directory suffix="Test.php">./tests/Feature/API/Notification</directory>
+        </testsuite>
     </testsuites>
     <coverage processUncoveredFiles="true">
         <include>
