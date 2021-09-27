@@ -15,7 +15,7 @@ beforeAll(function() {
         'notifiable_type' => get_class(new User),
         'notifiable_id' => User::first()->id,
         'data' => json_encode([
-            'user' => $user->only(['name', 'username', 'gender', 'image_url']),
+            'user' => $user->only(config('api.response.user.basic')),
             'action' => $action,
         ]),
     ])->toArray();

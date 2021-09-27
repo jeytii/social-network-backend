@@ -56,13 +56,7 @@ test('Should successfully comment on a post', function() {
                     'timestamp',
                     'is_own_comment',
                     'is_edited',
-                    'user' => [
-                        'slug',
-                        'name',
-                        'username',
-                        'gender',
-                        'image_url'
-                    ]
+                    'user' => array_merge(config('api.response.user.basic'), ['slug'])
                 ],
             ]
         ]);
@@ -72,7 +66,7 @@ test('Should successfully comment on a post', function() {
         NotifyUponAction::class,
         fn($notification, $channels, $notifiable) => (
             $notification->user->id === $this->user->id &&
-            $notification->actionType === config('constants.notifications.commented_on_post') &&
+            $notification->actionType === config('api.notifications.commented_on_post') &&
             $notifiable->id === $user->id
         )
     );

@@ -10,7 +10,10 @@ beforeAll(function() {
 });
 
 beforeEach(function() {
-    $this->columns = ['slug', 'name', 'username', 'gender', 'image_url', 'is_followed', 'is_self'];
+    $this->columns = array_merge(
+        config('api.response.user.basic'),
+        ['slug', 'is_followed', 'is_self']
+    );
 });
 
 afterAll(function() {

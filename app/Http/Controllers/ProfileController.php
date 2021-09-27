@@ -17,9 +17,10 @@ class ProfileController extends Controller
      */
     private function getConnections(User $user, string $type)
     {
-        return $user->{$type}()->withPaginated(20, [
-            'slug', 'name', 'username', 'gender', 'image_url'
-        ]);
+        return $user->{$type}()->withPaginated(
+            20,
+            array_merge(config('api.response.user.basic'), ['slug'])
+        );
     }
 
     /**

@@ -59,7 +59,7 @@ class NotifyUponAction extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'user' => $this->user->only(['name', 'username', 'gender', 'image_url']),
+            'user' => $this->user->only(config('api.response.user.basic')),
             'action' => $this->actionType,
         ];
     }
@@ -73,7 +73,7 @@ class NotifyUponAction extends Notification
     public function toBroadcast($notifiable)
     {
         return new BroadcastMessage([
-            'user' => $this->user->only(['name', 'username', 'gender', 'image_url']),
+            'user' => $this->user->only(config('api.response.user.basic')),
             'action' => $this->actionType,
         ]);
     }
