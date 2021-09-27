@@ -6,6 +6,18 @@ use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    public function get(Request $request)
+    {
+        $data = $request->user()->notifications()
+                    ->orderByDesc('created_at')
+                    ->withPaginated(20, ['data', 'read_at']);
+
+        return response()->json(array_merge($data, [
+            'status' => 200,
+            'message' => 'Successfully retrieved notifications.',
+        ]));
+    }
+
     public function peek(Request $request)
     {
         $request->user()->notifications()
