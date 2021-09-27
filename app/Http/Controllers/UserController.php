@@ -15,7 +15,7 @@ class UserController extends Controller
      *
      * @var array
      */
-    private $basic_columns = ['slug', 'name', 'username', 'gender', 'image_url'];
+    private $basic_columns = array_merge(config('api.response.user.basic'), ['slug']);
 
     /**
      * Get paginated list of user models.
@@ -92,7 +92,7 @@ class UserController extends Controller
 
         $user->notify(new NotifyUponAction(
             $request->user(),
-            config('constants.notifications.user_followed')
+            config('api.notifications.user_followed')
         ));
 
         return response()->json(['followed' => true]);

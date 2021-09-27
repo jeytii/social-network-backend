@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class CreateOrUpdatePostRequest extends FormRequest
+class CreateOrUpdateLongTextRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,7 @@ class CreateOrUpdatePostRequest extends FormRequest
     public function rules()
     {
         return [
-            'body' => ['required', 'string', 'max:180'],
+            'body' => ['required', 'string', 'max:' . config('api.max_lengths.long_text')],
         ];
     }
 
@@ -36,7 +36,7 @@ class CreateOrUpdatePostRequest extends FormRequest
     public function messages()
     {
         return [
-            'required' => 'Post should not be blank.',
+            'required' => 'Should not be blank.',
             'max' => 'Maximum character length is :max.',
         ];
     }

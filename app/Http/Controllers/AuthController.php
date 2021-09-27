@@ -4,40 +4,28 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
+use App\Services\AuthService;
 use Illuminate\Auth\Access\AuthorizationException;
-use App\Repositories\Contracts\AuthRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Exception;
 use Illuminate\Validation\ValidationException;
+use Exception;
 
 class AuthController extends Controller
 {
-    protected $authRepository;
-
-    /**
-     * Create a new event instance.
-     *
-     * @param  \App\Repositories\Contracts\AuthRepositoryInterface  $authRepository
-     * @return void
-     */
-    public function __construct(AuthRepositoryInterface $authRepository)
-    {
-        $this->authRepository = $authRepository;
-    }
-
     /**
      * Register any application services.
      *
      * @param \Illuminate\Http\Request  $request
+     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function login(Request $request)
+    public function login(Request $request, AuthService $authService)
     {
         try {
-            $data = $this->authRepository->logInUser($request);
+            $data = $authService->login($request);
 
             return response()->json($data);
         }
@@ -61,11 +49,12 @@ class AuthController extends Controller
      * Register a user.
      * 
      * @param \App\Http\Requests\RegistrationRequest  $request
+     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function register(RegistrationRequest $request) {
-        $data = $this->authRepository->registerUser($request);
+    public function register(RegistrationRequest $request, AuthService $authService) {
+        $data = $authService->register($request);
 
         return response()->json($data, 201);
     }
@@ -74,14 +63,15 @@ class AuthController extends Controller
      * Verify a user.
      * 
      * @param \Illuminate\Http\Request  $request
+     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function verify(Request $request)
+    public function verify(Request $request, AuthService $authService)
     {
         try {
-            $data = $this->authRepository->verifyUser($request);
+            $data = $authService->verify($request);
 
             return response()->json($data);
         }
@@ -96,14 +86,15 @@ class AuthController extends Controller
      * Resend another verification code to the user.
      * 
      * @param \App\Http\Requests\ResendCodeRequest  $request
+     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function resendVerificationCode(ResendCodeRequest $request)
+    public function resendVerificationCode(ResendCodeRequest $request, AuthService $authService)
     {
         try {
-            $data = $this->authRepository->resendCode($request);
+            $data = $authService->resendVerificationCode($request);
 
             return response()->json($data);
         }
@@ -118,14 +109,15 @@ class AuthController extends Controller
      * Send a password-reset request link to the user.
      * 
      * @param \Illuminate\Http\Request  $request
+     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function requestPasswordReset(Request $request)
+    public function requestPasswordReset(Request $request, AuthService $authService)
     {
         try {
-            $data = $this->authRepository->sendPasswordResetLink($request);
+            $data = $authService->sendPasswordResetLink($request);
 
             return response()->json($data);
         }
@@ -146,14 +138,15 @@ class AuthController extends Controller
      * Reset user's password.
      * 
      * @param \App\Http\Requests\ResetPasswordRequest  $request
+     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Exception
      */
-    public function resetPassword(ResetPasswordRequest $request)
+    public function resetPassword(ResetPasswordRequest $request, AuthService $authService)
     {
         try {
-            $data = $this->authRepository->resetPassword($request);
+            $data = $authService->resetPassword($request);
 
             return response()->json($data);
         }

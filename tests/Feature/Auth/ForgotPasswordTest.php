@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\Notifications\ResetPasswordNotification;
+use App\Notifications\ResetPassword;
 use Illuminate\Support\Facades\{DB, Notification};
 
 afterAll(function() {
@@ -14,7 +14,7 @@ afterAll(function() {
 test('Should throw an error if email address is not set', function() {
     Notification::fake();
 
-    $this->postJson('/forgot-password')
+    $this->postJson(route('auth.forgot-password'))
         ->assertStatus(422)
         ->assertJsonValidationErrors(['email']);
     
@@ -24,7 +24,7 @@ test('Should throw an error if email address is not set', function() {
 test('Should throw an error if email address has invalid format', function() {
     Notification::fake();
 
-    $this->postJson('/forgot-password', ['email' => 'invalidemailaddress'])
+    $this->postJson(route('auth.forgot-password'), ['email' => 'invalidemailaddress'])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['email']);
     
@@ -34,7 +34,7 @@ test('Should throw an error if email address has invalid format', function() {
 test('Should throw an error if the entered email address doesn\'t exist', function() {
     Notification::fake();
 
-    $this->postJson('/forgot-password', ['email' => 'dummy@email.com'])
+    $this->postJson(route('auth.forgot-password'), ['email' => 'dummy@email.com'])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['email']);
 
@@ -48,7 +48,7 @@ test('Should send password reset request successfully', function() {
         'email_verified_at' => null,
     ]);
 
-    $this->postJson('/forgot-password', ['email' => $user->email])->assertOk();
+    $this->postJson(route('auth.forgot-password'), $user->only('email'))->assertOk();
 
-    Notification::assertSentTo($user, ResetPasswordNotification::class);
+    Notification::assertSentTo($user, ResetPassword::class);
 });

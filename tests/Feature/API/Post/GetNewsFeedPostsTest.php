@@ -33,13 +33,7 @@ test('Should return the paginated list of posts from followed users', function()
                     'is_liked',
                     'is_edited',
                     'is_bookmarked',
-                    'user' => [
-                        'slug',
-                        'name',
-                        'username',
-                        'gender',
-                        'image_url'
-                    ]
+                    'user' => array_merge(config('api.response.user.basic'), ['slug'])
                 ],
             ],
             'has_more',

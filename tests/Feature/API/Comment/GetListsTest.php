@@ -68,13 +68,7 @@ test('Should return a paginated list of comments under a specific post', functio
                     'is_own_comment',
                     'is_edited',
                     'timestamp',
-                    'user' => [
-                        'slug',
-                        'name',
-                        'username',
-                        'gender',
-                        'image_url',
-                    ]
+                    'user' => array_merge(config('api.response.user.basic'), ['slug'])
                 ]
             ],
             'has_more',

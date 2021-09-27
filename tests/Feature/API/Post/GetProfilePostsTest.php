@@ -16,13 +16,7 @@ $jsonStructure = [
             'is_liked',
             'is_edited',
             'is_bookmarked',
-            'user' => [
-                'slug',
-                'name',
-                'username',
-                'gender',
-                'image_url'
-            ]
+            'user' => array_merge(config('api.response.user.basic'), ['slug'])
         ],
     ],
     'has_more',
@@ -110,13 +104,7 @@ test('Should return the paginated list of user\'s comments on all posts', functi
                     'is_liked',
                     'is_edited',
                     'is_bookmarked',
-                    'user' => [
-                        'slug',
-                        'name',
-                        'username',
-                        'gender',
-                        'image_url'
-                    ],
+                    'user' => array_merge(config('api.response.user.basic'), ['slug']),
                     'comments' => [
                         '*' => [
                             'slug',
@@ -124,13 +112,7 @@ test('Should return the paginated list of user\'s comments on all posts', functi
                             'is_own_comment',
                             'is_edited',
                             'timestamp',
-                            'user' => [
-                                'slug',
-                                'name',
-                                'username',
-                                'gender',
-                                'image_url'
-                            ],
+                            'user' => array_merge(config('api.response.user.basic'), ['slug']),
                         ]
                     ],
                 ],

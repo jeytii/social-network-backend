@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
-use App\Http\Requests\CreateOrUpdatePostRequest;
+use App\Http\Requests\CreateOrUpdateLongTextRequest;
 use App\Notifications\NotifyUponAction;
 
 class PostController extends Controller
@@ -33,11 +33,11 @@ class PostController extends Controller
     /**
      * Store a new post.
      * 
-     * @param \App\Http\Requests\CreateOrUpdatePostRequest  $request
+     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(CreateOrUpdatePostRequest $request)
+    public function store(CreateOrUpdateLongTextRequest $request)
     {
         $post = $request->user()->posts()
                     ->create($request->only('body'))
@@ -54,12 +54,12 @@ class PostController extends Controller
     /**
      * Update an existing post.
      * 
-     * @param \App\Http\Requests\CreateOrUpdatePostRequest  $request
+     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
      * @param \App\Models\Post  $post
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(CreateOrUpdatePostRequest $request, Post $post)
+    public function update(CreateOrUpdateLongTextRequest $request, Post $post)
     {
         $this->authorize('update', $post);
         
@@ -109,7 +109,7 @@ class PostController extends Controller
         
         $post->user->notify(new NotifyUponAction(
             $request->user(),
-            config('constants.notifications.post_liked')
+            config('api.notifications.post_liked')
         ));
 
         return response()->json([

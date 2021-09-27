@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\{DB, Event, Notification};
  * @var array
  */
 $requiredFields = [
-    'name', 'email', 'username', 'gender', 'password',
-    'phone_number', 'birth_month', 'birth_day', 'birth_year',
+    'name', 'email', 'username', 'phone_number',
+    'gender', 'birth_month', 'birth_day', 'birth_year',
 ];
 
 afterAll(function() {
@@ -23,7 +23,7 @@ afterAll(function() {
 test('Should throw an error if all inputs are not set', function() use ($requiredFields) {
     Event::fake([Registered::class]);
 
-    $this->postJson('/register')
+    $this->postJson(route('auth.register'))
         ->assertStatus(422)
         ->assertJsonValidationErrors($requiredFields);
 
@@ -34,7 +34,7 @@ test('Should throw an error if some inputs are not set', function() {
     Event::fake([Registered::class]);
     Notification::fake();
 
-    $this->postJson('/register', [
+    $this->postJson(route('auth.register'), [
         'name' => 'John Doe',
         'password' => 'password'
     ])
@@ -48,11 +48,11 @@ test('Should throw an error if some inputs are not set', function() {
     Notification::assertNothingSent();
 });
 
-test('Should throw password mismatch error', function() {
+test('Should throw an error if passwords don\'t match', function() {
     Event::fake([Registered::class]);
     Notification::fake();
     
-    $this->postJson('/register', [
+    $this->postJson(route('auth.register'), [
         'password' => 'User@123',
         'password_confirmation' => 'asdasdasd'
     ])
@@ -63,11 +63,11 @@ test('Should throw password mismatch error', function() {
     Notification::assertNothingSent();
 });
 
-test('Should throw minimum length error', function() {
+test('Should throw an error if the character length is less than minimum', function() {
     Event::fake([Registered::class]);
     Notification::fake();
     
-    $this->postJson('/register', [
+    $this->postJson(route('auth.register'), [
         'name' => 'z',
         'username' => 'abc',
         'password' => 'abc',
@@ -82,11 +82,11 @@ test('Should throw minimum length error', function() {
     Notification::assertNothingSent();
 });
 
-test('Should throw character length range error', function() {
+test('Should throw an error if the character length is out of range', function() {
     Event::fake([Registered::class]);
     Notification::fake();
     
-    $this->postJson('/register', [
+    $this->postJson(route('auth.register'), [
         'username' => 'thebigbrownfoxjumpsoverthelazydog'
     ])
         ->assertStatus(422)
@@ -96,16 +96,16 @@ test('Should throw character length range error', function() {
     Notification::assertNothingSent();
 });
 
-test('Should throw "already exists" error', function() {
+test('Should throw an error is user already exists', function() {
     Event::fake([Registered::class]);
     Notification::fake();
     
     $user = User::factory()->create([
         'email' => 'email@example.com',
-        'username' => 'dummy.user123',
+        'username' => 'dummy_user123',
     ]);
     
-    $this->postJson('/register', $user->only('email', 'username'))
+    $this->postJson(route('auth.register'), $user->only('email', 'username'))
         ->assertStatus(422)
         ->assertJsonPath('errors.email', ['You entered an unavailable email address.'])
         ->assertJsonPath('errors.username', ['You entered an unavailable username.']);
@@ -114,11 +114,11 @@ test('Should throw "already exists" error', function() {
     Notification::assertNothingSent();
 });
 
-test('Should throw regex pattern error', function() {
+test('Should throw an error if the input has invalid format/regex', function() {
     Event::fake([Registered::class]);
     Notification::fake();
     
-    $this->postJson('/register', ['username' => 'u$ername@123'])
+    $this->postJson(route('auth.register'), ['username' => 'u$ername@123'])
         ->assertStatus(422)
         ->assertJsonFragment([
             'username' => ['Please enter a valid username.']
@@ -128,11 +128,11 @@ test('Should throw regex pattern error', function() {
     Notification::assertNothingSent();
 });
 
-test('Should throw invalid phone number error', function() {
+test('Should throw an error if phone number is invalid', function() {
     Event::fake([Registered::class]);
     Notification::fake();
     
-    $this->postJson('/register', ['phone_number' => '12345678900'])
+    $this->postJson(route('auth.register'), ['phone_number' => '12345678900'])
         ->assertStatus(422)
         ->assertJsonPath('errors.phone_number', ['Please enter a valid phone number.']);
         
@@ -140,7 +140,7 @@ test('Should throw invalid phone number error', function() {
     Notification::assertNothingSent();
 });
 
-test('Successful registration', function() use ($requiredFields) {
+test('Should successfully register an account', function() use ($requiredFields) {
     $user = User::factory()->make();
     $body = $user->only($requiredFields);
 
@@ -148,11 +148,15 @@ test('Successful registration', function() use ($requiredFields) {
     Notification::fake();
     
     $this->postJson(
-        '/register',
-        array_merge($body, ['password_confirmation' => $user->password])
+        route('auth.register'),
+        array_merge($body, [
+            'password' => 'P@ssword123',
+            'password_confirmation' => 'P@ssword123',
+            'prefers_sms_verification' => false,
+        ])
     )->assertCreated();
 
-    test()->assertDatabaseHas('users', [
+    $this->assertDatabaseHas('users', [
         'username' => $user->username,
         'email' => $user->email,
     ]);

@@ -49,13 +49,13 @@ class RegistrationRequest extends FormRequest
                 'required',
                 'string',
                 'between:6,30',
-                'regex:/^[a-zA-Z0-9\.\_]+$/',
+                'regex:' . config('api.formats.username'),
                 Rule::unique('users'),
             ],
             'phone_number' => [
                 'required',
                 'numeric',
-                'regex:/^(0|63)?9[0-9]{9}$/',
+                'regex:' . config('api.formats.phone_number'),
             ],
             'gender' => [
                 'required',
@@ -84,7 +84,11 @@ class RegistrationRequest extends FormRequest
                     ->mixedCase()
                     ->numbers()
                     ->symbols(),
-            ]
+            ],
+            'prefers_sms_verification' => [
+                'required',
+                'boolean',
+            ],
         ];
     }
 
@@ -102,9 +106,11 @@ class RegistrationRequest extends FormRequest
             'regex' => 'Please enter a valid :attribute.',
             'in' => 'Please enter a valid :attribute.',
             'numeric' => 'The :attribute must be numeric.',
+            'boolean' => 'Must be true or false only.',
             'username.between' => 'The username must be between :min to :max characters long.',
             'between.numeric' => 'The :attribute must be between :min to :max only.',
             'password.confirmed' => 'Please confirm your password.',
+            'prefers_sms_verification.required' => 'Please choose the type of verification.',
         ];
     }
 

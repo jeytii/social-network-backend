@@ -12,9 +12,9 @@ afterAll(function() {
 });
 
 test('Should throw an error if all inputs are not set', function() {
-    Event::fake([ PasswordReset::class ]);
+    Event::fake([PasswordReset::class]);
 
-    $this->putJson('/reset-password')
+    $this->putJson(route('auth.reset-password'))
         ->assertStatus(422)
         ->assertJsonValidationErrors(['email', 'password', 'token']);
     

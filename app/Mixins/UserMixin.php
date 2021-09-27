@@ -36,7 +36,20 @@ class UserMixin
     public function withUser()
     {
         return function() {
-            return $this->with('user:id,slug,name,username,gender,image_url');
+            return $this->with('user:id,slug,' . join(',', config('api.response.user.basic')));
+        };
+    }
+
+    /**
+     * Get the first model with basic info only.
+     * 
+     * @return \Closure
+     */
+    public function firstWithBasicOnly()
+    {
+        return function() {
+            return $this->first(array_merge(config('api.response.user.basic'), ['id']))
+                        ->setHidden(['is_followed', 'is_self']);
         };
     }
 }

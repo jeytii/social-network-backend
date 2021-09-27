@@ -32,7 +32,7 @@ test('Can follow a user', function() {
         NotifyUponAction::class,
         fn($notification) => (
             $notification->user->id === $this->user->id &&
-            $notification->actionType === config('constants.notifications.user_followed')
+            $notification->actionType === config('api.notifications.user_followed')
         )
     );
 });
