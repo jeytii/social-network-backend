@@ -37,3 +37,21 @@ test('Should successfully peek at new notifications', function() {
 
     $this->assertTrue($this->user->notifications()->where('peeked_at', null)->count() === 0);
 });
+
+test('Should successfully marked a specific notification as read', function() {
+    $notificationId = $this->user->notifications()->first()->id;
+
+    $this->response
+        ->putJson(route('notifications.read', ['id' => $notificationId]))
+        ->assertOk();
+
+    $this->assertTrue($this->user->notifications()->where('read_at', '!=', null)->count() === 1);
+});
+
+test('Should successfully marked all notifications as read', function() {
+    $this->response
+        ->putJson(route('notifications.read.all'))
+        ->assertOk();
+
+    $this->assertTrue($this->user->unreadNotifications()->count() === 0);
+});
