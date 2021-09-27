@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Http\Requests\CreateOrUpdateCommentRequest;
 use App\Models\{User, Post, Comment};
+use Illuminate\Http\Request;
+use App\Http\Requests\CreateOrUpdateLongTextRequest;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NotifyUponAction;
@@ -35,12 +35,12 @@ class CommentController extends Controller
     /**
      * Store a new comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Validation\ValidationException
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function store(CreateOrUpdateCommentRequest $request)
+    public function store(CreateOrUpdateLongTextRequest $request)
     {
         try {
             $post = Post::where('slug', $request->query('uid'))->firstOrFail();
@@ -60,13 +60,13 @@ class CommentController extends Controller
             if (!$mentionedUsers->contains('username', $post->user->username)) {
                 $post->user->notify(new NotifyUponAction(
                     $request->user(),
-                    config('constants.notifications.commented_on_post')
+                    config('api.notifications.commented_on_post')
                 ));
             }
             
             Notification::send($mentionedUsers, new NotifyUponAction(
                 $request->user(),
-                config('constants.notifications.mentioned_on_comment')
+                config('api.notifications.mentioned_on_comment')
             ));
 
             return response()->json(
@@ -82,12 +82,12 @@ class CommentController extends Controller
     /**
      * Update an existing comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
      * @param \App\Models\Comment  $comment
      * @return \Illuminate\Http\Response
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(CreateOrUpdateCommentRequest $request, Comment $comment)
+    public function update(CreateOrUpdateLongTextRequest $request, Comment $comment)
     {
         $this->authorize('update', $comment);
         

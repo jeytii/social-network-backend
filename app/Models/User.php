@@ -6,7 +6,7 @@ use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Notifications\ResetPasswordNotification;
+use App\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany};
@@ -165,9 +165,9 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendPasswordResetNotification($token)
     {
-        $url = config('app.url') . "/api/reset-password/{$token}";
+        $url = config('app.client_url') . "/reset-password/{$token}";
 
-        $this->notify(new ResetPasswordNotification($url));
+        $this->notify(new ResetPassword($url));
     }
 
     // =============================

@@ -26,7 +26,7 @@ class ResendCodeRequest extends FormRequest
     {
         return [
             'username' => ['required', new ExistsInEmailOrUsername],
-            'prefers_sms' => ['required', 'boolean'],
+            'prefers_sms_verification' => ['required', 'boolean'],
         ];
     }
 
