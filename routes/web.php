@@ -14,11 +14,15 @@ use App\Http\Controllers\AuthController;
 |
 */
 
-Route::middleware('guest')->group(function() {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::put('/verify', [AuthController::class, 'verify']);
-    Route::post('/verify/resend', [AuthController::class, 'resendVerificationCode'])->middleware('throttle:3,30');
-    Route::post('/forgot-password', [AuthController::class, 'requestPasswordReset']);
-    Route::put('/reset-password', [AuthController::class, 'resetPassword']);
+Route::middleware('guest')->name('auth.')->group(function() {
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/register', [AuthController::class, 'register'])->name('register');
+    Route::put('/verify', [AuthController::class, 'verify'])->name('verify');
+
+    Route::post('/verify/resend', [AuthController::class, 'resendVerificationCode'])
+        ->middleware('throttle:3,30')
+        ->name('verify.resend');
+    
+    Route::post('/forgot-password', [AuthController::class, 'requestPasswordReset'])->name('forgot-password');
+    Route::put('/reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
 });
