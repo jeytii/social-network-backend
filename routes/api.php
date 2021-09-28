@@ -29,6 +29,21 @@ Route::prefix('users')->name('users.')->group(function() {
     Route::delete('/unfollow/{user}', [UserController::class, 'unfollow'])->name('unfollow');
 });
 
+Route::prefix('profile')->name('profile.')->group(function() {
+    Route::prefix('{username}')->name('get.')->group(function() {
+        Route::get('/', [ProfileController::class, 'getInfo'])->name('info');
+        Route::get('posts', [ProfileController::class, 'getPosts'])->name('posts');
+        Route::get('comments', [ProfileController::class, 'getComments'])->name('comments');
+        Route::get('likes', [ProfileController::class, 'getLikes'])->name('likes');
+        Route::get('bookmarks', [ProfileController::class, 'getBookmarks'])->name('bookmarks');
+        Route::get('followers', [ProfileController::class, 'getFollowers'])->name('followers');
+        Route::get('following', [ProfileController::class, 'getFollowedUsers'])->name('following');
+    });
+    
+    Route::post('upload/profile-photo', [ProfileController::class, 'uploadProfilePhoto'])->name('upload');
+    Route::put('update', [ProfileController::class, 'update'])->name('update');
+});
+
 Route::prefix('posts')->group(function() {
     Route::get('/', [PostController::class, 'get']);
     Route::post('/', [PostController::class, 'store']);
@@ -46,13 +61,6 @@ Route::prefix('comments')->group(function() {
     Route::post('/', [CommentController::class, 'store']);
     Route::put('{comment}', [CommentController::class, 'update']);
     Route::delete('{comment}', [CommentController::class, 'destroy']);
-});
-
-Route::prefix('profile')->group(function() {
-    Route::get('{username}/{section}', [ProfileController::class, 'get'])
-        ->where('section', 'posts|likes|comments|bookmarks|followers|following');
-    Route::get('{username}', [ProfileController::class, 'getInfo']);
-    Route::put('update', [ProfileController::class, 'update']);
 });
 
 Route::prefix('notifications')->name('notifications.')->group(function() {
