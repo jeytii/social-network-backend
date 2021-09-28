@@ -20,6 +20,9 @@
         <testsuite name="API.User">
             <directory suffix="Test.php">./tests/Feature/API/User</directory>
         </testsuite>
+        <testsuite name="API.Profile">
+            <directory suffix="Test.php">./tests/Feature/API/Profile</directory>
+        </testsuite>
         <testsuite name="API.Post">
             <directory suffix="Test.php">./tests/Feature/API/Post</directory>
         </testsuite>
