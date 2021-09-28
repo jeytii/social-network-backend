@@ -2,109 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Post};
+use App\Models\User;
 use App\Http\Requests\UpdateUserRequest;
+use App\Repositories\ProfileRepository;
+use App\Services\ProfileService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ProfileController extends Controller
 {
-    /**
-     * Get the paginated list of followers or followed users.
-     *
-     * @param \App\Models\User  $user
-     * @param string  $type
-     * @return array
-     */
-    private function getConnections(User $user, string $type)
-    {
-        return $user->{$type}()->withPaginated(
-            20,
-            array_merge(config('api.response.user.basic'), ['slug'])
-        );
-    }
+    protected $profileRepository;
+
+    protected $profileService;
 
     /**
-     * Get the paginated list of user's own posts.
+     * Create a new notification instance.
      *
-     * @param \App\Models\User  $user
-     * @return array
+     * @param \App\Repositories\ProfileRepository  $profileRepository
+     * @param \App\Services\ProfileService  $profileService
+     * @return void
      */
-    private function getOwnPosts(User $user)
+    public function __construct(ProfileRepository $profileRepository, ProfileService $profileService)
     {
-        return $user->posts()
-                ->withUser()
-                ->withCount(['likers as likes_count', 'comments'])
-                ->orderByDesc('created_at')
-                ->withPaginated();
-    }
-
-    /**
-     * Get the paginated list of user's likes or bookmarks.
-     *
-     * @param \App\Models\User  $user
-     * @param string  $type
-     * @return array
-     */
-    private function getLikesOrBookmarks(User $user, string $type)
-    {
-        return $user->{$type}()
-                ->withUser()
-                ->withCount(['likers as likes_count', 'comments'])
-                ->orderByPivot('created_at', 'desc')
-                ->withPaginated();
-    }
-
-    /**
-     * Get the paginated list of user's comments on posts.
-     *
-     * @param int  $userId
-     * @return array
-     */
-    private function getCommentsOnPosts($userId)
-    {
-        return Post::whereHas('comments', fn($q) => $q->where('user_id', $userId))
-                    ->withUser()
-                    ->with([
-                        'comments' => fn($q) => $q->withUser()->orderByDesc('created_at')
-                    ])
-                    ->withCount(['likers as likes_count', 'comments'])
-                    ->withPaginated();
-    }
-
-    /**
-     * Get all posts that the user owns and interacted with.
-     *
-     * @param string  $username
-     * @param string  $section
-     * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
-    public function get(string $username, string $section)
-    {
-        try {
-            $user = User::where('username', $username)->firstOrFail();
-            
-            if (in_array($section, ['followers', 'following'])) {
-                $data = $this->getConnections($user, $section);
-            }
-
-            if ($section === 'posts') {
-                $data = $this->getOwnPosts($user);
-            }
-            
-            if ($section === 'comments') {
-                $data = $this->getCommentsOnPosts($user->id);
-            }
-
-            if (in_array($section, ['likes', 'bookmarks'])) {
-                $data = $this->getLikesOrBookmarks($user, $section);
-            }
-
-            return response()->json($data);
-        }
-        catch (ModelNotFoundException $e) {
-            abort(404, $e->getMessage());
-        }
+        $this->profileRepository = $profileRepository;
+        $this->profileService = $profileService;
     }
 
     /**
@@ -117,33 +37,174 @@ class ProfileController extends Controller
     public function getInfo(string $username)
     {
         try {
-            $data = User::withCount('followers', 'following')
+            $user = User::withCount('followers', 'following')
                         ->where('username', $username)
                         ->firstOrFail();
+            $data = $this->profileRepository->get($user);
 
-            return response()->json([
-                'data' => $data->append('birth_date')
-            ]);
+            return response()->json($data);
         }
-        catch (ModelNotFoundException $e) {
-            abort(404, $e->getMessage());
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], 404);
         }
     }
 
     /**
-     * Update the auth user's profile info.
+     * Get user's own posts.
+     *
+     * @param string  $username
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getPosts(string $username)
+    {
+        try {
+            $user = User::withCount('followers', 'following')
+                        ->where('username', $username)
+                        ->firstOrFail();
+            $data = $this->profileRepository->getPosts($user, 'posts');
+
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], $exception->getCode());
+        }
+    }
+
+    /**
+     * Get user's own comments.
+     *
+     * @param string  $username
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getComments(string $username)
+    {
+        try {
+            $user = User::withCount('followers', 'following')
+                        ->where('username', $username)
+                        ->firstOrFail();
+            $data = $this->profileRepository->getComments($user->id);
+
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], $exception->getCode());
+        }
+    }
+
+    /**
+     * Get posts liked by user.
+     *
+     * @param string  $username
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getLikes(string $username)
+    {
+        try {
+            $user = User::withCount('followers', 'following')
+                        ->where('username', $username)
+                        ->firstOrFail();
+            $data = $this->profileRepository->getPosts($user, 'likes');
+
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], $exception->getCode());
+        }
+    }
+
+    /**
+     * Get posts bookmarked by user.
+     *
+     * @param string  $username
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getBookmarks(string $username)
+    {
+        try {
+            $user = User::withCount('followers', 'following')
+                        ->where('username', $username)
+                        ->firstOrFail();
+            $data = $this->profileRepository->getPosts($user, 'bookmarks');
+
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], $exception->getCode());
+        }
+    }
+
+    /**
+     * Get user's followers.
+     *
+     * @param string  $username
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getFollowers(string $username)
+    {
+        try {
+            $user = User::withCount('followers', 'following')
+                        ->where('username', $username)
+                        ->firstOrFail();
+            $data = $this->profileRepository->getConnections($user, 'followers');
+
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], $exception->getCode());
+        }
+    }
+
+    /**
+     * Get other users followed by user.
+     *
+     * @param string  $username
+     * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    public function getFollowedUsers(string $username)
+    {
+        try {
+            $user = User::withCount('followers', 'following')
+                        ->where('username', $username)
+                        ->firstOrFail();
+            $data = $this->profileRepository->getConnections($user, 'following');
+
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->json([
+                'message' => 'User not found.'
+            ], $exception->getCode());
+        }
+    }
+
+    /**
+     * Update auth user's profile.
      *
      * @param \App\Http\Requests\UpdateUserRequest  $request
      * @return \Illuminate\Http\Response
      */
     public function update(UpdateUserRequest $request)
     {   
-        $body = $request->user()->no_birthdate ?
-                $request->validated() :
-                $request->only(['name', 'location', 'bio', 'image_url']);
+        $data = $this->profileService->update($request);
 
-        $request->user()->update($body);
-
-        return response()->json(['updated' => true]);
+        return response()->json($data);
     }
 }
