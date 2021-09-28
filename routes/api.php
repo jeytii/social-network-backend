@@ -20,13 +20,13 @@ use App\Http\Controllers\{
 |
 */
 
-Route::prefix('users')->group(function() {
-    Route::get('/', [UserController::class, 'get']);
-    Route::get('/suggested', [UserController::class, 'getSuggested']);
-    Route::get('/search', [UserController::class, 'search']);
+Route::prefix('users')->name('users.')->group(function() {
+    Route::get('/', [UserController::class, 'get'])->name('get');
+    Route::get('/random', [UserController::class, 'getRandom'])->name('get.random');
+    Route::get('/search', [UserController::class, 'search'])->name('search');
     Route::put('/auth/update', [UserController::class, 'update']);
-    Route::post('/follow/{user}', [UserController::class, 'follow']);
-    Route::delete('/unfollow/{user}', [UserController::class, 'unfollow']);
+    Route::post('/follow/{user}', [UserController::class, 'follow'])->name('follow');
+    Route::delete('/unfollow/{user}', [UserController::class, 'unfollow'])->name('unfollow');
 });
 
 Route::prefix('posts')->group(function() {

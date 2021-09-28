@@ -24,7 +24,7 @@ afterAll(function() {
 test('Should return paginated list of users', function() {
     // First scroll full-page bottom
     $this->response
-        ->getJson('/api/users?page=1')
+        ->getJson(route('users.get', ['page' => 1]))
         ->assertOk()
         ->assertJsonCount(20, 'data')
         ->assertJsonPath('has_more', true)
@@ -37,7 +37,7 @@ test('Should return paginated list of users', function() {
 
     // Second scroll full-page bottom
     $this->response
-        ->getJson('/api/users?page=2')
+        ->getJson(route('users.get', ['page' => 2]))
         ->assertOk()
         ->assertJsonCount(20, 'data')
         ->assertJsonPath('has_more', true)
@@ -45,7 +45,7 @@ test('Should return paginated list of users', function() {
 
     // The last full-page scroll that returns data
     $this->response
-        ->getJson('/api/users?page=3')
+        ->getJson(route('users.get', ['page' => 3]))
         ->assertOk()
         ->assertJsonCount(9, 'data')
         ->assertJsonPath('has_more', false)
@@ -53,16 +53,16 @@ test('Should return paginated list of users', function() {
 
     // Full-page scroll attempt but should return empty list
     $this->response
-        ->getJson('/api/users?page=4')
+        ->getJson(route('users.get', ['page' => 4]))
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
 
-test('Should successfully return 3 suggested users', function() {
+test('Should successfully return 3 randomly suggested users', function() {
     $this->response
-        ->getJson('/api/users/suggested')
+        ->getJson(route('users.get.random'))
         ->assertJsonCount(3, 'data')
         ->assertJsonStructure([
             'data' => [
