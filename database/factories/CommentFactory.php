@@ -24,7 +24,7 @@ class CommentFactory extends Factory
         return [
             'user_id' => User::factory(),
             'post_id' => Post::factory(),
-            'body' => $this->faker->text(180),
+            'body' => $this->faker->text(config('api.max_lengths.long_text')),
         ];
     }
 }
