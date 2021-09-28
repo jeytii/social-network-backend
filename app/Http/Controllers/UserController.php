@@ -4,18 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Notifications\NotifyUponAction;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
+use App\Repositories\UserRepository;
+use App\Services\UserService;
 
 class UserController extends Controller
 {
+    protected $userRepository;
+
+    protected $userService;
+
     /**
-     * Get the necessary columns for basic data.
+     * Create a new notification instance.
      *
-     * @var array
+     * @param \App\Repositories\UserRepository  $userRepository
+     * @param \App\Services\UserService  $userService
+     * @return void
      */
-    private $basic_columns = array_merge(config('api.response.user.basic'), ['slug']);
+    public function __construct(UserRepository $userRepository, UserService $userService)
+    {
+        $this->userRepository = $userRepository;
+        $this->userService = $userService;
+    }
 
     /**
      * Get paginated list of user models.
@@ -25,92 +34,70 @@ class UserController extends Controller
      */
     public function get(Request $request)
     {
-        // Format each user model with only the necessary columns.
-        $sq = $request->query('search');
-        $data = User::when(!isset($sq), fn($q) => (
-                    $q->where('id', '!=', auth()->id())
-                        ->whereDoesntHave('followers', fn($q) => $q->where('id', auth()->id()))
-                ))
-                ->when(isset($sq), fn($q) => $q->searchUser($sq))
-                ->withPaginated(20, $this->basic_columns);
+        $data = $this->userRepository->get($request->query('query'));
 
         return response()->json($data);
     }
 
     /**
-     * Get suggested user models.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function getSuggested()
-    {
-        $data = User::where('id', '!=', auth()->id())
-                    ->inRandomOrder()
-                    ->limit(3)
-                    ->get($this->basic_columns);
-
-        return response()->json(compact('data'));
-    }
-
-    /**
-     * Get user models with name or username containing a specific pattern.
+     * Get 3 randomly suggested users that the user is not yet following.
      *
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Validation\ValidationException
      */
-    public function search(Request $request)
+    public function getRandom(Request $request)
     {
-        $query = $request->query('query');
+        $followingIds = $request->user()->following()->pluck('id')->toArray();
 
-        if (!isset($query) || is_null($query) || empty($query)) {
-            throw ValidationException::withMessages([
-                'query' => 'Please provide a pattern for the search query.'
-            ]);
-        }
+        $data = $this->userRepository->getRandom($followingIds);
 
-        $data = DB::table('users')
-                    ->searchUser($query)
-                    ->limit(5)
-                    ->get($this->basic_columns);
-
-        return response()->json(compact('data'));
+        return response()->json($data);
     }
 
     /**
-     * Add a user model to the list of followed users.
+     * Search user(s) by name or username.
+     *
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function search(Request $request)
+    {
+        $data = $this->userRepository->search($request->query('query'));
+
+        return response()->json($data);
+    }
+
+    /**
+     * Follow a user.
      *
      * @param \Illuminate\Http\Request  $request
      * @param \App\Models\User  $user
      * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function follow(Request $request, User $user)
     {
         $this->authorize('follow', $user);
         
-        $request->user()->following()->sync([$user->id]);
+        $data = $this->userService->follow($request->user(), $user);
 
-        $user->notify(new NotifyUponAction(
-            $request->user(),
-            config('api.notifications.user_followed')
-        ));
-
-        return response()->json(['followed' => true]);
+        return response()->json($data);
     }
 
     /**
-     * Remove a user model from the list of followed users.
+     * Unfollow a user.
      *
      * @param \Illuminate\Http\Request  $request
      * @param \App\Models\User  $user
      * @return \Illuminate\Http\Response
+     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function unfollow(Request $request, User $user)
     {
         $this->authorize('unfollow', $user);
 
-        $request->user()->following()->detach($user->id);
+        $data = $this->userService->unfollow($request->user(), $user);
 
-        return response()->json(['unfollowed' => true]);
+        return response()->json($data);
     }
 }
