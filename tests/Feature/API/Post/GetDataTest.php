@@ -16,7 +16,7 @@ test('Should return the paginated list of posts from followed users', function()
     $this->user->following()->sync(range(2, 6));
     
     $this->response
-        ->getJson('/api/posts')
+        ->getJson(route('posts.get'))
         ->assertOk()
         ->assertJsonCount(20, 'data')
         ->assertJsonPath('has_more', true)
@@ -37,18 +37,20 @@ test('Should return the paginated list of posts from followed users', function()
                 ],
             ],
             'has_more',
-            'next_offset'
+            'next_offset',
+            'status',
+            'message',
         ]);
 
     $this->response
-        ->getJson('/api/posts?page=2')
+        ->getJson(route('posts.get', ['page' => 2]))
         ->assertOk()
         ->assertJsonCount(10, 'data')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
     $this->response
-        ->getJson('/api/posts?page=3')
+        ->getJson(route('posts.get', ['page' => 3]))
         ->assertOk()
         ->assertJsonCount(0, 'data')
         ->assertJsonPath('has_more', false)
@@ -63,8 +65,11 @@ test('Should sort posts by number of likes', function() {
     $secondMostLiked->likers()->sync(range(1, 5));
 
     $this->response
-        ->getJson('/api/posts?sort=likes')
+        ->getJson(route('posts.get', ['sort' => 'likes']))
         ->assertOk()
+        ->assertJsonCount(20, 'data')
+        ->assertJsonPath('has_more', true)
+        ->assertJsonPath('next_offset', 2)
         ->assertJson([
             'data' => [
                 [
@@ -79,4 +84,18 @@ test('Should sort posts by number of likes', function() {
                 ],
             ]
         ]);
+
+    $this->response
+        ->getJson(route('posts.get', ['sort' => 'likes', 'page' => 2]))
+        ->assertOk()
+        ->assertJsonCount(10, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
+
+    $this->response
+        ->getJson(route('posts.get', ['sort' => 'likes', 'page' => 3]))
+        ->assertOk()
+        ->assertJsonCount(0, 'data')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
 });

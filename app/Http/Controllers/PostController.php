@@ -5,50 +5,53 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Http\Requests\CreateOrUpdateLongTextRequest;
-use App\Notifications\NotifyUponAction;
+use App\Repositories\PostRepository;
+use App\Services\PostService;
 
 class PostController extends Controller
 {
+    protected $postRepository;
+
+    protected $postService;
+
+    /**
+     * Create a new notification instance.
+     *
+     * @param \App\Repositories\PostRepository  $postRepository
+     * @param \App\Services\PostService  $postService
+     * @return void
+     */
+    public function __construct(PostRepository $postRepository, PostService $postService)
+    {
+        $this->postRepository = $postRepository;
+        $this->postService = $postService;
+    }
+
     /**
      * Get paginated news feed posts.
      * 
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function get(Request $request)
     {
-        $sortByLikes = $request->query('sort') === 'likes';
-        $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
-
-        $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
-                    ->withUser()
-                    ->withCount(['likers as likes_count', 'comments'])
-                    ->when(!$sortByLikes, fn($q) => $q->orderByDesc('created_at'))
-                    ->when($sortByLikes, fn($q) => $q->orderByDesc('likes_count'))
-                    ->withPaginated();
+        $data = $this->postRepository->get($request);
 
         return response()->json($data);
     }
 
     /**
-     * Store a new post.
+     * Create a new post.
      * 
      * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(CreateOrUpdateLongTextRequest $request)
     {
-        $post = $request->user()->posts()
-                    ->create($request->only('body'))
-                    ->withUser()
-                    ->withCount(['likers as likes_count', 'comments'])
-                    ->first();
+        $data = $this->postService->createPost($request);
 
-        return response()->json(
-            ['data' => compact('post')],
-            201
-        );
+        return response()->json($data, 201);
     }
 
     /**
@@ -56,66 +59,50 @@ class PostController extends Controller
      * 
      * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
      * @param \App\Models\Post  $post
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function update(CreateOrUpdateLongTextRequest $request, Post $post)
     {
         $this->authorize('update', $post);
-        
-        $request->user()->posts()
-            ->find($post->id)
-            ->update($request->only('body'));
 
-        return response()->json([
-            'updated' => true,
-            'message' => 'Post successfully updated.'
-        ]);
+        $data = $this->postService->updatePost($request, $post);
+
+        return response()->json($data);
     }
 
     /**
      * Delete an existing post.
      * 
-     * @param \App\Models\Post  $post
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function destroy(Request $request, Post $post)
     {
         $this->authorize('delete', $post);
 
-        $request->user()->posts()->find($post->id)->delete();
+        $data = $this->postService->deletePost($request->user(), $post->id);
 
-        return response()->json([
-            'deleted' => true,
-            'message' => 'Post successfully deleted.'
-        ]);
+        return response()->json($data);
     }
 
     /**
      * Add the post to the list of likes.
      * 
-     * @param \App\Models\Post  $post
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function like(Request $request, Post $post)
     {
         $this->authorize('like', $post);
 
-        $request->user()->likes()->attach($post->id);
-        
-        $post->user->notify(new NotifyUponAction(
-            $request->user(),
-            config('api.notifications.post_liked')
-        ));
+        $data = $this->postService->likePost($request->user(), $post);
 
-        return response()->json([
-            'liked' => true,
-            'message' => 'Post successfully liked.'
-        ]);
+        return response()->json($data);
     }
 
     /**
@@ -130,12 +117,9 @@ class PostController extends Controller
     {
         $this->authorize('dislike', $post);
 
-        $request->user()->likes()->detach($post->id);
+        $data = $this->postService->dislikePost($request->user(), $post->id);
 
-        return response()->json([
-            'disliked' => true,
-            'message' => 'Post successfully disliked.'
-        ]);
+        return response()->json($data);
     }
 
     /**
@@ -150,12 +134,9 @@ class PostController extends Controller
     {
         $this->authorize('bookmark', $post);
 
-        $request->user()->bookmarks()->attach($post->id);
+        $data = $this->postService->bookmarkPost($request->user(), $post->id);
 
-        return response()->json([
-            'bookmarked' => true,
-            'message' => 'Post successfully bookmarked.'
-        ]);
+        return response()->json($data);
     }
 
     /**
@@ -170,11 +151,8 @@ class PostController extends Controller
     {
         $this->authorize('unbookmark', $post);
 
-        $request->user()->bookmarks()->detach($post->id);
+        $data = $this->postService->unbookmarkPost($request->user(), $post->id);
 
-        return response()->json([
-            'unbookmarked' => true,
-            'message' => 'Post successfully unbookmarked.'
-        ]);
+        return response()->json($data);
     }
 }
