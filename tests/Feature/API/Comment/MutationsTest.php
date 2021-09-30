@@ -13,51 +13,64 @@ afterAll(function() {
     DB::table('users')->truncate();
 });
 
-test('Should not create a comment if body is blank or not set', function () {
+test('Should throw an error if the comment body is blank', function () {
     Notification::fake();
 
     $this->response
-        ->postJson('/api/comments')
+        ->postJson(route('comments.store'))
         ->assertStatus(422)
         ->assertJsonPath('errors.body', ['Comment should not be blank.']);
 
     Notification::assertNothingSent();
 });
 
-test('Should not create a comment if body length is greater than maximum length', function () {
+test('Should throw an error if the body length is greater than maximum', function () {
     Notification::fake();
 
+    $maxLength = config('api.max_lengths.long_text');
+
     $this->response
-        ->postJson('/api/comments', [
+        ->postJson(route('comments.store'), [
             'body' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud quis nostrud quis nostrud.'
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.body', ['Maximum character length is 180.']);
+        ->assertJsonPath('errors.body', ["Maximum character length is {$maxLength}."]);
 
     Notification::assertNothingSent();
 });
 
-test('Should successfully comment on a post', function() {
+test('Should throw an error if post doesn\'t exist', function() {
+    $this->response
+        ->postJson(route('comments.store'), [
+            'pid' => 123456,
+            'body' => 'Hello World',
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.pid', ['Post does not exist.']);
+});
+
+test('Should successfully create a comment', function() {
     Notification::fake();
 
-    $user = User::has('posts')->where('id', '!=', $this->user->id)->first();
+    $user = User::has('posts')->firstWhere('id', '!=', $this->user->id);
     $slug = $user->posts()->first()->slug;
     
     $this->response
-        ->postJson("/api/comments?uid={$slug}", [
-            'body' => 'Hello World'
+        ->postJson(route('comments.store'), [
+            'pid' => $slug,
+            'body' => 'Hello World',
         ])
         ->assertCreated()
         ->assertJsonStructure([
+            'status',
+            'message',
             'data' => [
-                'comment' => [
-                    'slug',
-                    'body',
-                    'timestamp',
-                    'is_own_comment',
-                    'is_edited',
-                    'user' => array_merge(config('api.response.user.basic'), ['slug'])
-                ],
+                'slug',
+                'body',
+                'timestamp',
+                'is_own_comment',
+                'is_edited',
+                'user' => array_merge(config('api.response.user.basic'), ['slug'])
             ]
         ]);
 
@@ -75,13 +88,14 @@ test('Should successfully comment on a post', function() {
 test('Should notify the mentioned users along with OP upon commenting', function() {
     Notification::fake();
 
-    $user = User::has('posts')->where('id', '!=', $this->user->id)->first();
+    $user = User::has('posts')->firstWhere('id', '!=', $this->user->id);
     $slug = $user->posts()->first()->slug;
-    $exceptIds = [$this->user->id, $user->id];
-    $usernames = User::whereNotIn('id', $exceptIds)->limit(3)->pluck('username');
+    $exceptionIds = [$this->user->id, $user->id];
+    $usernames = User::whereNotIn('id', $exceptionIds)->limit(3)->pluck('username');
     
     $this->response
-        ->postJson("/api/comments?uid={$slug}", [
+        ->postJson(route('comments.store'), [
+            'pid' => $slug,
             'body' => "Shoutout to @{$usernames[0]}, @{$usernames[1]}, and @{$usernames[2]}"
         ])
         ->assertCreated();
@@ -90,35 +104,37 @@ test('Should notify the mentioned users along with OP upon commenting', function
 });
 
 test('Should successfully update a comment', function() {
-    $slug = $this->user->comments()->first()->slug;
+    $comment = $this->user->comments()->first();
 
     $this->response
-        ->putJson("/api/comments/{$slug}", [
+        ->putJson(route('comments.update', ['comment' => $comment->slug]), [
             'body' => 'Hello World'
         ])
         ->assertOk()
         ->assertExactJson([
-            'updated' => true,
-            'message' => 'Comment successfully updated.',
+            'status' => 200,
+            'message' => 'Successfully updated a comment.',
         ]);
 
     $this->assertDatabaseHas('comments', [
-        'body' => 'Hello World'
+        'id' => $comment->id,
+        'body' => 'Hello World',
     ]);
 });
 
-test('Should not be able to update other user\'s comment', function() {
-    $user = User::has('comments')->where('id', '!=', $this->user->id)->first();
-    $slug = $user->comments()->first()->slug;
+test('Should throw an error for attempting to update other user\'s comment', function() {
+    $user = User::has('comments')->firstWhere('id', '!=', $this->user->id);
+    $comment = $user->comments()->first();
     
     $this->response
-        ->putJson("/api/comments/{$slug}", [
+        ->putJson(route('comments.update', ['comment' => $comment->slug]), [
             'body' => 'This comment has been edited'
         ])
         ->assertForbidden();
     
     $this->assertDatabaseMissing('comments', [
-        'body' => 'This comment has been edited'
+        'id' => $comment->id,
+        'body' => 'This comment has been edited',
     ]);
 });
 
@@ -126,22 +142,22 @@ test('Should successfully delete a comment', function() {
     $slug = $this->user->comments()->first()->slug;
 
     $this->response
-        ->deleteJson("/api/comments/{$slug}")
+        ->deleteJson(route('comments.destroy', ['comment' => $slug]))
         ->assertOk()
         ->assertExactJson([
-            'deleted' => true,
-            'message' => 'Comment successfully deleted.',
+            'status' => 200,
+            'message' => 'Successfully deleted a comment.',
         ]);
 
     $this->assertDatabaseMissing('comments', compact('slug'));
 });
 
 test('Should not be able to delete other user\'s comment', function() {
-    $user = User::has('comments')->where('id', '!=', $this->user->id)->first();
+    $user = User::has('comments')->firstWhere('id', '!=', $this->user->id);
     $slug = $user->comments()->first()->slug;
     
     $this->response
-        ->deleteJson("/api/comments/{$slug}")
+        ->deleteJson(route('comments.destroy', ['comment' => $slug]))
         ->assertForbidden();
     
     $this->assertDatabaseHas('comments', compact('slug'));
