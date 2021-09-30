@@ -129,8 +129,7 @@ test('Should be able to like a post', function() {
         $this->post->user,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->user->id === $this->user->id &&
-            $notification->actionType === config('api.notifications.post_liked')
+            $notification->action === config('api.notifications.post_liked')
         )
     );
 

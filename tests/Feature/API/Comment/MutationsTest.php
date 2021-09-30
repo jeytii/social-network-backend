@@ -77,10 +77,8 @@ test('Should successfully create a comment', function() {
     Notification::assertSentTo(
         $user,
         NotifyUponAction::class,
-        fn($notification, $channels, $notifiable) => (
-            $notification->user->id === $this->user->id &&
-            $notification->actionType === config('api.notifications.commented_on_post') &&
-            $notifiable->id === $user->id
+        fn($notification) => (
+            $notification->action === config('api.notifications.commented_on_post')
         )
     );
 });

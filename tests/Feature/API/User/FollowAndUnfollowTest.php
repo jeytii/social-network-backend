@@ -34,8 +34,7 @@ test('Should successfully follow a user', function() {
         $userToFollow,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->user->id === $this->user->id &&
-            $notification->actionType === config('api.notifications.user_followed')
+            $notification->action === config('api.notifications.user_followed')
         )
     );
 });
