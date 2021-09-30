@@ -2,104 +2,72 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{User, Post, Comment};
+use App\Models\Comment;
 use Illuminate\Http\Request;
-use App\Http\Requests\CreateOrUpdateLongTextRequest;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Notification;
-use App\Notifications\NotifyUponAction;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Http\Requests\CreateOrUpdateCommentRequest;
+use App\Repositories\CommentRepository;
+use App\Services\CommentService;
 
 class CommentController extends Controller
 {
-    /**
-     * Store a new comment.
-     * 
-     * @return \Illuminate\Http\Response  $request
-     * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-     */
-    public function get(Request $request)
-    {
-        try {
-            $post = Post::where('slug', $request->query('pid'))->firstOrFail();
-            $data = $post->comments()->withUser()->orderByDesc('created_at')->withPaginated();
+    protected $commentRepository;
 
-            return response()->json($data);
-        }
-        catch (ModelNotFoundException $exception) {
-            abort(404, $exception->getMessage());
-        }
+    protected $commentService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param \App\Repository\CommentRepository  $commentRepository
+     * @param \App\Service\CommentService  $commentService
+     * @return void
+     */
+    public function __construct(CommentRepository $commentRepository, CommentService $commentService)
+    {
+        $this->commentRepository = $commentRepository;
+        $this->commentService = $commentService;
+    }
+
+    /**
+     * Get comments under a specific post.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request)
+    {
+        $data = $this->commentRepository->get($request->query('pid'));
+
+        return response()->json($data, $data['status']);
     }
 
     /**
      * Store a new comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
-     * @return \Illuminate\Http\Response
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function store(CreateOrUpdateLongTextRequest $request)
+    public function store(CreateOrUpdateCommentRequest $request)
     {
-        try {
-            $post = Post::where('slug', $request->query('uid'))->firstOrFail();
-            $mentions = Str::of($request->body)->matchAll('/@[a-zA-Z0-9_]+/');
-            $usernames = $mentions->map(fn($mention) => Str::replace('@', '', $mention))->toArray();
-            $mentionedUsers = User::whereIn('username', $usernames)->get();
-        
-            $comment = $request->user()
-                        ->comments()
-                        ->create([
-                            'post_id' => $post->id,
-                            'body' => $request->body,
-                        ])
-                        ->withUser()
-                        ->first();
+        $data = $this->commentService->createComment($request);
 
-            if (!$mentionedUsers->contains('username', $post->user->username)) {
-                $post->user->notify(new NotifyUponAction(
-                    $request->user(),
-                    config('api.notifications.commented_on_post')
-                ));
-            }
-            
-            Notification::send($mentionedUsers, new NotifyUponAction(
-                $request->user(),
-                config('api.notifications.mentioned_on_comment')
-            ));
-
-            return response()->json(
-                ['data' => compact('comment')],
-                201
-            );
-        }
-        catch (ModelNotFoundException $exception) {
-            abort(404, $exception->getMessage());
-        }
+        return response()->json($data, 201);
     }
 
     /**
-     * Update an existing comment.
+     * Update a comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
+     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
      * @param \App\Models\Comment  $comment
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(CreateOrUpdateLongTextRequest $request, Comment $comment)
+    public function update(CreateOrUpdateCommentRequest $request, Comment $comment)
     {
         $this->authorize('update', $comment);
         
-        $request->user()
-            ->comments()
-            ->find($comment->id)
-            ->update($request->only('body'));
+        $data = $this->commentService->updateComment($request, $comment->id);
 
-        return response()->json([
-            'updated' => true,
-            'message' => 'Comment successfully updated.'
-        ]);
+        return response()->json($data);
     }
 
     /**
@@ -107,38 +75,15 @@ class CommentController extends Controller
      * 
      * @return \Illuminate\Http\Request  $request
      * @param \App\Models\Comment  $comment
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function destroy(Request $request, Comment $comment)
     {
         $this->authorize('delete', $comment);
-        
-        $request->user()->comments()->find($comment->id)->delete();
 
-        return response()->json([
-            'deleted' => true,
-            'message' => 'Comment successfully deleted.'
-        ]);
-    }
+        $data = $this->commentService->deleteComment($request->user(), $comment->id);
 
-    /**
-     * Get more comments from the user under a specific post.
-     * 
-     * @return \Illuminate\Http\Response  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function getMoreOwnComments(Request $request)
-    {
-        $data = $request->user()
-                    ->comments()
-                    ->whereHas('post', fn($q) => (
-                        $q->where('slug', $request->query('pid'))
-                    ))
-                    ->orderByDesc('created_at')
-                    ->withUser()
-                    ->withPaginated(5);
-
-            return response()->json($data);
+        return response()->json($data);
     }
 }

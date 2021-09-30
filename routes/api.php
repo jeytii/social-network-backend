@@ -56,13 +56,7 @@ Route::prefix('posts')->name('posts.')->group(function() {
     Route::delete('{post}/unbookmark', [PostController::class, 'unbookmark'])->name('unbookmark');
 });
 
-Route::prefix('comments')->group(function() {
-    Route::get('/', [CommentController::class, 'get']);
-    Route::get('/more', [CommentController::class, 'getMoreOwnComments']);
-    Route::post('/', [CommentController::class, 'store']);
-    Route::put('{comment}', [CommentController::class, 'update']);
-    Route::delete('{comment}', [CommentController::class, 'destroy']);
-});
+Route::apiResource('comments', CommentController::class)->except('show');
 
 Route::prefix('notifications')->name('notifications.')->group(function() {
     Route::get('/', [NotificationController::class, 'get'])->name('get');
