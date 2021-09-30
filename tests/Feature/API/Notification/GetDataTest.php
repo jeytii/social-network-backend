@@ -11,12 +11,13 @@ beforeAll(function() {
     $user = User::firstWhere('id', '!=', User::first()->id);
     $inserts = collect(range(1, 4))->map(fn($action) => [
         'id' => Str::uuid(),
-        'type' => get_class(new NotifyUponAction($user, $action)),
+        'type' => get_class(new NotifyUponAction($user, $action, '/sample/path')),
         'notifiable_type' => get_class(new User),
         'notifiable_id' => User::first()->id,
         'data' => json_encode([
-            'user' => $user->only(config('api.response.user.basic')),
+            'user' => $user->only(['name', 'gender', 'image_url']),
             'action' => $action,
+            'path' => '/sample/path',
         ]),
     ])->toArray();
 
@@ -32,12 +33,18 @@ afterAll(function() {
 
 test('Should return a paginated list of notifications', function() {
     $this->response
-        ->getJson(route('notifications.get'))
+        ->getJson(route('notifications.index'))
         ->assertOk()
         ->assertJsonCount(4, 'data')
         ->assertJsonStructure([
             'data' => [
-                '*' => ['data', 'read_at']
+                '*' => [
+                    'user' => ['name', 'gender', 'image_url'],
+                    'message',
+                    'action',
+                    'path',
+                    'is_read',
+                ]
             ],
             'has_more',
             'next_offset',

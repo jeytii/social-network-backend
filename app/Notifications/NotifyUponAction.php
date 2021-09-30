@@ -12,31 +12,25 @@ class NotifyUponAction extends Notification
 {
     use Queueable;
 
-    /**
-     * The user that receives the notification.
-     * 
-     * @var \App\Models\User
-     */
     public $user;
 
-    /**
-     * The type of action.
-     * 
-     * @var int
-     */
-    public $actionType;
+    public $action;
+
+    public $path;
 
     /**
      * Create a new notification instance.
      *
      * @param \App\Models\User  $user
-     * @param int  $actionType
+     * @param int  $action
+     * @param string  $path
      * @return void
      */
-    public function __construct(User $user, int $actionType)
+    public function __construct(User $user, int $action, string $path)
     {
         $this->user = $user;
-        $this->actionType = $actionType;
+        $this->action = $action;
+        $this->path = $path;
     }
 
     /**
@@ -59,8 +53,9 @@ class NotifyUponAction extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'user' => $this->user->only(config('api.response.user.basic')),
-            'action' => $this->actionType,
+            'user' => $this->user->only(['name', 'gender', 'image_url']),
+            'action' => $this->action,
+            'path' => $this->path,
         ];
     }
 
@@ -73,8 +68,7 @@ class NotifyUponAction extends Notification
     public function toBroadcast($notifiable)
     {
         return new BroadcastMessage([
-            'user' => $this->user->only(config('api.response.user.basic')),
-            'action' => $this->actionType,
+            'count' => $notifiable->notifications()->whereNull('peeked_at')->count()
         ]);
     }
 
