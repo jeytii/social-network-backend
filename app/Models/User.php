@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Notification;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
+use App\Notifications\ResetPassword;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany};
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -232,5 +233,15 @@ class User extends Authenticatable implements MustVerifyEmail
     public function bookmarks(): BelongsToMany
     {
         return $this->belongsToMany('App\Models\Post', 'bookmarks', 'user_id', 'bookmark_id')->withPivot('created_at');
+    }
+
+    /**
+     * Get the entity's notifications.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable')->orderBy('created_at', 'desc');
     }
 }

@@ -3,50 +3,81 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Repositories\NotificationRepository;
+use App\Services\NotificationService;
 
 class NotificationController extends Controller
 {
-    public function get(Request $request)
-    {
-        $data = $request->user()->notifications()
-                    ->orderByDesc('created_at')
-                    ->withPaginated(20, ['data', 'read_at']);
+    protected $notificationRepository;
 
-        return response()->json(array_merge($data, [
-            'status' => 200,
-            'message' => 'Successfully retrieved notifications.',
-        ]));
+    protected $notificationService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param \App\Repository\NotificationRepository  $notificationRepository
+     * @param \App\Service\NotificationService  $notificationService
+     * @return void
+     */
+    public function __construct(
+        NotificationRepository $notificationRepository,
+        NotificationService $notificationService
+    )
+    {
+        $this->notificationRepository = $notificationRepository;
+        $this->notificationService = $notificationService;
     }
 
+    /**
+     * Get the paginated notifications.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request)
+    {
+        $data = $this->notificationRepository->get($request->user());
+
+        return response()->json($data);
+    }
+
+    /**
+     * Peek at the newly received notifications.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function peek(Request $request)
     {
-        $request->user()->notifications()
-            ->where('peeked_at', null)
-            ->update(['peeked_at' => now()]);
+        $data = $this->notificationService->peek($request->user());
 
-        return response()->json([
-            'status' => 200,
-            'message' => 'Successfully peeked at new notifications.'
-        ]);
+        return response()->json($data);
     }
 
+    /**
+     * Update an unread notification's status into read.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @param string  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function read(Request $request, string $id)
     {
-        $request->user()->notifications()->firstWhere('id', $id)->markAsRead();
+        $data = $this->notificationService->readOne($request->user(), $id);
 
-        return response()->json([
-            'status' => 200,
-            'message' => 'Successfully marked a notification as read.'
-        ]);
+        return response()->json($data);
     }
 
+    /**
+     * Update all unread notifications' status into read.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function readAll(Request $request)
     {
-        $request->user()->unreadNotifications->markAsRead();
+        $data = $this->notificationService->readAll($request->user());
 
-        return response()->json([
-            'status' => 200,
-            'message' => 'Successfully marked all unread notifications as read.'
-        ]);
+        return response()->json($data);
     }
 }
