@@ -44,6 +44,7 @@ Route::prefix('profile')->name('profile.')->group(function() {
     Route::put('update', [ProfileController::class, 'update'])->name('update');
 });
 
+// FIXME: Group common routes into a resource
 Route::prefix('posts')->name('posts.')->group(function() {
     Route::get('/', [PostController::class, 'get'])->name('get');
     Route::get('/sort', [PostController::class, 'sort'])->name('sort');
@@ -64,3 +65,5 @@ Route::prefix('notifications')->name('notifications.')->group(function() {
     Route::put('/{id}/read', [NotificationController::class, 'read'])->name('read');
     Route::put('/read/all', [NotificationController::class, 'readAll'])->name('read.all');
 });
+
+// TODO: Add logout

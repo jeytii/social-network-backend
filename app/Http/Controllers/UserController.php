@@ -9,6 +9,8 @@ use App\Services\UserService;
 
 class UserController extends Controller
 {
+    // FIXME: Fix the doc blocks
+
     protected $userRepository;
 
     protected $userService;

@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ProfileController extends Controller
 {
+    // FIXME: Clean up error handling and fix some doc blocks.
+
     protected $profileRepository;
 
     protected $profileService;

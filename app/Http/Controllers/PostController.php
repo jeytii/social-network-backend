@@ -10,6 +10,8 @@ use App\Services\PostService;
 
 class PostController extends Controller
 {
+    // FIXME: Fix some doc blocks
+
     protected $postRepository;
 
     protected $postService;

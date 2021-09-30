@@ -27,6 +27,8 @@ class ProfileService
     /**
      * Update user's profile.
      * 
+     * FIXME: Delete the previous image if the image url is changed or set to null
+     * 
      * @param \App\Http\Requests\UpdateUserReques  $request
      * @return array
      */

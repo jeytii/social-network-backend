@@ -12,6 +12,8 @@ use Exception;
 
 class AuthController extends Controller
 {
+    // FIXME: Clean up error handling and fix the doc blocks
+
     /**
      * Register any application services.
      *
