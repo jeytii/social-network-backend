@@ -18,7 +18,7 @@ class PaginationMixin
             $nextOffset = $hasMore ? $data->currentPage() + 1 : null;
 
             return [
-                'data' => $data->items(),
+                'data' => $data->items(), // FIXME: Rename key into 'items'
                 'has_more' => $hasMore,
                 'next_offset' => $nextOffset,
             ];

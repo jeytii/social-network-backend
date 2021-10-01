@@ -15,13 +15,15 @@ class CommentService
      * 
      * @param \App\Models\User  $notifier
      * @param string  $notificationType
+     * @param string  $postSlug
      * @return mixed
      */
-    private function notifyOnComment(User $notifier, string $notificationType)
+    private function notifyOnComment(User $notifier, string $notificationType, string $postSlug)
     {
         return new NotifyUponAction(
             $notifier,
-            config('api.notifications.' . $notificationType)
+            config('api.notifications.' . $notificationType),
+            "/posts/{$postSlug}"
         );
     }
 
@@ -58,12 +60,12 @@ class CommentService
         $mentionedUsers = $this->getMentionedUsers($request->body);
 
         if (!$mentionedUsers->contains('username', $post->user->username)) {
-            $post->user->notify($this->notifyOnComment($request->user(), 'commented_on_post'));
+            $post->user->notify($this->notifyOnComment($request->user(), 'commented_on_post', $request->pid));
         }
 
         Notification::send(
             $mentionedUsers,
-            $this->notifyOnComment($request->user(), 'mentioned_on_comment')
+            $this->notifyOnComment($request->user(), 'mentioned_on_comment', $request->pid)
         );
 
         return [

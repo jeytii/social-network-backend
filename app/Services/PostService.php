@@ -78,7 +78,8 @@ class PostService
         
         $post->user->notify(new NotifyUponAction(
             $liker,
-            config('api.notifications.post_liked')
+            config('api.notifications.post_liked'),
+            "/posts/{$post->slug}"
         ));
 
         return [

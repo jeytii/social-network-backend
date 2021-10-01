@@ -21,10 +21,9 @@ use App\Http\Controllers\{
 */
 
 Route::prefix('users')->name('users.')->group(function() {
-    Route::get('/', [UserController::class, 'get'])->name('get');
+    Route::get('/', [UserController::class, 'get'])->name('get'); // FIXME: Change the method name and route name
     Route::get('/random', [UserController::class, 'getRandom'])->name('get.random');
     Route::get('/search', [UserController::class, 'search'])->name('search');
-    Route::put('/auth/update', [UserController::class, 'update']);
     Route::post('/follow/{user}', [UserController::class, 'follow'])->name('follow');
     Route::delete('/unfollow/{user}', [UserController::class, 'unfollow'])->name('unfollow');
 });
@@ -60,7 +59,7 @@ Route::prefix('posts')->name('posts.')->group(function() {
 Route::apiResource('comments', CommentController::class)->except('show');
 
 Route::prefix('notifications')->name('notifications.')->group(function() {
-    Route::get('/', [NotificationController::class, 'get'])->name('get');
+    Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::put('/peek', [NotificationController::class, 'peek'])->name('peek');
     Route::put('/{id}/read', [NotificationController::class, 'read'])->name('read');
     Route::put('/read/all', [NotificationController::class, 'readAll'])->name('read.all');
