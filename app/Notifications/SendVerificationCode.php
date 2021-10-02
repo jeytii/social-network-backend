@@ -3,9 +3,10 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\{MailMessage, NexmoMessage};
+use Illuminate\Contracts\Queue\ShouldQueue;
 
 class SendVerificationCode extends Notification
 {
@@ -22,6 +23,7 @@ class SendVerificationCode extends Notification
     {
         $this->code = $code;
         $this->prefersSMS = $prefersSMS;
+        $this->routeName = Route::currentRouteName();
     }
 
     /**
@@ -43,9 +45,17 @@ class SendVerificationCode extends Notification
      */
     public function toMail($notifiable)
     {
+        if (in_array($this->routeName, ['auth.register', 'auth.verify.resend'])) {
+            $subject = 'Account verification';
+        }
+
+        if ($this->routeName === 'settings.request-update.username') {
+            $subject = "Request to update username";
+        }
+
         return (new MailMessage) 
                     ->from(config('app.email'))
-                    ->subject('Account verification')
+                    ->subject($subject)
                     ->markdown('email.verification', [
                         'name' => $notifiable->username,
                         'code' => $this->code,
@@ -62,21 +72,16 @@ class SendVerificationCode extends Notification
     {
         $appName = config('app.name');
 
-        return (new NexmoMessage)
-            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. Your verification code is {$this->code}.")
-            ->from($appName);
-    }
+        if (in_array($this->routeName, ['auth.register', 'auth.verify.resend'])) {
+            $sentence = "Thank you for using {$appName}. The verification code is {$this->code}.";
+        }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return array
-     */
-    public function toArray($notifiable)
-    {
-        return [
-            //
-        ];
+        if ($this->routeName === 'settings.request-update.username') {
+            $sentence = "Thank you for using {$appName}. You have requested to update your username. The verification code is {$this->code}. You only have 30 minutes to update your username with it.";
+        }
+
+        return (new NexmoMessage)
+            ->content("Hi {$notifiable->username}! {$sentence}")
+            ->from($appName);
     }
 }
