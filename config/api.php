@@ -7,8 +7,13 @@ return [
     ],
     
     'max_lengths' => [
+        'username' => 30,
         'long_text' => 180,
         'bio' => 120,
+    ],
+
+    'min_lengths' => [
+        'username' => 6,
     ],
 
     'notifications' => [
