@@ -6,7 +6,8 @@ use App\Http\Controllers\{
     PostController,
     CommentController,
     NotificationController,
-    ProfileController
+    ProfileController,
+    SettingController
 };
 
 /*
@@ -57,6 +58,16 @@ Route::prefix('posts')->name('posts.')->group(function() {
 });
 
 Route::apiResource('comments', CommentController::class)->except('show');
+
+Route::prefix('settings')->name('settings.')->group(function() {
+    Route::prefix('request-update')->name('request-update.')->group(function() {
+        Route::post('username', [SettingController::class, 'requestUsernameUpdate'])->name('username');
+    });
+
+    Route::prefix('update')->name('update.')->group(function() {
+        Route::put('username', [SettingController::class, 'updateUsername'])->name('username');
+    });
+});
 
 Route::prefix('notifications')->name('notifications.')->group(function() {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
