@@ -97,4 +97,17 @@ class SettingController extends Controller
 
         return response()->json($response);
     }
+
+    /**
+     * Update the user's password.
+     * 
+     * @param \App\Http\Requests\UpdateSettingRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePassword(UpdateSettingRequest $request)
+    {
+        $response = $this->settings->updatePassword($request->new_password);
+
+        return response()->json($response);
+    }
 }

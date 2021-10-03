@@ -70,6 +70,7 @@ Route::prefix('settings')->name('settings.')->group(function() {
         Route::put('username', [SettingController::class, 'updateUsername'])->name('username');
         Route::put('email', [SettingController::class, 'updateEmailAddress'])->name('email');
         Route::put('phone', [SettingController::class, 'updatePhoneNumber'])->name('phone-number');
+        Route::put('password', [SettingController::class, 'updatePassword'])->name('password');
     });
 });
 

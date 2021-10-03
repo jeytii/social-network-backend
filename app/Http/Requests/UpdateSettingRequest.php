@@ -2,10 +2,11 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\IsCurrentPassword;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use App\Rules\NotCurrentPassword;
 
 class UpdateSettingRequest extends FormRequest
 {
@@ -52,7 +53,27 @@ class UpdateSettingRequest extends FormRequest
                 Rule::requiredIf($routeName === 'settings.request-update.username'),
                 'boolean',
             ],
-            'password' => ['required', new IsCurrentPassword]
+            'password' => [
+                Rule::requiredIf(in_array($routeName, [
+                    'settings.request-update.username',
+                    'settings.request-update.email',
+                    'settings.request-update.phone-number',
+                ])),
+                'current_password',
+            ],
+            'current_password' => [
+                Rule::requiredIf($routeName === 'settings.update.password'),
+                'current_password',
+            ],
+            'new_password' => [
+                Rule::requiredIf($routeName === 'settings.update.password'),
+                Password::min(8)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols(),
+                'confirmed',
+                new NotCurrentPassword,
+            ]
         ];
     }
 
@@ -69,10 +90,14 @@ class UpdateSettingRequest extends FormRequest
             'regex' => 'Please enter a valid :attribute.',
             'email' => 'Please enter a valid email address.',
             'unique' => 'Someone has already taken that :attribute.',
+            'current_password' => 'Incorrect password.',
             'username.between' => 'The username must be between :min to :max characters long.',
             'email.required' => 'The email address field is required.',
             'email.unique' => 'Someone has already taken that email address.',
             'prefers_sms.required' => 'Please choose a verification type.',
+            'current_password.required' => 'Please enter your current password.',
+            'new_password.required' => 'Please enter your new password.',
+            'new_password.confirmed' => 'New password must match with the confirmation.',
         ];
     }
 }
