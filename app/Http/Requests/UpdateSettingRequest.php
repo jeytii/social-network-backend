@@ -34,13 +34,19 @@ class UpdateSettingRequest extends FormRequest
                 'string',
                 'between:' . config('api.min_lengths.username') . ',' . config('api.max_lengths.username'),
                 'regex:' . config('api.formats.username'),
-                Rule::unique('users', 'username'),
+                Rule::unique('users'),
             ],
             'email' => [
                 Rule::requiredIf($routeName === 'settings.request-update.email'),
                 'string',
                 'email',
-                Rule::unique('users', 'email'),
+                Rule::unique('users'),
+            ],
+            'phone_number' => [
+                Rule::requiredIf($routeName === 'settings.request-update.phone-number'),
+                'numeric',
+                'regex:' . config('api.formats.phone_number'),
+                Rule::unique('users'),
             ],
             'prefers_sms' => [
                 Rule::requiredIf($routeName === 'settings.request-update.username'),
@@ -58,13 +64,15 @@ class UpdateSettingRequest extends FormRequest
     public function messages()
     {
         return [
-            'username.unique' => 'Please enter a valid username that is not owned by anyone.',
+            'numeric' => 'The :attribute must be numeric.',
+            'boolean' => 'Must be true or false only.',
+            'regex' => 'Please enter a valid :attribute.',
+            'email' => 'Please enter a valid email address.',
+            'unique' => 'Someone has already taken that :attribute.',
             'username.between' => 'The username must be between :min to :max characters long.',
             'email.required' => 'The email address field is required.',
-            'email.unique' => 'Please enter an email address that is not owned by anyone.',
-            'email' => 'Please enter a valid email address.',
+            'email.unique' => 'Someone has already taken that email address.',
             'prefers_sms.required' => 'Please choose a verification type.',
-            'boolean' => 'Must be true or false only.',
         ];
     }
 }

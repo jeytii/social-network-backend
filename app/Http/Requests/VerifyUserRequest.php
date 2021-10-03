@@ -35,6 +35,10 @@ class VerifyUserRequest extends FormRequest
             $table = 'email_address_updates';
         }
 
+        if ($routeName === 'settings.update.phone-number') {
+            $table = 'phone_number_updates';
+        }
+
         return [
             'code' => [
                 'required',
