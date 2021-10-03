@@ -2,10 +2,10 @@
 
 namespace App\Rules;
 
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Facades\Hash;
 
-class IsCurrentPassword implements Rule
+class NotCurrentPassword implements Rule
 {
     /**
      * Create a new rule instance.
@@ -26,7 +26,7 @@ class IsCurrentPassword implements Rule
      */
     public function passes($attribute, $value)
     {
-        return Hash::check($value, auth()->user()->password);
+        return !Hash::check($value, auth()->user()->password);
     }
 
     /**
@@ -36,6 +36,6 @@ class IsCurrentPassword implements Rule
      */
     public function message()
     {
-        return 'Incorrect password.';
+        return 'Please enter a password other than your current one.';
     }
 }
