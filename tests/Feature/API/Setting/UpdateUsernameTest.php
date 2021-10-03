@@ -42,7 +42,7 @@ test('Should throw an error for entering the current username', function() {
             'username' => $this->user->username,
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.username', ['Please enter a valid username that is not owned by anyone.']);
+        ->assertJsonPath('errors.username', ['Someone has already taken that username.']);
 
     Notification::assertNothingSent();
     $this->assertDatabaseCount('username_updates', 0);

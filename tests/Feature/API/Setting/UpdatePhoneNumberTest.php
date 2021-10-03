@@ -13,45 +13,45 @@ afterAll(function() {
     DB::table('users')->truncate();
 });
 
-test('Should throw 422 errors in requesting to update the email address', function() {
+test('Should throw 422 errors in requesting to update the phone number', function() {
     Notification::fake();
 
     $this->response
-        ->postJson(route('settings.request-update.email'), [
+        ->postJson(route('settings.request-update.phone-number'), [
             'password' => 'password123'
         ])
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
-                'email' => ['The email address field is required.'],
+                'phone_number' => ['The phone number field is required.'],
                 'password' => ['Incorrect password.'],
             ]
         ]);
 
     Notification::assertNothingSent();
-    $this->assertDatabaseCount('email_address_updates', 0);
+    $this->assertDatabaseCount('phone_number_updates', 0);
 });
 
-test('Should throw an error for entering the current email address', function() {
+test('Should throw an error for entering the current phone number', function() {
     Notification::fake();
 
     $this->response
-        ->postJson(route('settings.request-update.email'), [
-            'email' => $this->user->email,
+        ->postJson(route('settings.request-update.phone-number'), [
+            'phone_number' => $this->user->phone_number,
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.email', ['Someone has already taken that email address.']);
+        ->assertJsonPath('errors.phone_number', ['Someone has already taken that phone number.']);
 
     Notification::assertNothingSent();
-    $this->assertDatabaseCount('email_address_updates', 0);
+    $this->assertDatabaseCount('phone_number_updates', 0);
 });
 
-test('Should successfully make a request to update email address', function() {
+test('Should successfully make a request to update phone number', function() {
     Notification::fake();
 
     $this->response
-        ->postJson(route('settings.request-update.email'), [
-            'email' => 'johndoe@email.com',
+        ->postJson(route('settings.request-update.phone-number'), [
+            'phone_number' => '09123456789',
             'password' => 'P@ssword123'
         ])
         ->assertOk()
@@ -63,11 +63,11 @@ test('Should successfully make a request to update email address', function() {
     Notification::assertSentTo(
         $this->user,
         SendVerificationCode::class,
-        fn($notification, $channels) => $channels === ['mail']
+        fn($notification, $channels) => $channels === ['nexmo']
     );
 
-    $this->assertDatabaseCount('email_address_updates', 1);
-    $this->assertDatabaseHas('email_address_updates', [
+    $this->assertDatabaseCount('phone_number_updates', 1);
+    $this->assertDatabaseHas('phone_number_updates', [
         'user_id' => $this->user->id
     ]);
 });
@@ -76,7 +76,7 @@ test('Should throw an error if the verification code doesn\'t exist', function()
     Notification::fake();
 
     $this->response
-        ->putJson(route('settings.update.email'), [
+        ->putJson(route('settings.update.phone-number'), [
             'code' => 123456
         ])
         ->assertStatus(422)
@@ -89,8 +89,8 @@ test('Should throw an error if the verification code doesn\'t exist', function()
     Notification::assertNothingSent();
 });
 
-test('Should throw an error for attempting to update email address with expired verification code', function() {
-    $update = DB::table('email_address_updates')
+test('Should throw an error for attempting to update phone number with expired verification code', function() {
+    $update = DB::table('phone_number_updates')
                 ->where('user_id', $this->user->id)
                 ->whereNull('completed_at');
     
@@ -99,7 +99,7 @@ test('Should throw an error for attempting to update email address with expired 
     Notification::fake();
 
     $this->response
-        ->putJson(route('settings.update.email'), [
+        ->putJson(route('settings.update.phone-number'), [
             'code' => $update->first()->code
         ])
         ->assertStatus(422)
@@ -112,29 +112,29 @@ test('Should throw an error for attempting to update email address with expired 
     Notification::assertNothingSent();
 
     $this->assertDatabaseMissing('users', [
-        'email' => $update->first()->data
+        'phone_number' => $update->first()->data
     ]);
 });
 
-test('Should successfully update the email address', function() {
+test('Should successfully update the phone number', function() {
     Notification::fake();
 
     $this->response
-        ->postJson(route('settings.request-update.email'), [
-            'email' => 'johndoe@email.com',
+        ->postJson(route('settings.request-update.phone-number'), [
+            'phone_number' => '09123456789',
             'password' => 'P@ssword123'
         ])
         ->assertOk();
 
     Notification::assertSentTo($this->user, SendVerificationCode::class);
 
-    $code = DB::table('email_address_updates')
+    $code = DB::table('phone_number_updates')
                 ->where('user_id', $this->user->id)
                 ->whereNull('completed_at')
                 ->first()->code;
 
     $this->response
-        ->putJson(route('settings.update.email'), compact('code'))
+        ->putJson(route('settings.update.phone-number'), compact('code'))
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
@@ -142,6 +142,6 @@ test('Should successfully update the email address', function() {
         ]);
 
     $this->assertDatabaseHas('users', [
-        'email' => 'johndoe@email.com',
+        'phone_number' => '639123456789',
     ]);
 });

@@ -28,9 +28,9 @@ class SettingController extends Controller
      */
     public function requestUsernameUpdate(UpdateSettingRequest $request)
     {
-        $data = $this->settings->requestUpdate('username_updates', $request->username, $request->prefers_sms);
+        $response = $this->settings->requestUpdate('username_updates', $request->username, $request->prefers_sms);
 
-        return response()->json($data, $data['status']);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -54,9 +54,9 @@ class SettingController extends Controller
      */
     public function requestEmailAddressUpdate(UpdateSettingRequest $request)
     {
-        $data = $this->settings->requestUpdate('email_address_updates', $request->email, false);
+        $response = $this->settings->requestUpdate('email_address_updates', $request->email, false);
 
-        return response()->json($data, $data['status']);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -68,6 +68,32 @@ class SettingController extends Controller
     public function updateEmailAddress(VerifyUserRequest $request)
     {
         $response = $this->settings->updateColumn('email', 'email_address_updates', $request->code);
+
+        return response()->json($response);
+    }
+
+    /**
+     * Make a request to update phone number.
+     * 
+     * @param \App\Http\Requests\UpdateSettingRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function requestPhoneNumberUpdate(UpdateSettingRequest $request)
+    {
+        $response = $this->settings->requestUpdate('phone_number_updates', $request->phone_number, true);
+
+        return response()->json($response, $response['status']);
+    }
+
+    /**
+     * Update the user's phone number.
+     * 
+     * @param \App\Http\Requests\VerifyUserRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePhoneNumber(VerifyUserRequest $request)
+    {
+        $response = $this->settings->updateColumn('phone_number', 'phone_number_updates', $request->code);
 
         return response()->json($response);
     }

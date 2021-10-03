@@ -17,6 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        // TODO: Remove this
         $this->app->bind('App\Repositories\Contracts\AuthRepositoryInterface', 'App\Repositories\AuthRepository');
     }
 

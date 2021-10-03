@@ -63,11 +63,13 @@ Route::prefix('settings')->name('settings.')->group(function() {
     Route::prefix('request-update')->name('request-update.')->group(function() {
         Route::post('username', [SettingController::class, 'requestUsernameUpdate'])->name('username');
         Route::post('email', [SettingController::class, 'requestEmailAddressUpdate'])->name('email');
+        Route::post('phone', [SettingController::class, 'requestPhoneNumberUpdate'])->name('phone-number');
     });
 
     Route::prefix('update')->name('update.')->group(function() {
         Route::put('username', [SettingController::class, 'updateUsername'])->name('username');
         Route::put('email', [SettingController::class, 'updateEmailAddress'])->name('email');
+        Route::put('phone', [SettingController::class, 'updatePhoneNumber'])->name('phone-number');
     });
 });
 
