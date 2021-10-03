@@ -10,9 +10,7 @@ beforeAll(function() {
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
-
     DB::table('users')->truncate();
-    DB::table('username_updates')->truncate();
 });
 
 test('Should throw 422 errors in requesting to update the username', function() {
@@ -62,7 +60,7 @@ test('Should successfully make a request to update username via email', function
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
-            'message' => 'Successfully request for username update.',
+            'message' => 'Successfully made a request.',
         ]);
 
     Notification::assertSentTo(
@@ -91,7 +89,7 @@ test('Should successfully make a request to update username via SMS', function()
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
-            'message' => 'Successfully request for username update.',
+            'message' => 'Successfully made a request.',
         ]);
 
     Notification::assertSentTo(
@@ -138,15 +136,18 @@ test('Should throw an error for attempting to update username with expired verif
         ->putJson(route('settings.update.username'), [
             'code' => $update->first()->code
         ])
-        ->assertStatus(410);
+        ->assertStatus(422)
+        ->assertJsonFragment([
+            'errors' => [
+                'code' => ['Invalid verification code.']
+            ]
+        ]);
 
     Notification::assertNothingSent();
 
     $this->assertDatabaseMissing('users', [
         'username' => $update->first()->data
     ]);
-
-    DB::table('username_updates')->truncate();
 });
 
 test('Should successfully update the username', function() {
@@ -172,7 +173,7 @@ test('Should successfully update the username', function() {
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
-            'message' => 'Successfully updated the username.',
+            'message' => 'Update successful.',
         ]);
 
     $this->assertDatabaseHas('users', [
