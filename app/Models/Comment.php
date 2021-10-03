@@ -45,6 +45,8 @@ class Comment extends Model
         'timestamp',
     ];
 
+    // TODO: Modify built-in properties for automeated eager-loading.
+
     /**
      * The "booted" method of the model.
      *

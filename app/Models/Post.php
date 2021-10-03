@@ -43,6 +43,8 @@ class Post extends Model
         'timestamp',
     ];
 
+    // TODO: Modify built-in properties for automeated eager-loading.
+
     /**
      * The number of items per page.
      * 

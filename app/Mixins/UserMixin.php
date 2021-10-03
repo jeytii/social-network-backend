@@ -4,6 +4,8 @@ namespace App\Mixins;
 
 class UserMixin
 {
+    // TODO: Remove and declare inside the model instead.
+    
     /**
      * Find user by username or email address.
      * 

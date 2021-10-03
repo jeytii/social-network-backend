@@ -40,7 +40,7 @@ test('Should throw an error for entering the current email address', function() 
             'email' => $this->user->email,
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.email', ['Please enter an email address that is not owned by anyone.']);
+        ->assertJsonPath('errors.email', ['Someone has already taken that email address.']);
 
     Notification::assertNothingSent();
     $this->assertDatabaseCount('email_address_updates', 0);
@@ -116,7 +116,7 @@ test('Should throw an error for attempting to update email address with expired 
     ]);
 });
 
-test('Should successfully update the emal address', function() {
+test('Should successfully update the email address', function() {
     Notification::fake();
 
     $this->response
