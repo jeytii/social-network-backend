@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Hash};
 use App\Notifications\SendVerificationCode;
 use Exception;
 
@@ -14,10 +14,10 @@ class SettingService
      * @param string  $table
      * @param string  $data
      * @param bool  $prefersSMS
-     * @return void
+     * @return array
      * @throws \Exception
      */
-    public function requestUpdate(string $table, string $data, bool $prefersSMS)
+    public function requestUpdate(string $table, string $data, bool $prefersSMS): array
     {
         if (DB::table($table)->whereMonth('completed_at', date('m'))->count() === 3) {
             return [
@@ -73,7 +73,7 @@ class SettingService
      * @param int  $code
      * @return array
      */
-    public function updateColumn(string $column, string $table, int $code)
+    public function updateColumn(string $column, string $table, int $code): array
     {
         $data = DB::table($table)
                     ->where('user_id', auth()->id())
@@ -85,6 +85,24 @@ class SettingService
         return [
             'status' => 200,
             'message' => 'Update successful.',
+        ];
+    }
+
+    /**
+     * Update password.
+     * 
+     * @param string  $newPassword
+     * @return array
+     */
+    public function updatePassword(string $newPassword): array
+    {
+        auth()->user()->update([
+            'password' => Hash::make($newPassword)
+        ]);
+
+        return [
+            'status' => 200,
+            'message' => 'Successfully updated the password.',
         ];
     }
 }
