@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Requests\{UpdateSettingRequest, VerifyUserRequest};
 use Illuminate\Support\Facades\DB;
 use App\Notifications\SendVerificationCode;
 use Exception;
@@ -12,34 +11,50 @@ class SettingService
     /**
      * Make a request to update username
      * 
-     * @param \App\Http\Requests\UpdateSettingRequest  $request
-     * @return array
+     * @param string  $table
+     * @param string  $data
+     * @param bool  $prefersSMS
+     * @return void
+     * @throws \Exception
      */
-    public function requestUsernameUpdate(UpdateSettingRequest $request): array
+    public function requestUpdate(string $table, string $data, bool $prefersSMS)
     {
+        if (DB::table($table)->whereMonth('completed_at', date('m'))->count() === 3) {
+            return [
+                'status' => 401,
+                'message' => 'You can only do an update 3 times in a month.'
+            ];
+        }
+
         try {
-            DB::transaction(function() use ($request) {
+            DB::transaction(function() use ($table, $data, $prefersSMS) {
                 $code = random_int(100000, 999999);
+                $request = [
+                    'data' => $data,
+                    'code' => $code,
+                    'expiration' => now()->addMinutes(30),
+                ];
     
-                DB::table('username_updates')->updateOrInsert(
+                if ($table === 'username_updates') {
+                    $request = array_merge($request, [
+                        'prefers_sms' => $prefersSMS
+                    ]);
+                }
+    
+                DB::table($table)->updateOrInsert(
                     [
                         'user_id' => auth()->id(),
                         'completed_at' => null,
                     ],
-                    [
-                        'data' => $request->username,
-                        'code' => $code,
-                        'prefers_sms' => $request->prefers_sms,
-                        'expiration' => now()->addMinutes(30),
-                    ]
+                    $request
                 );
-
-                $request->user()->notify(new SendVerificationCode($code, $request->prefers_sms));
-            });
     
+                auth()->user()->notify(new SendVerificationCode($code, $prefersSMS));
+            });
+
             return [
                 'status' => 200,
-                'message' => 'Successfully request for username update.',
+                'message' => 'Successfully made a request.',
             ];
         }
         catch (Exception $exception) {
@@ -51,36 +66,25 @@ class SettingService
     }
 
     /**
-     * Update the user's username.
+     * Update a column.
      * 
-     * @param \App\Http\Requests\VerifyUserRequest  $request
+     * @param string  $column
+     * @param string  $table
+     * @param int  $code
      * @return array
      */
-    public function updateUsername(VerifyUserRequest $request): array
+    public function updateColumn(string $column, string $table, int $code)
     {
-        if (DB::table('username_updates')->whereMonth('completed_at', date('m'))->count() === 3) {
-            return [
-                'status' => 401,
-                'message' => 'You can only update your username 3 times in a month.'
-            ];
-        }
+        $data = DB::table($table)
+                    ->where('user_id', auth()->id())
+                    ->where('code', $code)
+                    ->first()->data;
 
-        $update = DB::table('username_updates')
-                    ->where('code', $request->code)
-                    ->where('expiration', '>', now());
-
-        if ($update->doesntExist()) {
-            return [
-                'status' => 410,
-                'message' => 'Verification code expired.'
-            ];
-        }
-
-        $request->user()->update(['username' => $update->first()->data]);
+        auth()->user()->update([$column => $data]);
 
         return [
             'status' => 200,
-            'message' => 'Successfully updated the username.',
+            'message' => 'Update successful.',
         ];
     }
 }

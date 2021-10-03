@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ValidVerificationCode;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Validation\Rule;
 
 class VerifyUserRequest extends FormRequest
 {
@@ -31,23 +31,15 @@ class VerifyUserRequest extends FormRequest
             $table = 'username_updates';
         }
 
+        if ($routeName === 'settings.update.email') {
+            $table = 'email_address_updates';
+        }
+
         return [
             'code' => [
                 'required',
-                Rule::exists($table, 'code'),
+                new ValidVerificationCode($table),
             ]
-        ];
-    }
-
-    /**
-     * Get the error messages for the defined validation rules.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [
-            'exists' => 'Invalid verification code.',
         ];
     }
 }
