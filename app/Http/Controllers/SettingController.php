@@ -21,14 +21,14 @@ class SettingController extends Controller
     }
     
     /**
-     * Make a request to update username
+     * Make a request to update username.
      * 
      * @param \App\Http\Requests\UpdateSettingRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function requestUsernameUpdate(UpdateSettingRequest $request)
     {
-        $data = $this->settings->requestUsernameUpdate($request);
+        $data = $this->settings->requestUpdate('username_updates', $request->username, $request->prefers_sms);
 
         return response()->json($data, $data['status']);
     }
@@ -41,8 +41,34 @@ class SettingController extends Controller
      */
     public function updateUsername(VerifyUserRequest $request)
     {
-        $data = $this->settings->updateUsername($request);
+        $response = $this->settings->updateColumn('username', 'username_updates', $request->code);
+
+        return response()->json($response);
+    }
+
+    /**
+     * Make a request to update email address.
+     * 
+     * @param \App\Http\Requests\UpdateSettingRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function requestEmailAddressUpdate(UpdateSettingRequest $request)
+    {
+        $data = $this->settings->requestUpdate('email_address_updates', $request->email, false);
 
         return response()->json($data, $data['status']);
+    }
+
+    /**
+     * Update the user's email address.
+     * 
+     * @param \App\Http\Requests\VerifyUserRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateEmailAddress(VerifyUserRequest $request)
+    {
+        $response = $this->settings->updateColumn('email', 'email_address_updates', $request->code);
+
+        return response()->json($response);
     }
 }
