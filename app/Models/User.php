@@ -85,6 +85,12 @@ class User extends Authenticatable implements MustVerifyEmail
             $user->setAttribute('slug', uniqid());
             $user->phone_number = $formattedPhoneNumber;
         });
+
+        static::updating(function ($user) {
+            $formattedPhoneNumber = (string) Str::of($user->phone_number)->replaceMatches('/^0?9/', '639');
+
+            $user->phone_number = $formattedPhoneNumber;
+        });
     }
 
     // =============================
