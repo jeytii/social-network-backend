@@ -55,7 +55,6 @@ class CommentService
                             'post_id' => $post->id,
                             'body' => $request->body,
                         ])
-                        ->withUser()
                         ->first();
         $mentionedUsers = $this->getMentionedUsers($request->body);
 

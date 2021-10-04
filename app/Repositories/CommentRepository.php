@@ -19,10 +19,7 @@ class CommentRepository
         try {
             $post = Post::where('slug', $postId)->firstOrFail();
 
-            $data = $post->comments()
-                        ->withUser()
-                        ->orderByDesc('created_at')
-                        ->withPaginated();
+            $data = $post->comments()->orderByDesc('created_at')->withPaginated();
 
             return array_merge($data, [
                 'status' => 200,

@@ -16,11 +16,7 @@ class PostService
      */
     public function createPost(CreateOrUpdateLongTextRequest $request): array
     {
-        $data = $request->user()->posts()
-                    ->create($request->only('body'))
-                    ->withUser()
-                    ->withCount(['likers as likes_count', 'comments'])
-                    ->first();
+        $data = $request->user()->posts()->create($request->only('body'));
 
         return [
             'status' => 201,

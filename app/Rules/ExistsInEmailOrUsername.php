@@ -26,7 +26,7 @@ class ExistsInEmailOrUsername implements Rule
      */
     public function passes($attribute, $value)
     {
-        return User::whereUser($value)->exists();
+        return User::whereUsername($value)->exists();
     }
 
     /**

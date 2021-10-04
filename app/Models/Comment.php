@@ -45,7 +45,14 @@ class Comment extends Model
         'timestamp',
     ];
 
-    // TODO: Modify built-in properties for automeated eager-loading.
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = [
+        'user:id,slug,name,username,gender,image_url'
+    ];
 
     /**
      * The "booted" method of the model.

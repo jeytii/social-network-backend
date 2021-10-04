@@ -16,7 +16,7 @@ class UserController extends Controller
     protected $userService;
 
     /**
-     * Create a new notification instance.
+     * Create a new controller instance.
      *
      * @param \App\Repositories\UserRepository  $userRepository
      * @param \App\Services\UserService  $userService

@@ -43,7 +43,24 @@ class Post extends Model
         'timestamp',
     ];
 
-    // TODO: Modify built-in properties for automeated eager-loading.
+    /**
+     * The relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $with = [
+        'user:id,slug,name,username,gender,image_url'
+    ];
+
+    /**
+     * The number of relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $withCount = [
+        'likers as likes_count',
+        'comments'
+    ];
 
     /**
      * The number of items per page.

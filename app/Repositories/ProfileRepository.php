@@ -38,9 +38,7 @@ class ProfileRepository
             $query = $user->posts()->orderByDesc('created_at');
         }
 
-        $data = $query->withUser()
-                    ->withCount(['likers as likes_count', 'comments'])
-                    ->withPaginated();
+        $data = $query->withPaginated();
 
         return array_merge($data, [
             'status' => 200,
@@ -57,11 +55,7 @@ class ProfileRepository
     public function getComments(string $userId): array
     {
         $data = Post::whereHas('comments', fn($q) => $q->where('user_id', $userId))
-                    ->withUser()
-                    ->with([
-                        'comments' => fn($q) => $q->withUser()->orderByDesc('created_at')
-                    ])
-                    ->withCount(['likers as likes_count', 'comments'])
+                    ->with(['comments' => fn($q) => $q->orderByDesc('created_at')])
                     ->withPaginated();
 
         return array_merge($data, [

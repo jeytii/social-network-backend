@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use App\Mixins\{UserMixin, PaginationMixin};
+use App\Mixins\PaginationMixin;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,8 +17,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // TODO: Remove this
-        $this->app->bind('App\Repositories\Contracts\AuthRepositoryInterface', 'App\Repositories\AuthRepository');
+        //
     }
 
     /**
@@ -28,12 +27,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Builder::mixin(new UserMixin);
         Builder::mixin(new PaginationMixin);
-
-        Relation::mixin(new UserMixin);
         Relation::mixin(new PaginationMixin);
 
-        QueryBuilder::mixin(new UserMixin);
+        QueryBuilder::macro('searchUser', function(string $query) {
+            return $this->where('name', 'ilike', "%$query%")->orWhere('username', 'like', "%$query%");
+        });
     }
 }

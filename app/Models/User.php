@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\Notification;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Support\Str;
+use App\Models\Notification;
 use Laravel\Sanctum\HasApiTokens;
 use App\Notifications\ResetPassword;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany};
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -91,6 +92,34 @@ class User extends Authenticatable implements MustVerifyEmail
 
             $user->phone_number = $formattedPhoneNumber;
         });
+    }
+
+    // =============================
+    // SCOPES
+    // =============================
+
+    /**
+     * Scope a query to find a user by username or email address.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param  string  $username
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeWhereUsername(Builder $query, string $username)
+    {
+        return $query->where('username', $username)->orWhere('email', $username);
+    }
+
+    /**
+     * Scope a query to get a user with only the basic data.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeFirstWithBasicOnly(Builder $query)
+    {
+        return $query->first(array_merge(config('api.response.user.basic'), ['id']))
+                    ->setHidden(['is_followed', 'is_self']);
     }
 
     // =============================

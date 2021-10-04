@@ -20,8 +20,6 @@ class PostRepository
 
         $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
                     ->orderByDesc($sortType)
-                    ->withUser()
-                    ->withCount(['likers as likes_count', 'comments'])
                     ->withPaginated();
 
         return array_merge($data, [

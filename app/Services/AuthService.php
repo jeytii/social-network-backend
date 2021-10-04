@@ -59,7 +59,7 @@ class AuthService
      */
     public function login(Request $request): array
     {
-        $user = User::whereUser($request->username);
+        $user = User::whereUsername($request->username);
 
         if (
             !$user->exists() ||
@@ -153,7 +153,7 @@ class AuthService
      */
     public function resendVerificationCode(ResendCodeRequest $request): array
     {
-        $user = User::whereUser($request->username)->first();
+        $user = User::whereUsername($request->username)->first();
         
         if ($user->hasVerifiedEmail()) {
             return [
