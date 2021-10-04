@@ -3,84 +3,140 @@
 namespace App\Repositories;
 
 use App\Models\{User, Post};
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ProfileRepository
 {
     /**
+     * Get a specific user.
+     * 
+     * @param string  $username
+     * @return \App\Models\User
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     */
+    private function getUser(string $username): User
+    {
+        return User::withCount('followers', 'following')
+                    ->where('username', $username)
+                    ->firstOrFail();
+    }
+
+    /**
      * Get the data of a specific user.
      * 
-     * @param \App\Models\User  $user
+     * @param string  $username
      * @return array
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function get(User $user): array
+    public function get(string $username): array
     {
-        $status = 200;
-        $message = 'Successfully retrieved the profile info.';
-        $data = $user->append('birth_date');
+        try {
+            $user = $this->getUser($username);
+            $data = $user->append('birth_date');
+            $message = 'Successfully retrieved the profile info.';
+            $status = 200;
 
-        return compact('status', 'message', 'data');
+            return compact('status', 'message', 'data');
+        }
+        catch (ModelNotFoundException $exception) {
+            return [
+                'status' => $exception->getCode(),
+                'message' => $exception->getMessage(),
+            ];
+        }
     }
 
     /**
      * Get paginated posts according to the type.
      * 
-     * @param \App\Models\User  $user
+     * @param string  $username
      * @param string  $type
      * @return array
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function getPosts(User $user, string $type): array
+    public function getPosts(string $username, string $type): array
     {
-        if (in_array($type, ['likes', 'bookmarks'])) {
-            $query = $user->{$type}()->orderByPivot('created_at', 'desc');
+        try {
+            $user = $this->getUser($username);
+
+            if (in_array($type, ['likes', 'bookmarks'])) {
+                $query = $user->{$type}()->orderByPivot('created_at', 'desc');
+            }
+    
+            if ($type === 'posts') {
+                $query = $user->posts()->orderByDesc('created_at');
+            }
+    
+            $data = $query->withPaginated();
+    
+            return array_merge($data, [
+                'status' => 200,
+                'message' => 'Successfully retrieved posts.',
+            ]);
         }
-
-        if ($type === 'posts') {
-            $query = $user->posts()->orderByDesc('created_at');
+        catch (ModelNotFoundException $exception) {
+            return [
+                'status' => $exception->getCode(),
+                'message' => $exception->getMessage(),
+            ];
         }
-
-        $data = $query->withPaginated();
-
-        return array_merge($data, [
-            'status' => 200,
-            'message' => 'Successfully retrieved posts.',
-        ]);
     }
 
     /**
      * Get paginated comments with the parent post.
      * 
-     * @param string  $userId
+     * @param string  $username
      * @return array
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function getComments(string $userId): array
+    public function getComments(string $username): array
     {
-        $data = Post::whereHas('comments', fn($q) => $q->where('user_id', $userId))
+        try {
+            $user = $this->getUser($username);
+            $data = Post::whereHas('comments', fn($q) => $q->where('user_id', $user->id))
                     ->with(['comments' => fn($q) => $q->orderByDesc('created_at')])
                     ->withPaginated();
 
-        return array_merge($data, [
-            'status' => 200,
-            'message' => 'Successfully retrieved comments.',
-        ]);
+            return array_merge($data, [
+                'status' => 200,
+                'message' => 'Successfully retrieved comments.',
+            ]);
+        }
+        catch (ModelNotFoundException $exception) {
+            return [
+                'status' => $exception->getCode(),
+                'message' => $exception->getMessage(),
+            ];
+        }
     }
 
     /**
      * Get paginated followers or followed users.
      *
-     * @param \App\Models\User  $user
+     * @param string  $username
      * @param string  $type
      * @return array
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function getConnections(User $user, string $type): array
+    public function getConnections(string $username, string $type): array
     {
-        $data = $user->{$type}()->withPaginated(
-                    20,
-                    array_merge(config('api.response.user.basic'), ['slug'])
-                );
-
-        return array_merge($data, [
-            'status' => 200,
-            'message' => 'Successfully retrieved users.',
-        ]);
+        try {
+            $user = $this->getUser($username);
+            $data = $user->{$type}()->withPaginated(
+                        20,
+                        array_merge(config('api.response.user.basic'), ['slug'])
+                    );
+    
+            return array_merge($data, [
+                'status' => 200,
+                'message' => 'Successfully retrieved users.',
+            ]);
+        }
+        catch (ModelNotFoundException $exception) {
+            return [
+                'status' => $exception->getCode(),
+                'message' => $exception->getMessage(),
+            ];
+        }
     }
 }

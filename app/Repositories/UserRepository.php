@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class UserRepository
@@ -44,18 +45,19 @@ class UserRepository
     /**
      * Get 3 random users.
      * 
-     * @param array  $exceptIds
+     * @param \Illuminate\Http\Request  $request
      * @param int  $count
      * @return array
      */
-    public function getRandom(array $exceptIds, int $count = 3): array
+    public function getRandom(Request $request, int $count = 3): array
     {
-        $status = 200;
-        $message = 'Successfully retrieved data.';
+        $exceptIds = $request->user()->following()->pluck('id')->toArray();
         $data = User::whereNotIn('id', [auth()->id(), ...$exceptIds])
                     ->inRandomOrder()
                     ->limit($count)
                     ->get($this->columns);
+        $message = 'Successfully retrieved data.';
+        $status = 200;
 
         return compact('status', 'message', 'data');
     }

@@ -10,14 +10,12 @@ use App\Services\PostService;
 
 class PostController extends Controller
 {
-    // FIXME: Fix some doc blocks
-
     protected $postRepository;
 
     protected $postService;
 
     /**
-     * Create a new notification instance.
+     * Create a new controller instance.
      *
      * @param \App\Repositories\PostRepository  $postRepository
      * @param \App\Services\PostService  $postService
@@ -37,9 +35,9 @@ class PostController extends Controller
      */
     public function get(Request $request)
     {
-        $data = $this->postRepository->get($request);
+        $response = $this->postRepository->get($request);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -47,13 +45,12 @@ class PostController extends Controller
      * 
      * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
      */
     public function store(CreateOrUpdateLongTextRequest $request)
     {
-        $data = $this->postService->createPost($request);
+        $response = $this->postService->createPost($request);
 
-        return response()->json($data, 201);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -68,9 +65,9 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
-        $data = $this->postService->updatePost($request, $post);
+        $response = $this->postService->updatePost($request, $post);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -85,9 +82,9 @@ class PostController extends Controller
     {
         $this->authorize('delete', $post);
 
-        $data = $this->postService->deletePost($request->user(), $post->id);
+        $response = $this->postService->deletePost($request->user(), $post->id);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -102,59 +99,59 @@ class PostController extends Controller
     {
         $this->authorize('like', $post);
 
-        $data = $this->postService->likePost($request->user(), $post);
+        $response = $this->postService->likePost($request->user(), $post);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Remove the post from the list of likes.
      * 
-     * @param \App\Models\Post  $post
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function dislike(Request $request, Post $post)
     {
         $this->authorize('dislike', $post);
 
-        $data = $this->postService->dislikePost($request->user(), $post->id);
+        $response = $this->postService->dislikePost($request->user(), $post->id);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Add the post to the list of bookmarks.
      * 
-     * @param \App\Models\Post  $post
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function bookmark(Request $request, Post $post)
     {
         $this->authorize('bookmark', $post);
 
-        $data = $this->postService->bookmarkPost($request->user(), $post->id);
+        $response = $this->postService->bookmarkPost($request->user(), $post->id);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Remove the post from the list of bookmarks.
      * 
-     * @param \App\Models\Post  $post
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function unbookmark(Request $request, Post $post)
     {
         $this->authorize('unbookmark', $post);
 
-        $data = $this->postService->unbookmarkPost($request->user(), $post->id);
+        $response = $this->postService->unbookmarkPost($request->user(), $post->id);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 }

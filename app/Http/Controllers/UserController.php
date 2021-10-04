@@ -9,8 +9,6 @@ use App\Services\UserService;
 
 class UserController extends Controller
 {
-    // FIXME: Fix the doc blocks
-
     protected $userRepository;
 
     protected $userService;
@@ -32,41 +30,39 @@ class UserController extends Controller
      * Get paginated list of user models.
      *
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function get(Request $request)
     {
-        $data = $this->userRepository->get($request->query('query'));
+        $response = $this->userRepository->get($request->query('query'));
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Get 3 randomly suggested users that the user is not yet following.
      *
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function getRandom(Request $request)
     {
-        $followingIds = $request->user()->following()->pluck('id')->toArray();
+        $response = $this->userRepository->getRandom($request);
 
-        $data = $this->userRepository->getRandom($followingIds);
-
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Search user(s) by name or username.
      *
      * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function search(Request $request)
     {
-        $data = $this->userRepository->search($request->query('query'));
+        $response = $this->userRepository->search($request->query('query'));
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -74,16 +70,16 @@ class UserController extends Controller
      *
      * @param \Illuminate\Http\Request  $request
      * @param \App\Models\User  $user
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function follow(Request $request, User $user)
     {
         $this->authorize('follow', $user);
         
-        $data = $this->userService->follow($request->user(), $user);
+        $response = $this->userService->follow($request->user(), $user);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -91,15 +87,15 @@ class UserController extends Controller
      *
      * @param \Illuminate\Http\Request  $request
      * @param \App\Models\User  $user
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function unfollow(Request $request, User $user)
     {
         $this->authorize('unfollow', $user);
 
-        $data = $this->userService->unfollow($request->user(), $user);
+        $response = $this->userService->unfollow($request->user(), $user);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 }
