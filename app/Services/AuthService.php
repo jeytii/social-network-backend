@@ -6,11 +6,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
 use Illuminate\Support\Facades\{DB, Hash, Password};
-use App\Notifications\SendVerificationCode;
 use Illuminate\Auth\Events\{Login, Registered, PasswordReset};
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Exception;
+use App\Notifications\SendVerificationCode;
 
 class AuthService
 {
@@ -59,28 +56,26 @@ class AuthService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function login(Request $request): array
     {
-        $request->validate([
-            'username' => 'required',
-            'password' => 'required',
-        ]);
-
         $user = User::whereUser($request->username);
 
         if (
             !$user->exists() ||
             !Hash::check($request->password, $user->first()->password)
         ) {
-            throw new ModelNotFoundException('Incorrect combination.', 404);
+            return [
+                'status' => 404,
+                'message' => 'Incorrect combination.',
+            ];
         }
 
         if (!$user->first()->hasVerifiedEmail()) {
-            throw new AuthorizationException('Your account is not yet verified.', 401);
+            return [
+                'status' => 401,
+                'message' => 'Your account is not yet verified.',
+            ];
         }
 
         event(new Login('api', $user->firstWithBasicOnly(), true));
@@ -93,7 +88,6 @@ class AuthService
      * 
      * @param \App\Http\Requests\RegistrationRequest  $request
      * @return array
-     * @throws \Illuminate\Validation\ValidationException
      */
     public function register(RegistrationRequest $request): array
     {
@@ -109,7 +103,7 @@ class AuthService
         $type = $this->sendVerificationCode($user, $request->prefers_sms_verification);
 
         return [
-            'status' => 200,
+            'status' => 201,
             'message' => "Account successfully created. Please enter the verification code that was sent to your {$type}.",
         ];
     }
@@ -119,25 +113,28 @@ class AuthService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
     public function verify(Request $request): array
     {
-        $request->validate([
-            'code' => ['required', 'exists:verifications,code']
-        ]);
+        $verification = DB::table('verifications')
+                            ->where('user_id', auth()->id())
+                            ->where('code', $request->code)
+                            ->where('expiration', '>', now());
 
-        $verification = DB::table('verifications')->where('code', $request->code)->first();
-
-        if ($verification->expiration < now()) {
-            throw new Exception('Verification code already expired.', 410);
+        if ($verification->doesntExist()) {
+            return [
+                'status' => 410,
+                'message' => 'Verification code already expired.',
+            ];
         }
 
-        $user = User::find($verification->user_id);
+        $user = User::find($verification->first()->user_id);
 
         if ($user->hasVerifiedEmail()) {
-            throw new Exception('You have already verified your account.', 409);
+            return [
+                'status' => 409,
+                'message' => 'You have already verified your account.',
+            ];
         }
         
         $user->markEmailAsVerified();
@@ -153,15 +150,16 @@ class AuthService
      * 
      * @param \App\Http\Requests\ResendCodeRequest  $request
      * @return array
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
     public function resendVerificationCode(ResendCodeRequest $request): array
     {
         $user = User::whereUser($request->username)->first();
         
         if ($user->hasVerifiedEmail()) {
-            throw new Exception('You have already verified your account.', 409);
+            return [
+                'status' => 409,
+                'message' => 'You have already verified your account.',
+            ];
         }
 
         $type = $this->sendVerificationCode($user, $request->prefers_sms_verification);
@@ -177,17 +175,14 @@ class AuthService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
     public function sendPasswordResetLink(Request $request): array
     {
-        $request->validate([
-            'email' => ['required', 'email', 'exists:users,email']
-        ]);
-
         if (User::firstWhere('email', $request->email)->hasVerifiedEmail()) {
-            throw new Exception('You have already verified your account.', 409);
+            return [
+                'status' => 409,
+                'message' => 'You have already verified your account.',
+            ];
         }
 
         Password::sendResetLink($request->only('email'));
@@ -203,8 +198,6 @@ class AuthService
      * 
      * @param \App\Http\Requests\ResetPasswordRequest  $request
      * @return array
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
     public function resetPassword(ResetPasswordRequest $request): array
     {
@@ -221,7 +214,10 @@ class AuthService
         });
 
         if ($status === Password::INVALID_TOKEN) {
-            throw new Exception('Permission denied. You entered an invalid token.', 403);
+            return [
+                'status' => 401,
+                'message' => 'Permission denied. You entered an invalid token.',
+            ];
         }
 
         return $this->authenticateUser($user, 'You have successfully reset your password.');

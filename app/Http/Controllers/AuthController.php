@@ -5,157 +5,109 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
 use App\Services\AuthService;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Validation\ValidationException;
-use Exception;
 
 class AuthController extends Controller
 {
-    // FIXME: Clean up error handling and fix the doc blocks
+    protected $auth;
 
     /**
-     * Register any application services.
+     * Create a new controller instance.
+     *
+     * @param \App\Services\AuthService  $auth
+     * @return void
+     */
+    public function __construct(AuthService $auth)
+    {
+        $this->auth = $auth;
+    }
+
+    /**
+     * Log in a user.
      *
      * @param \Illuminate\Http\Request  $request
-     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
-     * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function login(Request $request, AuthService $authService)
+    public function login(Request $request)
     {
-        try {
-            $data = $authService->login($request);
+        $request->validate([
+            'username' => 'required',
+            'password' => 'required',
+        ]);
 
-            return response()->json($data);
-        }
-        catch (AuthorizationException $exception) {
-            return response()->json([
-                'message' => $exception->getMessage(),
-                'data' => [
-                    'resend_code_url' => config('app.url') . '/api/verify/resend',
-                    'username' => $request->username,
-                ],
-            ], $exception->getCode());
-        }
-        catch (ModelNotFoundException $exception) {
-            return response()->json([
-                'message' => $exception->getMessage()
-            ], $exception->getCode());    
-        }
+        $response = $this->auth->login($request);
+
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Register a user.
      * 
      * @param \App\Http\Requests\RegistrationRequest  $request
-     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
      */
-    public function register(RegistrationRequest $request, AuthService $authService) {
-        $data = $authService->register($request);
+    public function register(RegistrationRequest $request) {
+        $response = $this->auth->register($request);
 
-        return response()->json($data, 201);
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Verify a user.
      * 
      * @param \Illuminate\Http\Request  $request
-     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
-    public function verify(Request $request, AuthService $authService)
+    public function verify(Request $request)
     {
-        try {
-            $data = $authService->verify($request);
+        $request->validate([
+            'code' => ['required', 'exists:verifications']
+        ]);
 
-            return response()->json($data);
-        }
-        catch (Exception $exception) {
-            return response()->json([
-                'message' => $exception->getMessage()
-            ], $exception->getCode());
-        }
+        $response = $this->auth->verify($request);
+
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Resend another verification code to the user.
      * 
      * @param \App\Http\Requests\ResendCodeRequest  $request
-     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
-    public function resendVerificationCode(ResendCodeRequest $request, AuthService $authService)
+    public function resendVerificationCode(ResendCodeRequest $request)
     {
-        try {
-            $data = $authService->resendVerificationCode($request);
+        $response = $this->auth->resendVerificationCode($request);
 
-            return response()->json($data);
-        }
-        catch (Exception $exception) {
-            return response()->json([
-                'message' => $exception->getMessage()
-            ], $exception->getCode());
-        }
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Send a password-reset request link to the user.
      * 
      * @param \Illuminate\Http\Request  $request
-     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
-    public function requestPasswordReset(Request $request, AuthService $authService)
+    public function requestPasswordReset(Request $request)
     {
-        try {
-            $data = $authService->sendPasswordResetLink($request);
+        $request->validate([
+            'email' => ['required', 'email', 'exists:users']
+        ]);
 
-            return response()->json($data);
-        }
-        catch (ValidationException $exception) {
-            return response()->json([
-                'message' => $exception->getMessage(),
-                'errors' => $exception->errors(),
-            ], 422);
-        }
-        catch (Exception $exception) {
-            return response()->json([
-                'message' => $exception->getMessage()
-            ], $exception->getCode());
-        }
+        $response = $this->auth->sendPasswordResetLink($request);
+
+        return response()->json($response, $response['status']);
     }
 
      /**
      * Reset user's password.
      * 
      * @param \App\Http\Requests\ResetPasswordRequest  $request
-     * @param \App\Services\AuthService  $authService
      * @return \Illuminate\Http\JsonResponse
-     * @throws \Illuminate\Validation\ValidationException
-     * @throws \Exception
      */
-    public function resetPassword(ResetPasswordRequest $request, AuthService $authService)
+    public function resetPassword(ResetPasswordRequest $request)
     {
-        try {
-            $data = $authService->resetPassword($request);
+        $response = $this->auth->resetPassword($request);
 
-            return response()->json($data);
-        }
-        catch (Exception $exception) {
-            return response()->json([
-                'message' => $exception->getMessage()
-            ], $exception->getCode());
-        }
+        return response()->json($response, $response['status']);
     }
 }
