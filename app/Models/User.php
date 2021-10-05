@@ -118,7 +118,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeFirstWithBasicOnly(Builder $query)
     {
-        return $query->first(array_merge(config('api.response.user.basic'), ['id']))
+        return $query->first(array_merge(config('api.response.user.basic'), ['id'])) // FIXME: Replace id with slug
                     ->setHidden(['is_followed', 'is_self']);
     }
 
