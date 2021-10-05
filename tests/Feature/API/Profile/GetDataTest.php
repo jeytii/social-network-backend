@@ -49,14 +49,14 @@ test('The visited user profile is not self', function() {
     $username = DB::table('users')->find(3)->username;
 
     $this->response
-        ->getJson(route('profile.get.info', compact('username')))
+        ->getJson(route('profile.get.info', ['user' => $username]))
         ->assertOk()
         ->assertJsonPath('data.is_self', false);
 });
 
 test('The visited user profile is self', function() {
     $this->response
-        ->getJson(route('profile.get.info', $this->user->only('username')))
+        ->getJson(route('profile.get.info', ['user' => $this->user->username]))
         ->assertOk()
         ->assertJsonPath('data.is_self', true);
 });
@@ -67,7 +67,7 @@ test('Should return the profile data with followers count and following count', 
     $this->user->followers()->sync(range(51, 55));
 
     $this->response
-        ->getJson(route('profile.get.info', $this->user->only('username')))
+        ->getJson(route('profile.get.info', ['user' => $this->user->username]))
         ->assertOk()
         ->assertJsonPath('data.followers_count', 5)
         ->assertJsonPath('data.following_count', 40);
@@ -76,7 +76,7 @@ test('Should return the profile data with followers count and following count', 
 test('Should return the paginated list of owned posts', function() use ($jsonStructure) {
     $this->response
         ->getJson(route('profile.get.posts', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 1,
         ]))
         ->assertOk()
@@ -87,7 +87,7 @@ test('Should return the paginated list of owned posts', function() use ($jsonStr
 
     $this->response
         ->getJson(route('profile.get.posts', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 2,
         ]))
         ->assertOk()
@@ -101,7 +101,7 @@ test('Should return the paginated list of liked posts', function() use ($jsonStr
 
     $this->response
         ->getJson(route('profile.get.likes', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 1,
         ]))
         ->assertOk()
@@ -112,7 +112,7 @@ test('Should return the paginated list of liked posts', function() use ($jsonStr
 
     $this->response
         ->getJson(route('profile.get.likes', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 2,
         ]))
         ->assertOk()
@@ -129,7 +129,7 @@ test('Should return the paginated list of comments', function() {
 
     $this->response
         ->getJson(route('profile.get.comments', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 1,
         ]))
         ->assertOk()
@@ -169,7 +169,7 @@ test('Should return the paginated list of bookmarked posts', function() use ($js
 
     $this->response
         ->getJson(route('profile.get.bookmarks', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 1,
         ]))
         ->assertOk()
@@ -180,7 +180,7 @@ test('Should return the paginated list of bookmarked posts', function() use ($js
 
     $this->response
         ->getJson(route('profile.get.bookmarks', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 2,
         ]))
         ->assertOk()
@@ -195,7 +195,7 @@ test('Should return the paginated list of followed users', function() {
     // First full-page scroll
     $this->response
         ->getJson(route('profile.get.following', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 1,
         ]))
         ->assertOk()
@@ -206,7 +206,7 @@ test('Should return the paginated list of followed users', function() {
     // The last full-page scroll that returns an empty list
     $this->response
         ->getJson(route('profile.get.following', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 2,
         ]))
         ->assertOk()
@@ -221,7 +221,7 @@ test('Should return the paginated list of followers', function() {
     // First full-page scroll
     $this->response
         ->getJson(route('profile.get.followers', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 1,
         ]))
         ->assertOk()
@@ -232,7 +232,7 @@ test('Should return the paginated list of followers', function() {
     // The last full-page scroll that returns an empty list
     $this->response
         ->getJson(route('profile.get.followers', [
-            'username' => $this->user->username,
+            'user' => $this->user->username,
             'page' => 2,
         ]))
         ->assertOk()
@@ -243,6 +243,6 @@ test('Should return the paginated list of followers', function() {
 
 test('Should return an error if the visited user profile doesn\'t exist', function() {
     $this->response
-        ->getJson(route('profile.get.info', ['username' => 'foobar']))
+        ->getJson(route('profile.get.info', ['user' => 'foobar']))
         ->assertNotFound();
 });

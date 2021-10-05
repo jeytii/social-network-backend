@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Services\ProfileService;
 use App\Http\Requests\UserRequest;
 use App\Repositories\ProfileRepository;
-use App\Services\ProfileService;
 
 class ProfileController extends Controller
 {
@@ -28,92 +29,92 @@ class ProfileController extends Controller
     /**
      * Get the user's profile info.
      *
-     * @param string  $username
+     * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getInfo(string $username)
+    public function getInfo(User $user)
     {
-        $response = $this->profileRepository->get($username);
+        $response = $this->profileRepository->get($user);
 
-        return response()->json($response, $response['status']);
+        return response()->json($response);
     }
 
     /**
      * Get user's own posts.
      *
-     * @param string  $username
+     * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getPosts(string $username)
+    public function getPosts(User $user)
     {
-        $response = $this->profileRepository->getPosts($username, 'posts');
+        $response = $this->profileRepository->getPosts($user, 'posts');
 
-        return response()->json($response, $response['status']);
+        return response()->json($response);
     }
 
     /**
      * Get user's own comments.
      *
-     * @param string  $username
+     * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getComments(string $username)
+    public function getComments(User $user)
     {
-        $response = $this->profileRepository->getComments($username);
+        $response = $this->profileRepository->getComments($user);
 
-        return response()->json($response, $response['status']);
+        return response()->json($response);
     }
 
     /**
      * Get posts liked by user.
      *
-     * @param string  $username
+     * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getLikes(string $username)
+    public function getLikes(User $user)
     {
-        $response = $this->profileRepository->getPosts($username, 'likes');
+        $response = $this->profileRepository->getPosts($user, 'likes');
 
-        return response()->json($response, $response['status']);
+        return response()->json($response);
     }
 
     /**
      * Get posts bookmarked by user.
      *
-     * @param string  $username
+     * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getBookmarks(string $username)
+    public function getBookmarks(User $user)
     {
-        $response = $this->profileRepository->getPosts($username, 'bookmarks');
+        $response = $this->profileRepository->getPosts($user, 'bookmarks');
 
-        return response()->json($response, $response['status']);
+        return response()->json($response);
     }
 
     /**
      * Get user's followers.
      *
-     * @param string  $username
+     * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getFollowers(string $username)
+    public function getFollowers(User $user)
     {
-        $response = $this->profileRepository->getConnections($username, 'followers');
+        $response = $this->profileRepository->getConnections($user, 'followers');
 
-        return response()->json($response, $response['status']);
+        return response()->json($response);
     }
 
     /**
      * Get other users followed by user.
      *
-     * @param string  $username
+     * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getFollowedUsers(string $username)
+    public function getFollowedUsers(User $user)
     {
-        $response = $this->profileRepository->getConnections($username, 'following');
+        $response = $this->profileRepository->getConnections($user, 'following');
 
-        return response()->json($response, $response['status']);
+        return response()->json($response);
     }
 
     /**

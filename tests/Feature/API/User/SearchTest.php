@@ -55,14 +55,14 @@ test('Searching by username should return list of users', function() {
 
 test('Should return paginated list of users with search query', function() {
     $this->response
-        ->getJson(route('users.get', ['query' => 'dummy user', 'page' => 1]))
+        ->getJson(route('users.index', ['query' => 'dummy user', 'page' => 1]))
         ->assertOk()
         ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
     $this->response
-        ->getJson(route('users.get', ['query' => 'dummy user', 'page' => 2]))
+        ->getJson(route('users.index', ['query' => 'dummy user', 'page' => 2]))
         ->assertOk()
         ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)

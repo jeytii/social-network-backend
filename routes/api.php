@@ -22,7 +22,7 @@ use App\Http\Controllers\{
 */
 
 Route::prefix('users')->name('users.')->group(function() {
-    Route::get('/', [UserController::class, 'get'])->name('get'); // FIXME: Change the method name and route name
+    Route::get('/', [UserController::class, 'index'])->name('index');
     Route::get('/random', [UserController::class, 'getRandom'])->name('get.random');
     Route::get('/search', [UserController::class, 'search'])->name('search');
     Route::post('/follow/{user}', [UserController::class, 'follow'])->name('follow');
@@ -30,15 +30,21 @@ Route::prefix('users')->name('users.')->group(function() {
 });
 
 Route::prefix('profile')->name('profile.')->group(function() {
-    // FIXME: Fix route binding
-    Route::prefix('{username}')->name('get.')->group(function() {
-        Route::get('/', [ProfileController::class, 'getInfo'])->name('info');
-        Route::get('posts', [ProfileController::class, 'getPosts'])->name('posts');
-        Route::get('comments', [ProfileController::class, 'getComments'])->name('comments');
-        Route::get('likes', [ProfileController::class, 'getLikes'])->name('likes');
-        Route::get('bookmarks', [ProfileController::class, 'getBookmarks'])->name('bookmarks');
-        Route::get('followers', [ProfileController::class, 'getFollowers'])->name('followers');
-        Route::get('following', [ProfileController::class, 'getFollowedUsers'])->name('following');
+    Route::prefix('{user:username}')->name('get.')->group(function() {
+        $throw404Error = function () {
+            return response()->json([
+                'status' => 404,
+                'message' => 'User not found.'
+            ], 404);
+        };
+
+        Route::get('/', [ProfileController::class, 'getInfo'])->missing($throw404Error)->name('info');
+        Route::get('posts', [ProfileController::class, 'getPosts'])->missing($throw404Error)->name('posts');
+        Route::get('comments', [ProfileController::class, 'getComments'])->missing($throw404Error)->name('comments');
+        Route::get('likes', [ProfileController::class, 'getLikes'])->missing($throw404Error)->name('likes');
+        Route::get('bookmarks', [ProfileController::class, 'getBookmarks'])->missing($throw404Error)->name('bookmarks');
+        Route::get('followers', [ProfileController::class, 'getFollowers'])->missing($throw404Error)->name('followers');
+        Route::get('following', [ProfileController::class, 'getFollowedUsers'])->missing($throw404Error)->name('following');
     });
     
     Route::post('upload/profile-photo', [ProfileController::class, 'uploadProfilePhoto'])->name('upload.profile-photo');

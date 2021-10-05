@@ -24,7 +24,7 @@ afterAll(function() {
 test('Should return paginated list of users', function() {
     // First scroll full-page bottom
     $this->response
-        ->getJson(route('users.get', ['page' => 1]))
+        ->getJson(route('users.index', ['page' => 1]))
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
@@ -37,7 +37,7 @@ test('Should return paginated list of users', function() {
 
     // Second scroll full-page bottom
     $this->response
-        ->getJson(route('users.get', ['page' => 2]))
+        ->getJson(route('users.index', ['page' => 2]))
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
@@ -45,7 +45,7 @@ test('Should return paginated list of users', function() {
 
     // The last full-page scroll that returns data
     $this->response
-        ->getJson(route('users.get', ['page' => 3]))
+        ->getJson(route('users.index', ['page' => 3]))
         ->assertOk()
         ->assertJsonCount(9, 'items')
         ->assertJsonPath('has_more', false)
@@ -53,7 +53,7 @@ test('Should return paginated list of users', function() {
 
     // Full-page scroll attempt but should return empty list
     $this->response
-        ->getJson(route('users.get', ['page' => 4]))
+        ->getJson(route('users.index', ['page' => 4]))
         ->assertOk()
         ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)

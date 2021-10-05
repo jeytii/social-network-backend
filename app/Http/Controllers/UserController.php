@@ -32,7 +32,7 @@ class UserController extends Controller
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function get(Request $request)
+    public function index(Request $request)
     {
         $response = $this->userRepository->get($request->query('query'));
 
