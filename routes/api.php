@@ -30,6 +30,7 @@ Route::prefix('users')->name('users.')->group(function() {
 });
 
 Route::prefix('profile')->name('profile.')->group(function() {
+    // FIXME: Fix route binding
     Route::prefix('{username}')->name('get.')->group(function() {
         Route::get('/', [ProfileController::class, 'getInfo'])->name('info');
         Route::get('posts', [ProfileController::class, 'getPosts'])->name('posts');
@@ -40,7 +41,7 @@ Route::prefix('profile')->name('profile.')->group(function() {
         Route::get('following', [ProfileController::class, 'getFollowedUsers'])->name('following');
     });
     
-    Route::post('upload/profile-photo', [ProfileController::class, 'uploadProfilePhoto'])->name('upload');
+    Route::post('upload/profile-photo', [ProfileController::class, 'uploadProfilePhoto'])->name('upload.profile-photo');
     Route::put('update', [ProfileController::class, 'update'])->name('update');
 });
 

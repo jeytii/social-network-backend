@@ -16,6 +16,11 @@ return [
         'username' => 6,
     ],
 
+    'image' => [
+        'min_res' => 100,
+        'max_res' => 800,
+    ],
+
     'notifications' => [
         'user_followed' => 1,
         'post_liked' => 2,

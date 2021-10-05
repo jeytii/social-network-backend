@@ -1,7 +1,8 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Storage};
+use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\WithFaker;
 
 uses(WithFaker::class);
@@ -13,6 +14,50 @@ beforeAll(function() {
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
+});
+
+test('Should throw an error for uploading a non-image file', function() {
+    Storage::fake();
+
+    $this->response
+        ->postJson(route('profile.upload.profile-photo'), [
+            'image' => UploadedFile::fake()->create('sample.pdf', 1500, 'application/pdf')
+        ])
+        ->assertStatus(422)
+        ->assertJsonFragment([
+            'errors' => [
+                'image' => [
+                    'Please upload an image file.',
+                    'Resolution must be from 100x100 to 800x800.',
+                ]
+            ]
+        ]);
+});
+
+test('Should throw an error for uploading an image with invalid', function() {
+    Storage::fake();
+
+    $this->response
+        ->postJson(route('profile.upload.profile-photo'), [
+            'image' => UploadedFile::fake()->image('sample.jpg', 900, 900)
+        ])
+        ->assertStatus(422)
+        ->assertJsonFragment([
+            'errors' => [
+                'image' => ['Resolution must be from 100x100 to 800x800.']
+            ]
+        ]);
+});
+
+test('Should successfully upload a profile photo', function() {
+    Storage::fake();
+
+    $this->response
+        ->postJson(route('profile.upload.profile-photo'), [
+            'image' => UploadedFile::fake()->image('sample.png', 200, 200)
+        ])
+        ->assertOk()
+        ->assertJsonStructure(['status', 'message', 'data']);
 });
 
 test('Should throw validation errors if input values are incorrect in update profile form', function() {

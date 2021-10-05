@@ -26,9 +26,9 @@ class UpdateUserRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string'],
-            'location' => ['string'],
-            'bio' => ['string', 'max:' . config('api.max_lengths.bio')],
-            'image_url' => ['string']
+            'location' => ['nullable', 'string'],
+            'bio' => ['nullable', 'string', 'max:' . config('api.max_lengths.bio')],
+            'image_url' => ['nullable', 'string'],
         ];
     }
 

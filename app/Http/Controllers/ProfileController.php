@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\{UploadProfilePhotoRequest, UpdateUserRequest};
 use App\Repositories\ProfileRepository;
 use App\Services\ProfileService;
 
@@ -117,6 +117,19 @@ class ProfileController extends Controller
     }
 
     /**
+     * Upload a profile photo.
+     *
+     * @param \App\Http\Requests\UploadProfilePhotoRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadProfilePhoto(UploadProfilePhotoRequest $request)
+    {   
+        $response = $this->profileService->uploadProfilePhoto($request);
+
+        return response()->json($response);
+    }
+
+    /**
      * Update auth user's profile.
      *
      * @param \App\Http\Requests\UpdateUserRequest  $request
@@ -124,8 +137,8 @@ class ProfileController extends Controller
      */
     public function update(UpdateUserRequest $request)
     {   
-        $data = $this->profileService->update($request);
+        $response = $this->profileService->update($request);
 
-        return response()->json($data);
+        return response()->json($response);
     }
 }

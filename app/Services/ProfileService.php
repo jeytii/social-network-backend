@@ -2,32 +2,54 @@
 
 namespace App\Services;
 
-use Illuminate\Http\Request;
-use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\{UploadProfilePhotoRequest, UpdateUserRequest};
+use Illuminate\Support\Str;
+use Cloudinary\Cloudinary;
 
 class ProfileService
 {
+    protected $cloudinary;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        $this->cloudinary = new Cloudinary(env('CLOUDINARY_URL'));
+    }
+
     /**
      * Upload an image as profile photo.
      * 
-     * @param \Illuminate\Http\Request  $request
+     * @param \App\Http\Requests\UploadProfilePhotoRequest  $request
      * @return array
      */
-    public function uploadProfilePhoto(Request $request): array
+    public function uploadProfilePhoto(UploadProfilePhotoRequest $request): array
     {
-        $image = $request->file('image')->storeOnCloudinary();
+        $image = $this->cloudinary->uploadApi()->upload(
+            $request->file('image')->getRealPath(),
+            [
+                'folder' => 'social',
+                'eager' => [
+                    'width' => 200,
+                    'height' => 200,
+                    'crop' => 'fill',
+                    'aspect_ratio' => 1.0,
+                ]
+            ]
+        );
 
         return [
             'status' => 200,
             'message' => 'Successfully uploaded an image.',
-            'data' => $image->getSecurePath(),
+            'data' => $image['eager'][0]['secure_url'],
         ];
     }
 
     /**
      * Update user's profile.
-     * 
-     * FIXME: Delete the previous image if the image url is changed or set to null
      * 
      * @param \App\Http\Requests\UpdateUserReques  $request
      * @return array
@@ -37,6 +59,11 @@ class ProfileService
         $body = $request->user()->no_birthdate ?
                 $request->validated() :
                 $request->only(['name', 'location', 'bio', 'image_url']);
+
+        if (empty($request->image_url) && !is_null($request->user()->image_url)) {
+            $id = (string) Str::of($request->user()->image_url)->match('/social\/\w+/');
+            $this->cloudinary->uploadApi()->destroy($id);
+        }
 
         $request->user()->update($body);
 
