@@ -110,4 +110,17 @@ class AuthController extends Controller
 
         return response()->json($response, $response['status']);
     }
+
+    /**
+     * Log out a user.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function logout(Request $request)
+    {
+        $response = $this->auth->logout($request);
+
+        return response()->json($response, $response['status']);
+    }
 }

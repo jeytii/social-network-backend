@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
+    AuthController,
     UserController,
     PostController,
     CommentController,
@@ -84,4 +85,4 @@ Route::prefix('notifications')->name('notifications.')->group(function() {
     Route::put('/read/all', [NotificationController::class, 'readAll'])->name('read.all');
 });
 
-// TODO: Add logout
+Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');

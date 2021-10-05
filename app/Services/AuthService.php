@@ -21,9 +21,13 @@ class AuthService
     private function authenticateUser(User $user, string $message): array
     {
         $token = $user->createToken($user->username)->plainTextToken;
-        $status = 200;
 
-        return compact('status', 'message', 'user', 'token');
+        return [
+            'status' => 200,
+            'message' => $message,
+            'token' => $token,
+            'user' => $user->setHidden(['id']),
+        ];
     }
 
     /**
@@ -221,5 +225,21 @@ class AuthService
         }
 
         return $this->authenticateUser($user, 'You have successfully reset your password.');
+    }
+
+    /**
+     * Log out a user.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function logout(Request $request): array
+    {
+        $request->user()->tokens()->delete();
+
+        return [
+            'status' => 200,
+            'message' => 'Logout successful.',
+        ];
     }
 }
