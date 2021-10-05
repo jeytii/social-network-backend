@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\{UpdateSettingRequest, VerifyUserRequest};
+use App\Http\Requests\UserRequest;
 use App\Services\SettingService;
 
 class SettingController extends Controller
@@ -23,10 +23,10 @@ class SettingController extends Controller
     /**
      * Make a request to update username.
      * 
-     * @param \App\Http\Requests\UpdateSettingRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function requestUsernameUpdate(UpdateSettingRequest $request)
+    public function requestUsernameUpdate(UserRequest $request)
     {
         $response = $this->settings->requestUpdate('username_updates', $request->username, $request->prefers_sms);
 
@@ -36,10 +36,10 @@ class SettingController extends Controller
     /**
      * Update the user's username.
      * 
-     * @param \App\Http\Requests\VerifyUserRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateUsername(VerifyUserRequest $request)
+    public function updateUsername(UserRequest $request)
     {
         $response = $this->settings->updateColumn('username', 'username_updates', $request->code);
 
@@ -49,10 +49,10 @@ class SettingController extends Controller
     /**
      * Make a request to update email address.
      * 
-     * @param \App\Http\Requests\UpdateSettingRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function requestEmailAddressUpdate(UpdateSettingRequest $request)
+    public function requestEmailAddressUpdate(UserRequest $request)
     {
         $response = $this->settings->requestUpdate('email_address_updates', $request->email, false);
 
@@ -62,10 +62,10 @@ class SettingController extends Controller
     /**
      * Update the user's email address.
      * 
-     * @param \App\Http\Requests\VerifyUserRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updateEmailAddress(VerifyUserRequest $request)
+    public function updateEmailAddress(UserRequest $request)
     {
         $response = $this->settings->updateColumn('email', 'email_address_updates', $request->code);
 
@@ -75,10 +75,10 @@ class SettingController extends Controller
     /**
      * Make a request to update phone number.
      * 
-     * @param \App\Http\Requests\UpdateSettingRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function requestPhoneNumberUpdate(UpdateSettingRequest $request)
+    public function requestPhoneNumberUpdate(UserRequest $request)
     {
         $response = $this->settings->requestUpdate('phone_number_updates', $request->phone_number, true);
 
@@ -88,10 +88,10 @@ class SettingController extends Controller
     /**
      * Update the user's phone number.
      * 
-     * @param \App\Http\Requests\VerifyUserRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updatePhoneNumber(VerifyUserRequest $request)
+    public function updatePhoneNumber(UserRequest $request)
     {
         $response = $this->settings->updateColumn('phone_number', 'phone_number_updates', $request->code);
 
@@ -101,10 +101,10 @@ class SettingController extends Controller
     /**
      * Update the user's password.
      * 
-     * @param \App\Http\Requests\UpdateSettingRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function updatePassword(UpdateSettingRequest $request)
+    public function updatePassword(UserRequest $request)
     {
         $response = $this->settings->updatePassword($request->new_password);
 

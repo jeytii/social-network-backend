@@ -3,10 +3,10 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Route;
 
-class CreateOrUpdateCommentRequest extends FormRequest
+class PostAndCommentRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,13 +24,17 @@ class CreateOrUpdateCommentRequest extends FormRequest
      * @return array
      */
     public function rules()
-    {
+    {   
         return [
             'pid' => [
                 Rule::requiredIf(Route::currentRouteName() === 'comments.store'),
                 Rule::exists('posts', 'slug'),
             ],
-            'body' => ['required', 'string', 'max:' . config('api.max_lengths.long_text')],
+            'body' => [
+                'required',
+                'string',
+                'max:' . config('api.max_lengths.long_text')
+            ],
         ];
     }
 
@@ -43,9 +47,9 @@ class CreateOrUpdateCommentRequest extends FormRequest
     {
         return [
             'pid.required' => 'Please choose a post to comment on.',
-            'body.required' => 'Comment should not be blank.',
-            'exists' => 'Post does not exist.',
-            'max' => 'Maximum character length is :max.',
+            'pid.exists' => 'Post does not exist.',
+            'body.required' => 'Should not be blank.',
+            'body.max' => 'The number of characters exceeds the maximum length.',
         ];
     }
 }

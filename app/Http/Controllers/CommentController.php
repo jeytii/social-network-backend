@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Comment;
 use Illuminate\Http\Request;
-use App\Http\Requests\CreateOrUpdateCommentRequest;
+use App\Http\Requests\PostAndCommentRequest;
 use App\Repositories\CommentRepository;
 use App\Services\CommentService;
 
@@ -43,10 +43,10 @@ class CommentController extends Controller
     /**
      * Store a new comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @param \App\Http\Requests\PostAndCommentRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(CreateOrUpdateCommentRequest $request)
+    public function store(PostAndCommentRequest $request)
     {
         $data = $this->commentService->createComment($request);
 
@@ -56,12 +56,12 @@ class CommentController extends Controller
     /**
      * Update a comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @param \App\Http\Requests\PostAndCommentRequest  $request
      * @param \App\Models\Comment  $comment
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(CreateOrUpdateCommentRequest $request, Comment $comment)
+    public function update(PostAndCommentRequest $request, Comment $comment)
     {
         $this->authorize('update', $comment);
         

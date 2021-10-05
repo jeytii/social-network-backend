@@ -40,7 +40,7 @@ class ProfileRepository
         }
         catch (ModelNotFoundException $exception) {
             return [
-                'status' => $exception->getCode(),
+                'status' => 404,
                 'message' => $exception->getMessage(),
             ];
         }

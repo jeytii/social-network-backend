@@ -40,7 +40,7 @@ class ResetPasswordRequest extends FormRequest
                     ->numbers()
                     ->symbols(),
             ],
-            'token' => 'required'
+            'token' => ['required', 'string'],
         ];
     }
 

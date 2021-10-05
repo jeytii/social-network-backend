@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
-use App\Http\Requests\CreateOrUpdateLongTextRequest;
+use App\Http\Requests\PostAndCommentRequest;
 use App\Repositories\PostRepository;
 use App\Services\PostService;
 
@@ -43,10 +43,10 @@ class PostController extends Controller
     /**
      * Create a new post.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
+     * @param \App\Http\Requests\PostAndCommentRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(CreateOrUpdateLongTextRequest $request)
+    public function store(PostAndCommentRequest $request)
     {
         $response = $this->postService->createPost($request);
 
@@ -56,12 +56,12 @@ class PostController extends Controller
     /**
      * Update an existing post.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
+     * @param \App\Http\Requests\PostAndCommentRequest  $request
      * @param \App\Models\Post  $post
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(CreateOrUpdateLongTextRequest $request, Post $post)
+    public function update(PostAndCommentRequest $request, Post $post)
     {
         $this->authorize('update', $post);
 

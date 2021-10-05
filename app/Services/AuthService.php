@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
+use App\Http\Requests\{ResendCodeRequest, ResetPasswordRequest};
 use Illuminate\Support\Facades\{DB, Hash, Password};
 use Illuminate\Auth\Events\{Login, Registered, PasswordReset};
 use App\Notifications\SendVerificationCode;
@@ -86,10 +86,10 @@ class AuthService
     /**
      * Register a user.
      * 
-     * @param \App\Http\Requests\RegistrationRequest  $request
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function register(RegistrationRequest $request): array
+    public function register(Request $request): array
     {
         $body = $request->only([
             'name', 'email', 'username', 'phone_number',

@@ -19,7 +19,7 @@ test('Should throw an error if the comment body is blank', function () {
     $this->response
         ->postJson(route('comments.store'))
         ->assertStatus(422)
-        ->assertJsonPath('errors.body', ['Comment should not be blank.']);
+        ->assertJsonPath('errors.body', ['Should not be blank.']);
 
     Notification::assertNothingSent();
 });
@@ -27,14 +27,12 @@ test('Should throw an error if the comment body is blank', function () {
 test('Should throw an error if the body length is greater than maximum', function () {
     Notification::fake();
 
-    $maxLength = config('api.max_lengths.long_text');
-
     $this->response
         ->postJson(route('comments.store'), [
             'body' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud quis nostrud quis nostrud.'
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.body', ["Maximum character length is {$maxLength}."]);
+        ->assertJsonPath('errors.body', ['The number of characters exceeds the maximum length.']);
 
     Notification::assertNothingSent();
 });

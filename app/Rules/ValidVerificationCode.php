@@ -10,12 +10,22 @@ class ValidVerificationCode implements Rule
     /**
      * Create a new rule instance.
      *
-     * @param string  $table
+     * @param string  $routeName
      * @return void
      */
-    public function __construct(string $table)
+    public function __construct(string $routeName)
     {
-        $this->table = $table;
+        if ($routeName === 'settings.update.username') {
+            $this->table = 'username_updates';
+        }
+
+        if ($routeName === 'settings.update.email') {
+            $this->table = 'email_address_updates';
+        }
+
+        if ($routeName === 'settings.update.phone-number') {
+            $this->table = 'phone_number_updates';
+        }
     }
 
     /**

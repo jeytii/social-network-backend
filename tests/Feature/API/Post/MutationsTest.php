@@ -30,7 +30,7 @@ test('Should not create a post if body length is greater than maximum length', f
             'body' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud quis nostrud quis nostrud.'
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.body', ['Maximum character length is 180.']);
+        ->assertJsonPath('errors.body', ['The number of characters exceeds the maximum length.']);
 });
 
 test('Should successfully create a post', function() {

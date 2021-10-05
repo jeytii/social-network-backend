@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Http\Requests\{UploadProfilePhotoRequest, UpdateUserRequest};
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Cloudinary\Cloudinary;
 
@@ -23,10 +23,10 @@ class ProfileService
     /**
      * Upload an image as profile photo.
      * 
-     * @param \App\Http\Requests\UploadProfilePhotoRequest  $request
+     * @param \Illuminate\Http\Request $request
      * @return array
      */
-    public function uploadProfilePhoto(UploadProfilePhotoRequest $request): array
+    public function uploadProfilePhoto(Request $request): array
     {
         $image = $this->cloudinary->uploadApi()->upload(
             $request->file('image')->getRealPath(),
@@ -51,10 +51,10 @@ class ProfileService
     /**
      * Update user's profile.
      * 
-     * @param \App\Http\Requests\UpdateUserReques  $request
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function update(UpdateUserRequest $request): array
+    public function update(Request $request): array
     {
         $body = $request->user()->no_birthdate ?
                 $request->validated() :

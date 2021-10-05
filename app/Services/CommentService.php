@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\{User, Post};
-use App\Http\Requests\CreateOrUpdateCommentRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NotifyUponAction;
@@ -44,10 +44,10 @@ class CommentService
     /**
      * Create a comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function createComment(CreateOrUpdateCommentRequest $request): array
+    public function createComment(Request $request): array
     {
         $post = Post::firstWhere('slug', $request->pid);
         $comment = $request->user()->comments()
@@ -77,10 +77,10 @@ class CommentService
     /**
      * Update a comment.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateCommentRequest  $request
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function updateComment(CreateOrUpdateCommentRequest $request, string $commentId): array
+    public function updateComment(Request $request, string $commentId): array
     {
         $request->user()
             ->comments()

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\{RegistrationRequest, ResendCodeRequest, ResetPasswordRequest};
+use App\Http\Requests\{UserRequest, ResendCodeRequest, ResetPasswordRequest};
 use App\Services\AuthService;
 
 class AuthController extends Controller
@@ -42,10 +42,10 @@ class AuthController extends Controller
     /**
      * Register a user.
      * 
-     * @param \App\Http\Requests\RegistrationRequest  $request
+     * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(RegistrationRequest $request) {
+    public function register(UserRequest $request) {
         $response = $this->auth->register($request);
 
         return response()->json($response, $response['status']);

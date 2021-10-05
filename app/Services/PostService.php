@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\{User, Post};
-use App\Http\Requests\CreateOrUpdateLongTextRequest;
+use Illuminate\Http\Request;
 use App\Notifications\NotifyUponAction;
 
 class PostService
@@ -11,12 +11,12 @@ class PostService
     /**
      * Create a post.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function createPost(CreateOrUpdateLongTextRequest $request): array
+    public function createPost(Request $request): array
     {
-        $data = $request->user()->posts()->create($request->only('body'));
+        $data = $request->user()->posts()->create($request->only('body'))->first();
 
         return [
             'status' => 201,
@@ -28,11 +28,11 @@ class PostService
     /**
      * Update a post.
      * 
-     * @param \App\Http\Requests\CreateOrUpdateLongTextRequest  $request
+     * @param \Illuminate\Http\Request  $request
      * @param \App\Models\Post  $post
      * @return array
      */
-    public function updatePost(CreateOrUpdateLongTextRequest $request, Post $post): array
+    public function updatePost(Request $request, Post $post): array
     {
         $request->user()->posts()
             ->find($post->id)
