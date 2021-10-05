@@ -51,13 +51,9 @@ Route::prefix('profile')->name('profile.')->group(function() {
     Route::put('update', [ProfileController::class, 'update'])->name('update');
 });
 
-// FIXME: Group common routes into a resource
+Route::apiResource('posts', PostController::class)->except('show');
 Route::prefix('posts')->name('posts.')->group(function() {
-    Route::get('/', [PostController::class, 'get'])->name('get');
     Route::get('/sort', [PostController::class, 'sort'])->name('sort');
-    Route::post('/', [PostController::class, 'store'])->name('create');
-    Route::put('{post}', [PostController::class, 'update'])->name('update');
-    Route::delete('{post}', [PostController::class, 'destroy'])->name('delete');
     Route::post('{post}/like', [PostController::class, 'like'])->name('like');
     Route::delete('{post}/dislike', [PostController::class, 'dislike'])->name('dislike');
     Route::post('{post}/bookmark', [PostController::class, 'bookmark'])->name('bookmark');

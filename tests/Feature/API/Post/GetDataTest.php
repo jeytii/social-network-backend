@@ -16,7 +16,7 @@ test('Should return the paginated list of posts from followed users', function()
     $this->user->following()->sync(range(2, 6));
     
     $this->response
-        ->getJson(route('posts.get'))
+        ->getJson(route('posts.index'))
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
@@ -43,14 +43,14 @@ test('Should return the paginated list of posts from followed users', function()
         ]);
 
     $this->response
-        ->getJson(route('posts.get', ['page' => 2]))
+        ->getJson(route('posts.index', ['page' => 2]))
         ->assertOk()
         ->assertJsonCount(10, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
     $this->response
-        ->getJson(route('posts.get', ['page' => 3]))
+        ->getJson(route('posts.index', ['page' => 3]))
         ->assertOk()
         ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
@@ -65,7 +65,7 @@ test('Should sort posts by number of likes', function() {
     $secondMostLiked->likers()->sync(range(1, 5));
 
     $this->response
-        ->getJson(route('posts.get', ['sort' => 'likes']))
+        ->getJson(route('posts.index', ['sort' => 'likes']))
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
@@ -86,14 +86,14 @@ test('Should sort posts by number of likes', function() {
         ]);
 
     $this->response
-        ->getJson(route('posts.get', ['sort' => 'likes', 'page' => 2]))
+        ->getJson(route('posts.index', ['sort' => 'likes', 'page' => 2]))
         ->assertOk()
         ->assertJsonCount(10, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
     $this->response
-        ->getJson(route('posts.get', ['sort' => 'likes', 'page' => 3]))
+        ->getJson(route('posts.index', ['sort' => 'likes', 'page' => 3]))
         ->assertOk()
         ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)

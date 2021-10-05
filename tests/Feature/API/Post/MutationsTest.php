@@ -19,14 +19,14 @@ afterAll(function() {
 
 test('Should not create a post if body is blank or not set', function () {
     $this->response
-        ->postJson(route('posts.create'))
+        ->postJson(route('posts.store'))
         ->assertStatus(422)
         ->assertJsonPath('errors.body', ['Should not be blank.']);
 });
 
 test('Should not create a post if body length is greater than maximum length', function () {
     $this->response
-        ->postJson(route('posts.create'), [
+        ->postJson(route('posts.store'), [
             'body' => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud quis nostrud quis nostrud.'
         ])
         ->assertStatus(422)
@@ -35,7 +35,7 @@ test('Should not create a post if body length is greater than maximum length', f
 
 test('Should successfully create a post', function() {
     $this->response
-        ->postJson(route('posts.create'), [
+        ->postJson(route('posts.store'), [
             'body' => 'Sample post'
         ])
         ->assertCreated()
@@ -94,7 +94,7 @@ test('Should successfully delete a post', function() {
     $slug = $this->user->posts()->first()->slug;
 
     $this->response
-        ->deleteJson(route('posts.delete', ['post' => $slug]))
+        ->deleteJson(route('posts.destroy', ['post' => $slug]))
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
@@ -108,7 +108,7 @@ test('Should not be able to delete other user\'s post', function() {
     $slug = User::find(3)->posts()->first()->slug;
 
     $this->response
-        ->deleteJson("/api/posts/$slug")
+        ->deleteJson(route('posts.destroy', ['post' => $slug]))
         ->assertForbidden();
 
     $this->assertDatabaseHas('posts', compact('slug'));

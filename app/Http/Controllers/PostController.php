@@ -33,7 +33,7 @@ class PostController extends Controller
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function get(Request $request)
+    public function index(Request $request)
     {
         $response = $this->postRepository->get($request);
 
