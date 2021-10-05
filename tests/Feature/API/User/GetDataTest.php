@@ -26,11 +26,11 @@ test('Should return paginated list of users', function() {
     $this->response
         ->getJson(route('users.get', ['page' => 1]))
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
         ->assertJsonPath('next_offset', 2)
         ->assertJsonStructure([
-            'data' => [
+            'items' => [
                 '*' => $this->columns,
             ],
         ]);
@@ -39,7 +39,7 @@ test('Should return paginated list of users', function() {
     $this->response
         ->getJson(route('users.get', ['page' => 2]))
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
         ->assertJsonPath('next_offset', 3);
 
@@ -47,7 +47,7 @@ test('Should return paginated list of users', function() {
     $this->response
         ->getJson(route('users.get', ['page' => 3]))
         ->assertOk()
-        ->assertJsonCount(9, 'data')
+        ->assertJsonCount(9, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
@@ -55,7 +55,7 @@ test('Should return paginated list of users', function() {
     $this->response
         ->getJson(route('users.get', ['page' => 4]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });

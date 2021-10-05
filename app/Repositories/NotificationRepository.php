@@ -45,10 +45,10 @@ class NotificationRepository
     public function get(User $user): array
     {
         $notifications = $user->notifications()->withPaginated();
-        $data = array_map([$this, 'formatNotification'], $notifications['data']);
+        $items = array_map([$this, 'formatNotification'], $notifications['items']);
 
         return [
-            'data' => $data,
+            'items' => $items,
             'has_more' => $notifications['has_more'],
             'next_offset' => $notifications['next_offset'],
             'status' => 200,

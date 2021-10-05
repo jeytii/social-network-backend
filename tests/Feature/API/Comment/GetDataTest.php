@@ -26,11 +26,11 @@ test('Should return a paginated list of comments under a specific post', functio
     $this->response
         ->getJson(route('comments.index', ['pid' => $slug, 'page' => 1]))
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
         ->assertJsonPath('next_offset', 2)
         ->assertJsonStructure([
-            'data' => [
+            'items' => [
                 '*' => [
                     'slug',
                     'body',
@@ -54,7 +54,7 @@ test('Should successfully retrieve more comments upon clicking "show more commen
     $this->response
         ->getJson(route('comments.index', ['pid' => $slug, 'page' => 2]))
         ->assertOk()
-        ->assertJsonCount(15, 'data')
+        ->assertJsonCount(15, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });

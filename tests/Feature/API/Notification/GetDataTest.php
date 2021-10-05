@@ -35,9 +35,9 @@ test('Should return a paginated list of notifications', function() {
     $this->response
         ->getJson(route('notifications.index'))
         ->assertOk()
-        ->assertJsonCount(4, 'data')
+        ->assertJsonCount(4, 'items')
         ->assertJsonStructure([
-            'data' => [
+            'items' => [
                 '*' => [
                     'user' => ['name', 'gender', 'image_url'],
                     'message',

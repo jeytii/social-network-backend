@@ -18,11 +18,11 @@ test('Should return the paginated list of posts from followed users', function()
     $this->response
         ->getJson(route('posts.get'))
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
         ->assertJsonPath('next_offset', 2)
         ->assertJsonStructure([
-            'data' => [
+            'items' => [
                 '*' => [
                     'slug',
                     'body',
@@ -45,14 +45,14 @@ test('Should return the paginated list of posts from followed users', function()
     $this->response
         ->getJson(route('posts.get', ['page' => 2]))
         ->assertOk()
-        ->assertJsonCount(10, 'data')
+        ->assertJsonCount(10, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
     $this->response
         ->getJson(route('posts.get', ['page' => 3]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
@@ -67,11 +67,11 @@ test('Should sort posts by number of likes', function() {
     $this->response
         ->getJson(route('posts.get', ['sort' => 'likes']))
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
         ->assertJsonPath('next_offset', 2)
         ->assertJson([
-            'data' => [
+            'items' => [
                 [
                     'slug' => $firstMostLiked->slug,
                     'body' => $firstMostLiked->body,
@@ -88,14 +88,14 @@ test('Should sort posts by number of likes', function() {
     $this->response
         ->getJson(route('posts.get', ['sort' => 'likes', 'page' => 2]))
         ->assertOk()
-        ->assertJsonCount(10, 'data')
+        ->assertJsonCount(10, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
     $this->response
         ->getJson(route('posts.get', ['sort' => 'likes', 'page' => 3]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });

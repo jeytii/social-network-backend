@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\WithFaker;
 
 $jsonStructure = [
-    'data' => [
+    'items' => [
         '*' => [
             'slug',
             'body',
@@ -80,7 +80,7 @@ test('Should return the paginated list of owned posts', function() use ($jsonStr
             'page' => 1,
         ]))
         ->assertOk()
-        ->assertJsonCount(5, 'data')
+        ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null)
         ->assertJsonStructure($jsonStructure);
@@ -91,7 +91,7 @@ test('Should return the paginated list of owned posts', function() use ($jsonStr
             'page' => 2,
         ]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
@@ -105,7 +105,7 @@ test('Should return the paginated list of liked posts', function() use ($jsonStr
             'page' => 1,
         ]))
         ->assertOk()
-        ->assertJsonCount(5, 'data')
+        ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null)
         ->assertJsonStructure($jsonStructure);
@@ -116,7 +116,7 @@ test('Should return the paginated list of liked posts', function() use ($jsonStr
             'page' => 2,
         ]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
@@ -133,9 +133,9 @@ test('Should return the paginated list of comments', function() {
             'page' => 1,
         ]))
         ->assertOk()
-        ->assertJsonCount(1, 'data')
+        ->assertJsonCount(1, 'items')
         ->assertJsonStructure([
-            'data' => [
+            'items' => [
                 '*' => [
                     'slug',
                     'body',
@@ -173,7 +173,7 @@ test('Should return the paginated list of bookmarked posts', function() use ($js
             'page' => 1,
         ]))
         ->assertOk()
-        ->assertJsonCount(5, 'data')
+        ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null)
         ->assertJsonStructure($jsonStructure);
@@ -184,7 +184,7 @@ test('Should return the paginated list of bookmarked posts', function() use ($js
             'page' => 2,
         ]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
@@ -199,7 +199,7 @@ test('Should return the paginated list of followed users', function() {
             'page' => 1,
         ]))
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
@@ -210,7 +210,7 @@ test('Should return the paginated list of followed users', function() {
             'page' => 2,
         ]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
@@ -225,7 +225,7 @@ test('Should return the paginated list of followers', function() {
             'page' => 1,
         ]))
         ->assertOk()
-        ->assertJsonCount(20, 'data')
+        ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
@@ -236,7 +236,7 @@ test('Should return the paginated list of followers', function() {
             'page' => 2,
         ]))
         ->assertOk()
-        ->assertJsonCount(0, 'data')
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
