@@ -16,7 +16,7 @@ class CreateBookmarksTable extends Migration
         Schema::create('bookmarks', function (Blueprint $table) {
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('bookmark_id')->constrained('posts')->cascadeOnDelete();
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
         });
     }
 

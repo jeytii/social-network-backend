@@ -105,10 +105,10 @@ test('Should return the paginated list of owned posts', function() use ($jsonStr
 test('Should return the paginated list of liked posts', function() use ($jsonStructure) {
     $likedIds = Post::inRandomOrder()->limit(5)->pluck('id');
 
-    $this->user->likes()->sync($likedIds);
+    $this->user->likedPosts()->sync($likedIds);
 
     $this->response
-        ->getJson(route('profile.get.likes', [
+        ->getJson(route('profile.get.likes.posts', [
             'user' => $this->user->username,
             'page' => 1,
         ]))
@@ -119,7 +119,54 @@ test('Should return the paginated list of liked posts', function() use ($jsonStr
         ->assertJsonStructure($jsonStructure);
 
     $this->response
-        ->getJson(route('profile.get.likes', [
+        ->getJson(route('profile.get.likes.posts', [
+            'user' => $this->user->username,
+            'page' => 2,
+        ]))
+        ->assertOk()
+        ->assertJsonCount(0, 'items')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
+});
+
+test('Should return the paginated list of liked comments', function() {
+    $likedIds = Comment::factory(5)
+                    ->for(User::firstWhere('id', '!=', $this->user->id))
+                    ->for(Post::first())
+                    ->create()
+                    ->pluck('id');
+
+    $this->user->likedComments()->sync($likedIds);
+
+    $this->response
+        ->getJson(route('profile.get.likes.comments', [
+            'user' => $this->user->username,
+            'page' => 1,
+        ]))
+        ->assertOk()
+        ->assertJsonCount(5, 'items')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null)
+        ->assertJsonStructure([
+            'items' => [
+                '*' => [
+                    'slug',
+                    'body',
+                    'is_own_comment',
+                    'is_liked',
+                    'is_edited',
+                    'timestamp',
+                    'user' => array_merge(config('api.response.user.basic'), ['slug'])
+                ]
+            ],
+            'has_more',
+            'next_offset',
+            'status',
+            'message',
+        ]);
+
+    $this->response
+        ->getJson(route('profile.get.likes.comments', [
             'user' => $this->user->username,
             'page' => 2,
         ]))

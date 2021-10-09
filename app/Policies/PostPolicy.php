@@ -101,7 +101,7 @@ class PostPolicy
      */
     public function like(User $user, Post $post)
     {
-        return !$user->likes()->find($post->id);
+        return !$user->likedPosts()->find($post->id);
     }
 
     /**
@@ -113,7 +113,7 @@ class PostPolicy
      */
     public function dislike(User $user, Post $post)
     {
-        return (bool) $user->likes()->find($post->id);
+        return (bool) $user->likedPosts()->find($post->id);
     }
 
     /**

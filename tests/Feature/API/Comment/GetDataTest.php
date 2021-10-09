@@ -35,6 +35,7 @@ test('Should return a paginated list of comments under a specific post', functio
                     'slug',
                     'body',
                     'is_own_comment',
+                    'is_liked',
                     'is_edited',
                     'timestamp',
                     'user' => array_merge(config('api.response.user.basic'), ['slug'])

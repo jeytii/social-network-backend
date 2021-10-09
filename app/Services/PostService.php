@@ -70,7 +70,7 @@ class PostService
      */
     public function likePost(User $liker, Post $post): array
     {
-        $liker->likes()->attach($post->id);
+        $liker->likedPosts()->attach($post->id);
         
         $post->user->notify(new NotifyUponAction(
             $liker,
@@ -93,7 +93,7 @@ class PostService
      */
     public function dislikePost(User $user, string $postId): array
     {
-        $user->likes()->detach($postId);
+        $user->likedPosts()->detach($postId);
 
         return [
             'status' => 200,

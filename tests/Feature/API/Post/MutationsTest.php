@@ -133,10 +133,7 @@ test('Should be able to like a post', function() {
         )
     );
 
-    $this->assertDatabaseHas('likes', [
-        'user_id' => $this->user->id,
-        'post_id' => $post->id
-    ]);
+    $this->assertTrue($this->user->likedPosts()->where('id', $post->id)->exists());
 });
 
 test('Should not be able to like a post that has already been liked', function() {
@@ -166,10 +163,7 @@ test('Should be able to dislike a post', function() {
             'message' => 'Successfully disliked a post.',
         ]);
 
-    $this->assertDatabaseMissing('likes', [
-        'user_id' => $this->user->id,
-        'post_id' => $post->id
-    ]);
+    $this->assertFalse($this->user->likedPosts()->where('id', $post->id)->exists());
 });
 
 test('Should not be able to dislike a post that is not liked', function() {
@@ -179,10 +173,7 @@ test('Should not be able to dislike a post that is not liked', function() {
         ->deleteJson(route('posts.dislike', ['post' => $post->slug]))
         ->assertForbidden();
 
-    $this->assertDatabaseMissing('likes', [
-        'user_id' => $this->user->id,
-        'post_id' => $post->id
-    ]);
+    $this->assertFalse($this->user->likedPosts()->where('id', $post->id)->exists());
 });
 
 test('Should be able to bookmark a post', function() {

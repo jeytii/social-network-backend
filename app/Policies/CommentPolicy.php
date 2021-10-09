@@ -91,4 +91,28 @@ class CommentPolicy
     {
         //
     }
+
+    /**
+     * Determine whether the user can like the comment.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Comment  $comment
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function like(User $user, Comment $comment)
+    {
+        return !$user->likedComments()->find($comment->id);
+    }
+
+    /**
+     * Determine whether the user can dislike the comment.
+     *
+     * @param  \App\Models\User  $user
+     * @param  \App\Models\Comment  $comment
+     * @return \Illuminate\Auth\Access\Response|bool
+     */
+    public function dislike(User $user, Comment $comment)
+    {
+        return (bool) $user->likedComments()->find($comment->id);
+    }
 }

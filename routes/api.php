@@ -42,7 +42,8 @@ Route::prefix('profile')->name('profile.')->group(function() {
         Route::get('/', [ProfileController::class, 'getInfo'])->missing($throw404Error)->name('info');
         Route::get('posts', [ProfileController::class, 'getPosts'])->missing($throw404Error)->name('posts');
         Route::get('comments', [ProfileController::class, 'getComments'])->missing($throw404Error)->name('comments');
-        Route::get('likes', [ProfileController::class, 'getLikes'])->missing($throw404Error)->name('likes');
+        Route::get('likes/posts', [ProfileController::class, 'getLikedPosts'])->missing($throw404Error)->name('likes.posts');
+        Route::get('likes/comments', [ProfileController::class, 'getLikedComments'])->missing($throw404Error)->name('likes.comments');
         Route::get('bookmarks', [ProfileController::class, 'getBookmarks'])->missing($throw404Error)->name('bookmarks');
         Route::get('followers', [ProfileController::class, 'getFollowers'])->missing($throw404Error)->name('followers');
         Route::get('following', [ProfileController::class, 'getFollowedUsers'])->missing($throw404Error)->name('following');
@@ -62,6 +63,10 @@ Route::prefix('posts')->name('posts.')->group(function() {
 });
 
 Route::apiResource('comments', CommentController::class)->except('show');
+Route::prefix('comments')->name('comments.')->group(function() {
+    Route::post('{comment}/like', [CommentController::class, 'like'])->name('like');
+    Route::delete('{comment}/dislike', [CommentController::class, 'dislike'])->name('dislike');
+});
 
 Route::prefix('settings')->name('settings.')->group(function() {
     Route::prefix('request-update')->name('request-update.')->group(function() {

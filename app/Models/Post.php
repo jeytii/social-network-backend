@@ -3,9 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany};
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\{
+    BelongsTo,
+    BelongsToMany,
+    HasMany,
+    MorphToMany
+};
 
 class Post extends Model
 {
@@ -200,11 +205,11 @@ class Post extends Model
     /**
      * Get the users who liked the post.
      * 
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
      */
-    public function likers(): BelongsToMany
+    public function likers(): MorphToMany
     {
-        return $this->belongsToMany('App\Models\User', 'likes', 'post_id', 'user_id')->withPivot('created_at');
+        return $this->morphToMany('App\Models\User', 'likable')->withPivot('created_at');
     }
 
     /**

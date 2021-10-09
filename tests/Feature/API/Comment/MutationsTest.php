@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\{User, Comment};
 use App\Notifications\NotifyUponAction;
 use Illuminate\Support\Facades\{DB, Notification};
 
@@ -157,4 +157,66 @@ test('Should not be able to delete other user\'s comment', function() {
         ->assertForbidden();
     
     $this->assertDatabaseHas('comments', compact('slug'));
+});
+
+test('Should be able to like a comment', function() {
+    $comment = Comment::firstWhere('user_id', '!=', $this->user->id);
+    
+    Notification::fake();
+
+    $this->response
+        ->postJson(route('comments.like', ['comment' => $comment->slug]))
+        ->assertOk()
+        ->assertExactJson([
+            'status' => 200,
+        ]);
+
+    Notification::assertSentTo(
+        $comment->user,
+        NotifyUponAction::class,
+        fn($notification) => (
+            $notification->action === config('api.notifications.comment_liked')
+        )
+    );
+
+    $this->assertTrue($this->user->likedComments()->where('id', $comment->id)->exists());
+});
+
+test('Should not be able to like a comment that has already been liked', function() {
+    $comment = Comment::firstWhere('user_id', '!=', $this->user->id);
+
+    Notification::fake();
+
+    // Suppose the user has already liked the selected comment based from the test above.
+    $this->response
+        ->postJson(route('comments.like', ['comment' => $comment->slug]))
+        ->assertForbidden();
+
+    Notification::assertNothingSent();
+
+    $this->assertDatabaseCount('likables', 1);
+});
+
+test('Should be able to dislike a comment', function() {
+    $comment = Comment::firstWhere('user_id', '!=', $this->user->id);
+
+    // Suppose the selected comment has already been liked based on the test above.
+    $this->response
+        ->deleteJson(route('comments.dislike', ['comment' => $comment->slug]))
+        ->assertOk()
+        ->assertExactJson([
+            'status' => 200,
+        ]);
+
+    $this->assertFalse($this->user->likedComments()->where('id', $comment->id)->exists());
+});
+
+test('Should not be able to dislike a comment that is not liked', function() {
+    $comment = Comment::firstWhere('user_id', '!=', $this->user->id);
+
+    $this->response
+        ->deleteJson(route('comments.dislike', ['comment' => $comment->slug]))
+        ->assertForbidden();
+
+    $this->assertFalse($this->user->likedComments()->where('id', $comment->id)->exists());
 });
