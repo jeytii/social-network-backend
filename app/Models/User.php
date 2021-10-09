@@ -18,6 +18,20 @@ class User extends Authenticatable implements MustVerifyEmail
     use HasApiTokens, HasFactory, Notifiable;
 
     /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -83,6 +97,7 @@ class User extends Authenticatable implements MustVerifyEmail
         static::creating(function ($user) {
             $formattedPhoneNumber = (string) Str::of($user->phone_number)->replaceMatches('/^0?9/', '639');
 
+            $user->setAttribute('id', (string) Str::uuid());
             $user->setAttribute('slug', uniqid());
             $user->phone_number = $formattedPhoneNumber;
         });
@@ -123,7 +138,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // =============================
-    // GETTERS
+    // OVERRIDE DEFAULTS
     // =============================
 
     /**
@@ -135,6 +150,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return 'slug';
     }
+
+    // =============================
+    // CUSTOM ATTRIBUTES
+    // =============================
 
     /**
      * Get the user's full birth date.
@@ -179,7 +198,7 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     // =============================
-    // OVERRIDE DEFAULT METHODS
+    // OVERRIDE DEFAULTS
     // =============================
 
     /**

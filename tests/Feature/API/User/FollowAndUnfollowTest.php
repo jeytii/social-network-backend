@@ -17,7 +17,7 @@ afterAll(function() {
 test('Should successfully follow a user', function() {
     Notification::fake();
 
-    $userToFollow = User::find(2);
+    $userToFollow = User::firstWhere('id', '!=', $this->user->id);
     
     $this->response
         ->postJson(route('users.follow', ['user' => $userToFollow->slug]))
@@ -43,21 +43,21 @@ test('Should throw an error for following a user that has been already followed'
     Notification::fake();
 
     // Suppose the auth user already follows another user with the ID of 2 based on the test above.
-    $userToFollow = User::find(2);
+    $userToFollow = User::firstWhere('id', '!=', $this->user->id);
 
     $this->response
         ->postJson(route('users.follow', ['user' => $userToFollow->slug]))
         ->assertForbidden();
 
-    $this->assertTrue($this->user->following()->where('id', 2)->count() === 1);
-    $this->assertTrue($userToFollow->followers()->where('id', 1)->count() === 1);
+    $this->assertTrue($this->user->following()->where('id', $userToFollow->id)->count() === 1);
+    $this->assertTrue($userToFollow->followers()->where('id', $this->user->id)->count() === 1);
 
     Notification::assertNothingSent();
 });
 
 test('Should successfully unfollow a user', function() {
     // Suppose the auth user already follows another user with the ID of 2 based on the test above.
-    $userToUnfollow = User::find(2);
+    $userToUnfollow = User::firstWhere('id', '!=', $this->user->id);
     
     $this->response
         ->deleteJson(route('users.unfollow', ['user' => $userToUnfollow->slug]))
@@ -72,7 +72,7 @@ test('Should successfully unfollow a user', function() {
 });
 
 test('Should throw an error for unfollowing a user that is not followed', function() {
-    $userToUnfollow = User::find(2);
+    $userToUnfollow = User::firstWhere('id', '!=', $this->user->id);
 
     $this->response
         ->deleteJson(route('users.unfollow', ['user' => $userToUnfollow->slug]))

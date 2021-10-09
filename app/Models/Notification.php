@@ -3,9 +3,26 @@
 namespace App\Models;
 
 use Illuminate\Notifications\DatabaseNotification;
+use App\Traits\HasUuid;
 
 class Notification extends DatabaseNotification
 {
+    use HasUuid;
+
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
+    
     /**
      * The attributes that should be hidden for arrays.
      *

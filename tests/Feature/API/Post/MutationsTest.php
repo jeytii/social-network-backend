@@ -8,10 +8,6 @@ beforeAll(function() {
     User::factory(5)->hasPosts(5)->create();
 });
 
-beforeEach(function() {
-    $this->post = Post::find(10);
-});
-
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
@@ -76,7 +72,8 @@ test('Should successfully update a post', function() {
 });
 
 test('Should not be able to update other user\'s post', function() {
-    $slug = User::find(3)->posts()->first()->slug;
+    $user = User::firstWhere('id', '!=', $this->user->id);
+    $slug = $user->posts()->first()->slug;
 
     $this->response
         ->putJson(route('posts.update', ['post' => $slug]), [
@@ -85,7 +82,7 @@ test('Should not be able to update other user\'s post', function() {
         ->assertForbidden();
     
     $this->assertDatabaseMissing('posts', [
-        'user_id' => 3,
+        'user_id' => $user->id,
         'body' => 'Hello World',
     ]);
 });
@@ -105,7 +102,8 @@ test('Should successfully delete a post', function() {
 });
 
 test('Should not be able to delete other user\'s post', function() {
-    $slug = User::find(3)->posts()->first()->slug;
+    $user = User::firstWhere('id', '!=', $this->user->id);
+    $slug = $user->posts()->first()->slug;
 
     $this->response
         ->deleteJson(route('posts.destroy', ['post' => $slug]))
@@ -115,10 +113,12 @@ test('Should not be able to delete other user\'s post', function() {
 });
 
 test('Should be able to like a post', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+    
     Notification::fake();
 
     $this->response
-        ->postJson(route('posts.like', ['post' => $this->post->slug]))
+        ->postJson(route('posts.like', ['post' => $post->slug]))
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
@@ -126,7 +126,7 @@ test('Should be able to like a post', function() {
         ]);
 
     Notification::assertSentTo(
-        $this->post->user,
+        $post->user,
         NotifyUponAction::class,
         fn($notification) => (
             $notification->action === config('api.notifications.post_liked')
@@ -135,16 +135,18 @@ test('Should be able to like a post', function() {
 
     $this->assertDatabaseHas('likes', [
         'user_id' => $this->user->id,
-        'post_id' => $this->post->id
+        'post_id' => $post->id
     ]);
 });
 
 test('Should not be able to like a post that has already been liked', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+
     Notification::fake();
 
     // Suppose the user has already liked the selected post based from the test above.
     $this->response
-        ->postJson(route('posts.like', ['post' => $this->post->slug]))
+        ->postJson(route('posts.like', ['post' => $post->slug]))
         ->assertForbidden();
 
     Notification::assertNothingSent();
@@ -153,9 +155,11 @@ test('Should not be able to like a post that has already been liked', function()
 });
 
 test('Should be able to dislike a post', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+
     // Suppost the selected post has already been liked based on the test above.
     $this->response
-        ->deleteJson(route('posts.dislike', ['post' => $this->post->slug]))
+        ->deleteJson(route('posts.dislike', ['post' => $post->slug]))
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
@@ -164,24 +168,28 @@ test('Should be able to dislike a post', function() {
 
     $this->assertDatabaseMissing('likes', [
         'user_id' => $this->user->id,
-        'post_id' => $this->post->id
+        'post_id' => $post->id
     ]);
 });
 
 test('Should not be able to dislike a post that is not liked', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+
     $this->response
-        ->deleteJson(route('posts.dislike', ['post' => $this->post->slug]))
+        ->deleteJson(route('posts.dislike', ['post' => $post->slug]))
         ->assertForbidden();
 
     $this->assertDatabaseMissing('likes', [
         'user_id' => $this->user->id,
-        'post_id' => $this->post->id
+        'post_id' => $post->id
     ]);
 });
 
 test('Should be able to bookmark a post', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+
     $this->response
-        ->postJson(route('posts.bookmark', ['post' => $this->post->slug]))
+        ->postJson(route('posts.bookmark', ['post' => $post->slug]))
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
@@ -190,23 +198,27 @@ test('Should be able to bookmark a post', function() {
 
     $this->assertDatabaseHas('bookmarks', [
         'user_id' => $this->user->id,
-        'bookmark_id' => $this->post->id
+        'bookmark_id' => $post->id
     ]);
 });
 
 test('Should not be able to bookmark a post that has already been bookmarked', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+
     // Suppost the selected post has already been bookmarked based on the test above.
     $this->response
-        ->postJson(route('posts.bookmark', ['post' => $this->post->slug]))
+        ->postJson(route('posts.bookmark', ['post' => $post->slug]))
         ->assertForbidden();
 
     $this->assertDatabaseCount('bookmarks', 1);
 });
 
 test('Should be able to unbookmark a post', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+
     // Suppost the selected post has already been bookmarked based on the test above.
     $this->response
-        ->deleteJson(route('posts.unbookmark', ['post' => $this->post->slug]))
+        ->deleteJson(route('posts.unbookmark', ['post' => $post->slug]))
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
@@ -215,17 +227,19 @@ test('Should be able to unbookmark a post', function() {
 
     $this->assertDatabaseMissing('bookmarks', [
         'user_id' => $this->user->id,
-        'bookmark_id' => $this->post->id
+        'bookmark_id' => $post->id
     ]);
 });
 
 test('Should not be able to unbookmark a post that is not bookmarked', function() {
+    $post = Post::firstWhere('user_id', '!=', $this->user->id);
+
     $this->response
-        ->deleteJson(route('posts.unbookmark', ['post' => $this->post->slug]))
+        ->deleteJson(route('posts.unbookmark', ['post' => $post->slug]))
         ->assertForbidden();
 
     $this->assertDatabaseMissing('bookmarks', [
         'user_id' => $this->user->id,
-        'bookmark_id' => $this->post->id
+        'bookmark_id' => $post->id
     ]);
 });

@@ -11,6 +11,7 @@ beforeAll(function() {
     $user = User::firstWhere('id', '!=', User::first()->id);
     $inserts = collect(range(1, 4))->map(fn($action) => [
         'id' => Str::uuid(),
+        'slug' => uniqid(),
         'type' => get_class(new NotifyUponAction($user, $action, '/sample/path')),
         'notifiable_type' => get_class(new User),
         'notifiable_id' => User::first()->id,

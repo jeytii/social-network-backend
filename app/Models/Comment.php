@@ -5,10 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Traits\HasUuid;
 
 class Comment extends Model
 {
-    use HasFactory;
+    use HasUuid, HasFactory;
+
+    /**
+     * The "type" of the primary key ID.
+     *
+     * @var string
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     *
+     * @var bool
+     */
+    public $incrementing = false;
 
     /**
      * The attributes that are mass assignable.
@@ -54,17 +69,9 @@ class Comment extends Model
         'user:id,slug,name,username,gender,image_url'
     ];
 
-    /**
-     * The "booted" method of the model.
-     *
-     * @return void
-     */
-    protected static function booted()
-    {
-        static::creating(function ($user) {
-            $user->setAttribute('slug', uniqid());
-        });
-    }
+    // =============================
+    // OVERRIDE DEFAULTS
+    // =============================
 
     /**
      * Get the route key for the model.
@@ -75,6 +82,10 @@ class Comment extends Model
     {
         return 'slug';
     }
+
+    // =============================
+    // CUSTOM ATTRIBUTES
+    // =============================
 
     /**
      * Check if the comment is owned by the auth user.
@@ -133,6 +144,10 @@ class Comment extends Model
 
         return $this->created_at->format('F d, Y (g:i A)');
     }
+
+    // =============================
+    // RELATIONSHIPS
+    // =============================
 
     /**
      * Get the user that owns the comment.

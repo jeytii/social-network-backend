@@ -14,8 +14,7 @@ class CreateUsernameUpdatesTable extends Migration
     public function up()
     {
         Schema::create('username_updates', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->integer('code');
             $table->string('data');
             $table->boolean('prefers_sms');
