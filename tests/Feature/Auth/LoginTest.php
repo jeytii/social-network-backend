@@ -80,5 +80,5 @@ test('Should return an auth token if successful', function() {
             'status',
         ]);
 
-    Event::assertDispatched(fn(Login $event) => $event->user->id === $user->id);
+    Event::assertDispatched(fn(Login $event) => $event->user->slug === $user->slug);
 });

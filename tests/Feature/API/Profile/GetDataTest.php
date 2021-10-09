@@ -46,7 +46,7 @@ afterAll(function() {
 });
 
 test('The visited user profile is not self', function() {
-    $username = DB::table('users')->find(3)->username;
+    $username = User::firstWhere('id', '!=', $this->user->id)->username;
 
     $this->response
         ->getJson(route('profile.get.info', ['user' => $username]))
@@ -63,14 +63,20 @@ test('The visited user profile is self', function() {
 
 test('Should return the profile data with followers count and following count', function() {
     // Assume that the auth user is already following 40 users.
-    $this->user->following()->sync(range(2, 41));
-    $this->user->followers()->sync(range(51, 55));
+    $followingIds = User::where('id', '!=', $this->user->id)->inRandomOrder()->limit(40)->pluck('id');
+    $followerIds = User::where('id', '!=', $this->user->id)->inRandomOrder()->limit(5)->pluck('id');
+
+    $this->user->following()->sync($followingIds);
+    $this->user->followers()->sync($followerIds);
 
     $this->response
         ->getJson(route('profile.get.info', ['user' => $this->user->username]))
         ->assertOk()
         ->assertJsonPath('data.followers_count', 5)
         ->assertJsonPath('data.following_count', 40);
+
+    $this->user->following()->detach();
+    $this->user->followers()->detach();
 });
 
 test('Should return the paginated list of owned posts', function() use ($jsonStructure) {
@@ -97,7 +103,9 @@ test('Should return the paginated list of owned posts', function() use ($jsonStr
 });
 
 test('Should return the paginated list of liked posts', function() use ($jsonStructure) {
-    $this->user->likes()->sync(range(11, 15));
+    $likedIds = Post::inRandomOrder()->limit(5)->pluck('id');
+
+    $this->user->likes()->sync($likedIds);
 
     $this->response
         ->getJson(route('profile.get.likes', [
@@ -165,7 +173,9 @@ test('Should return the paginated list of comments', function() {
 });
 
 test('Should return the paginated list of bookmarked posts', function() use ($jsonStructure) {
-    $this->user->bookmarks()->sync(range(11, 15));
+    $bookmarkedIds = Post::inRandomOrder()->limit(5)->pluck('id');
+
+    $this->user->bookmarks()->sync($bookmarkedIds);
 
     $this->response
         ->getJson(route('profile.get.bookmarks', [
@@ -190,7 +200,9 @@ test('Should return the paginated list of bookmarked posts', function() use ($js
 });
 
 test('Should return the paginated list of followed users', function() {
-    $this->user->following()->sync(range(2, 21));
+    $followingIds = User::where('id', '!=', $this->user->id)->inRandomOrder()->limit(20)->pluck('id');
+
+    $this->user->following()->sync($followingIds);
 
     // First full-page scroll
     $this->response
@@ -216,7 +228,9 @@ test('Should return the paginated list of followed users', function() {
 });
 
 test('Should return the paginated list of followers', function() {
-    $this->user->followers()->sync(range(26, 45));
+    $followerIds = User::where('id', '!=', $this->user->id)->inRandomOrder()->limit(20)->pluck('id');
+
+    $this->user->followers()->sync($followerIds);
 
     // First full-page scroll
     $this->response
