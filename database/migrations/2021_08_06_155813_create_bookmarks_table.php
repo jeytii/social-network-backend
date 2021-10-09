@@ -14,8 +14,8 @@ class CreateBookmarksTable extends Migration
     public function up()
     {
         Schema::create('bookmarks', function (Blueprint $table) {
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('bookmark_id')->constrained('posts')->onDelete('cascade');
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('bookmark_id')->constrained('posts')->cascadeOnDelete();
             $table->timestamp('created_at');
         });
     }
