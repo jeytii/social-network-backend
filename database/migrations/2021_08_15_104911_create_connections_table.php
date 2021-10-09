@@ -16,7 +16,7 @@ class CreateConnectionsTable extends Migration
         Schema::create('connections', function (Blueprint $table) {
             $table->foreignUuid('follower_id')->constrained('users')->cascadeOnDelete();
             $table->foreignUuid('following_id')->constrained('users')->cascadeOnDelete();
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
         });
     }
 

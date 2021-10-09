@@ -71,9 +71,22 @@ class ProfileController extends Controller
      * @param \App\Models\User  $user
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getLikes(User $user)
+    public function getLikedPosts(User $user)
     {
-        $response = $this->profileRepository->getPosts($user, 'likes');
+        $response = $this->profileRepository->getPosts($user, 'likedPosts');
+
+        return response()->json($response);
+    }
+
+    /**
+     * Get comments liked by user.
+     *
+     * @param \App\Models\User  $user
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getLikedComments(User $user)
+    {
+        $response = $this->profileRepository->getPosts($user, 'likedComments');
 
         return response()->json($response);
     }

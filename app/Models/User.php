@@ -11,7 +11,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany};
+use Illuminate\Database\Eloquent\Relations\{
+    HasMany,
+    BelongsToMany,
+    MorphToMany,
+    MorphMany
+};
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -272,11 +277,23 @@ class User extends Authenticatable implements MustVerifyEmail
     /**
      * Get the posts liked by the user.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
      */
-    public function likes(): BelongsToMany
+    public function likedPosts(): MorphToMany
     {
-        return $this->belongsToMany('App\Models\Post', 'likes', 'user_id', 'post_id')->withPivot('created_at');
+        return $this->morphedByMany('App\Models\Post', 'likable')
+                    ->withPivot('created_at');
+    }
+
+    /**
+     * Get the comments liked by the user.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     */
+    public function likedComments(): MorphToMany
+    {
+        return $this->morphedByMany('App\Models\Comment', 'likable')
+                    ->withPivot('created_at');
     }
 
     /**
@@ -294,7 +311,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphMany
      */
-    public function notifications()
+    public function notifications(): MorphMany
     {
         return $this->morphMany(Notification::class, 'notifiable')->orderBy('created_at', 'desc');
     }

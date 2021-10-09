@@ -30,7 +30,7 @@ class ProfileRepository
      */
     public function getPosts(User $user, string $type): array
     {
-        if (in_array($type, ['likes', 'bookmarks'])) {
+        if (in_array($type, ['likedPosts', 'likedComments', 'bookmarks'])) {
             $query = $user->{$type}()->orderByPivot('created_at', 'desc');
         }
 

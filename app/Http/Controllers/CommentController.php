@@ -86,4 +86,38 @@ class CommentController extends Controller
 
         return response()->json($data);
     }
+
+    /**
+     * Add the comment to the list of likes.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @param \App\Models\Comment  $comment
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function like(Request $request, Comment $comment)
+    {
+        $this->authorize('like', $comment);
+
+        $response = $this->commentService->likeComment($request->user(), $comment);
+
+        return response()->json($response, $response['status']);
+    }
+
+    /**
+     * Remove the comment from the list of likes.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @param \App\Models\Comment  $comment
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Illuminate\Auth\Access\AuthorizationException
+     */
+    public function dislike(Request $request, Comment $comment)
+    {
+        $this->authorize('dislike', $comment);
+
+        $response = $this->commentService->dislikeComment($request->user(), $comment->id);
+
+        return response()->json($response, $response['status']);
+    }
 }

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, MorphToMany};
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Traits\HasUuid;
 
@@ -56,6 +56,7 @@ class Comment extends Model
      */
     protected $appends = [
         'is_own_comment',
+        'is_liked',
         'is_edited',
         'timestamp',
     ];
@@ -67,6 +68,15 @@ class Comment extends Model
      */
     protected $with = [
         'user:id,slug,name,username,gender,image_url'
+    ];
+
+    /**
+     * The number of relationships that should always be loaded.
+     *
+     * @var array
+     */
+    protected $withCount = [
+        'likers as likes_count',
     ];
 
     // =============================
@@ -105,6 +115,16 @@ class Comment extends Model
     public function getIsEditedAttribute(): bool
     {
         return $this->isDirty('body');
+    }
+
+    /**
+     * Check if the comment is liked by the auth user.
+     *
+     * @return bool
+     */
+    public function getIsLikedAttribute(): bool
+    {
+        return (bool) $this->likers()->find(auth()->id());
     }
 
     /**
@@ -167,5 +187,15 @@ class Comment extends Model
     public function post(): BelongsTo
     {
         return $this->belongsTo('App\Models\Post');
+    }
+
+    /**
+     * Get the users who liked the comment.
+     * 
+     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     */
+    public function likers(): MorphToMany
+    {
+        return $this->morphToMany('App\Models\User', 'likable')->withPivot('created_at');
     }
 }

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{User, Post};
+use App\Models\{User, Post, Comment};
 use Illuminate\Http\Request;
 use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\Notification;
@@ -107,6 +107,44 @@ class CommentService
         return [
             'status' => 200,
             'message' => 'Successfully deleted a comment.',
+        ];
+    }
+
+    /**
+     * Like a comment.
+     * 
+     * @param \App\Models\User  $liker
+     * @param \App\Models\Comment  $comment
+     * @return array
+     */
+    public function likeComment(User $liker, Comment $comment): array
+    {
+        $liker->likedComments()->attach($comment->id);
+        
+        $comment->user->notify(new NotifyUponAction(
+            $liker,
+            config('api.notifications.comment_liked'),
+            "/posts/{$comment->post->slug}"
+        ));
+
+        return [
+            'status' => 200,
+        ];
+    }
+
+    /**
+     * Dislike a comment.
+     * 
+     * @param \App\Models\User  $user
+     * @param string  $commentId
+     * @return array
+     */
+    public function dislikeComment(User $user, string $commentId): array
+    {
+        $user->likedComments()->detach($commentId);
+
+        return [
+            'status' => 200,
         ];
     }
 }
