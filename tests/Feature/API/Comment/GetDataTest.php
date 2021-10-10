@@ -48,6 +48,38 @@ test('Should return a paginated list of comments under a specific post', functio
         ]);
 });
 
+test('Should return a paginated list of comments ordered by number of likes', function() {
+    $post = Post::first();
+    $first = Comment::whereHas('post', fn($q) => $q->where('id', $post->id))->first();
+    $second = Comment::whereHas('post', fn($q) => $q->where('id', $post->id))->firstWhere('id', '!=', $first->id);
+
+    $first->likers()->attach(User::where('id', '!=', $this->user->id)->pluck('id'));
+    $second->likers()->attach($this->user->id);
+    
+    $this->response
+        ->getJson(route('comments.index', [
+            'pid' => $post->slug,
+            'page' => 1,
+            'by' => 'likes',
+        ]))
+        ->assertOk()
+        ->assertJsonCount(20, 'items')
+        ->assertJsonPath('has_more', true)
+        ->assertJsonPath('next_offset', 2)
+        ->assertJson([
+            'items' => [
+                [
+                    'slug' => $first->slug,
+                    'likes_count' => 2,
+                ],
+                [
+                    'slug' => $second->slug,
+                    'likes_count' => 1,
+                ],
+            ]
+        ]);
+});
+
 test('Should successfully retrieve more comments upon clicking "show more comments"', function() {
     // Suppose there's only 15 comments left to be retrieved after the first call based on the test above.
     $slug = Post::first()->slug;
