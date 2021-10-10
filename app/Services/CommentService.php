@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\NotifyUponAction;
+use Exception;
 
 class CommentService
 {
@@ -46,32 +47,41 @@ class CommentService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Exception
      */
     public function createComment(Request $request): array
     {
-        $post = Post::firstWhere('slug', $request->pid);
-        $comment = $request->user()->comments()
-                        ->create([
-                            'post_id' => $post->id,
-                            'body' => $request->body,
-                        ])
-                        ->first();
-        $mentionedUsers = $this->getMentionedUsers($request->body);
+        try {
+            $post = Post::where('slug', $request->pid)->firstOrFail();
+            $comment = $request->user()->comments()
+                            ->create([
+                                'post_id' => $post->id,
+                                'body' => $request->body,
+                            ])
+                            ->first();
+            $mentionedUsers = $this->getMentionedUsers($request->body);
 
-        if (!$mentionedUsers->contains('username', $post->user->username)) {
-            $post->user->notify($this->notifyOnComment($request->user(), 'commented_on_post', $request->pid));
+            if (!$mentionedUsers->contains('username', $post->user->username)) {
+                $post->user->notify($this->notifyOnComment($request->user(), 'commented_on_post', $request->pid));
+            }
+
+            Notification::send(
+                $mentionedUsers,
+                $this->notifyOnComment($request->user(), 'mentioned_on_comment', $request->pid)
+            );
+
+            return [
+                'status' => 201,
+                'message' => 'Successfully created a comment.',
+                'data' => $comment,
+            ];
         }
-
-        Notification::send(
-            $mentionedUsers,
-            $this->notifyOnComment($request->user(), 'mentioned_on_comment', $request->pid)
-        );
-
-        return [
-            'status' => 201,
-            'message' => 'Successfully created a comment.',
-            'data' => $comment,
-        ];
+        catch (Exception $e) {
+            return [
+                'status' => 404,
+                'message' => 'Post not found.',
+            ];
+        }
     }
 
     /**

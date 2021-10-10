@@ -74,21 +74,21 @@ test('Should sort posts by number of likes', function() {
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
-        ->assertJsonPath('next_offset', 2);
-        // ->assertJson([
-        //     'items' => [
-        //         [
-        //             'slug' => $firstMostLiked->slug,
-        //             'body' => $firstMostLiked->body,
-        //             'likes_count' => 10,
-        //         ],
-        //         [
-        //             'slug' => $secondMostLiked->slug,
-        //             'body' => $secondMostLiked->body,
-        //             'likes_count' => 5,
-        //         ],
-        //     ]
-        // ]);
+        ->assertJsonPath('next_offset', 2)
+        ->assertJson([
+            'items' => [
+                [
+                    'slug' => $firstMostLiked->slug,
+                    'body' => $firstMostLiked->body,
+                    'likes_count' => 10,
+                ],
+                [
+                    'slug' => $secondMostLiked->slug,
+                    'body' => $secondMostLiked->body,
+                    'likes_count' => 5,
+                ],
+            ]
+        ]);
 
     $this->response
         ->getJson(route('posts.index', ['sort' => 'likes', 'page' => 2]))

@@ -35,7 +35,7 @@ class CommentController extends Controller
      */
     public function index(Request $request)
     {
-        $data = $this->commentRepository->get($request->query('pid'));
+        $data = $this->commentRepository->get($request);
 
         return response()->json($data, $data['status']);
     }
