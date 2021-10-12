@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use Illuminate\Http\Request;
-use App\Repositories\NotificationRepository;
 use App\Services\NotificationService;
+use App\Repositories\NotificationRepository;
 
 class NotificationController extends Controller
 {
@@ -36,9 +37,9 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
-        $data = $this->notificationRepository->get($request->user());
+        $response = $this->notificationRepository->get($request->user());
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -49,23 +50,22 @@ class NotificationController extends Controller
      */
     public function peek(Request $request)
     {
-        $data = $this->notificationService->peek($request->user());
+        $response = $this->notificationService->peek($request->user());
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
      * Update an unread notification's status into read.
      * 
-     * @param \Illuminate\Http\Request  $request
-     * @param string  $id
+     * @param \App\Models\Notification  $notification
      * @return \Illuminate\Http\JsonResponse
      */
-    public function read(Request $request, string $id)
+    public function read(Notification $notification)
     {
-        $data = $this->notificationService->readOne($request->user(), $id);
+        $response = $this->notificationService->readOne($notification);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -76,8 +76,8 @@ class NotificationController extends Controller
      */
     public function readAll(Request $request)
     {
-        $data = $this->notificationService->readAll($request->user());
+        $response = $this->notificationService->readAll($request->user());
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 }

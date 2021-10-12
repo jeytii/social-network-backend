@@ -14,23 +14,30 @@ class NotificationRepository
      */
     private function formatNotification($data): Notification
     {
+        $message = null;
+
         if ($data->action === config('api.notifications.user_followed')) {
-            $data->message = "{$data->user['name']} followed you.";
+            $message = "{$data->user['name']} followed you.";
         }
         
         if ($data->action === config('api.notifications.post_liked')) {
-            $data->message = "{$data->user['name']} liked your post.";
+            $message = "{$data->user['name']} liked your post.";
+        }
+
+        if ($data->action === config('api.notifications.comment_liked')) {
+            $message = "{$data->user['name']} liked your comment.";
         }
 
         if ($data->action === config('api.notifications.commented_on_post')) {
-            $data->message = "{$data->user['name']} commented on your post.";
+            $message = "{$data->user['name']} commented on your post.";
         }
 
         if ($data->action === config('api.notifications.mentioned_on_comment')) {
             $pronoun = $data->user['gender'] === 'Male' ? 'his' : 'her';
-            $data->message = "{$data->user['name']} mentioned you on {$pronoun} comment.";
+            $message = "{$data->user['name']} mentioned you on {$pronoun} comment.";
         }
 
+        $data->message = $message;
         $data->path = config('app.client_url') . $data->path;
 
         return $data;

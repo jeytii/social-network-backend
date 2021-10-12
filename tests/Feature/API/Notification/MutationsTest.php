@@ -41,10 +41,10 @@ test('Should successfully peek at new notifications', function() {
 });
 
 test('Should successfully marked a specific notification as read', function() {
-    $notificationId = $this->user->notifications()->first()->id;
+    $notification = $this->user->notifications()->first()->slug;
 
     $this->response
-        ->putJson(route('notifications.read', ['id' => $notificationId]))
+        ->putJson(route('notifications.read', compact('notification')))
         ->assertOk();
 
     $this->assertTrue($this->user->readNotifications()->count() === 1);

@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Models\{User, Notification};
 
 class NotificationService
 {
@@ -25,13 +25,19 @@ class NotificationService
     /**
      * Update an unread notification's status into read.
      * 
-     * @param \App\Models\User  $user
-     * @param string  $id
+     * @param \App\Models\Notification  $notification
      * @return array
      */
-    public function readOne(User $user, string $id): array
+    public function readOne(Notification $notification): array
     {
-        $user->notifications()->firstWhere('id', $id)->markAsRead();
+        if ($notification->notifiable->id !== auth()->id()) {
+            return [
+                'status' => 403,
+                'message' => 'Unauthorized.',
+            ];
+        }
+
+        $notification->markAsRead();
 
         return [
             'status' => 200,
