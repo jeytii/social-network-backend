@@ -19,7 +19,7 @@ test('Should throw errors for non-existing username and invalid prefers_sms type
         ->assertStatus(422)
         ->assertJsonFragment([
             'username' => ['User does not exist.'],
-            'prefers_sms_verification' => ['Must be only true or false.'],
+            'prefers_sms_verification' => ['Must be true or false only.'],
         ]);
 
     Notification::assertNothingSent();

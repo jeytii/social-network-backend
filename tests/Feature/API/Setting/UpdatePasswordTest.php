@@ -40,7 +40,7 @@ test('Should throw an error for unconfirmed new password', function() {
             'new_password_confirmation' => 'wrongpassword',
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.new_password', ['New password must match with the confirmation.']);
+        ->assertJsonPath('errors.new_password', ['New password not confirmed.']);
 });
 
 test('Should throw an error for entering the current password as the new one', function() {

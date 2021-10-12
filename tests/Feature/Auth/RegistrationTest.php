@@ -57,7 +57,7 @@ test('Should throw an error if passwords don\'t match', function() {
         'password_confirmation' => 'asdasdasd'
     ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.password', ['Please confirm your password.']);
+        ->assertJsonPath('errors.password', ['Password not confirmed.']);
     
     Event::assertNothingDispatched();
     Notification::assertNothingSent();
@@ -90,7 +90,7 @@ test('Should throw an error if the character length is out of range', function()
         'username' => 'thebigbrownfoxjumpsoverthelazydog'
     ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.username', ['The username must be between 6 to 30 characters long.']);
+        ->assertJsonPath('errors.username', ['The username must be between 6 and 30 characters long.']);
 
     Event::assertNothingDispatched();
     Notification::assertNothingSent();
@@ -121,7 +121,7 @@ test('Should throw an error if the input has invalid format/regex', function() {
     $this->postJson(route('auth.register'), ['username' => 'u$ername@123'])
         ->assertStatus(422)
         ->assertJsonFragment([
-            'username' => ['Please enter a valid username.']
+            'username' => ['Invalid username.']
         ]);
         
     Event::assertNothingDispatched();
@@ -134,7 +134,7 @@ test('Should throw an error if phone number is invalid', function() {
     
     $this->postJson(route('auth.register'), ['phone_number' => '12345678900'])
         ->assertStatus(422)
-        ->assertJsonPath('errors.phone_number', ['Please enter a valid phone number.']);
+        ->assertJsonPath('errors.phone_number', ['Invalid phone number.']);
         
     Event::assertNothingDispatched();
     Notification::assertNothingSent();
