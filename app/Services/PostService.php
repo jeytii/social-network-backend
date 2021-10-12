@@ -2,14 +2,35 @@
 
 namespace App\Services;
 
-use App\Models\{User, Post};
+use App\Models\{User, Post, Notification as NotificationModel};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\{Collection, Str};
+use Illuminate\Support\Facades\{DB, Notification};
 use App\Notifications\NotifyUponAction;
 use Exception;
 
 class PostService
 {
+    /**
+     * Get all mentioned users in the comment body.
+     * 
+     * @param string  $body
+     * @return \Illuminate\Support\Collection
+     */
+    private function getMentionedUsers(string $body): Collection
+    {
+        $mentions = Str::of($body)->matchAll('/@[a-zA-Z0-9_]+/');
+        $usernames = $mentions->unique()->reduce(function($list, $mention) {
+                        if ($mention !== '@' . auth()->user()->username) {
+                            array_push($list, Str::replace('@', '', $mention));
+                        }
+
+                        return $list;
+                    }, []);
+        
+        return User::whereIn('username', $usernames)->get();
+    }
+
     /**
      * Create a post.
      * 
@@ -18,12 +39,34 @@ class PostService
      */
     public function createPost(Request $request): array
     {
-        $data = $request->user()->posts()->create($request->only('body'))->first();
+        try {
+            $data = DB::transaction(function() use ($request) {
+                $mentionedUsers = $this->getMentionedUsers($request->body);
+                $post = $request->user()->posts()->create($request->only('body'))->first();
+    
+                Notification::send(
+                    $mentionedUsers,
+                    new NotifyUponAction(
+                        $request->user(),
+                        NotificationModel::MENTIONED_ON_POST,
+                        "/posts/{$request->pid}"
+                    )
+                );
 
-        return [
-            'status' => 201,
-            'data' => $data,
-        ];
+                return $post;
+            });
+
+            return [
+                'status' => 201,
+                'data' => $data,
+            ];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**
@@ -72,7 +115,7 @@ class PostService
                 
                 $post->user->notify(new NotifyUponAction(
                     $liker,
-                    config('constants.notifications.post_liked'),
+                    NotificationModel::LIKED_POST,
                     "/posts/{$post->slug}"
                 ));
             });

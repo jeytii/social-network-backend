@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\{User, Post};
+use App\Models\{User, Post, Notification as NotificationModel};
 use Illuminate\Support\Facades\{DB, Notification};
 use App\Notifications\NotifyUponAction;
 
@@ -50,6 +50,21 @@ test('Should successfully create a post', function() {
             ],
             'status',
         ]);
+});
+
+test('Should notify the mentioned users upon successfully creating a post', function() {
+    Notification::fake();
+
+    $usernames = User::where('id', '!=', $this->user->id)->limit(3)->pluck('username');
+    $body = $usernames->map(fn($username) => '@' . $username)
+                    ->merge('@' . $this->user->username)
+                    ->join(', ');
+    
+    $this->response
+        ->postJson(route('posts.store'), compact('body'))
+        ->assertCreated();
+
+    Notification::assertTimesSent(3, NotifyUponAction::class);
 });
 
 test('Should successfully update a post', function() {
@@ -116,7 +131,7 @@ test('Should be able to like a post', function() {
         $post->user,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('constants.notifications.post_liked')
+            $notification->action === NotificationModel::LIKED_POST
         )
     );
 
