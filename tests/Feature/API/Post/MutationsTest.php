@@ -148,7 +148,7 @@ test('Should not be able to like a post that has already been liked', function()
 
     Notification::assertNothingSent();
 
-    $this->assertDatabaseCount('likes', 1);
+    $this->assertDatabaseCount('likables', 1);
 });
 
 test('Should be able to dislike a post', function() {
