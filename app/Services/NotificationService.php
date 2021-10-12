@@ -29,7 +29,7 @@ class NotificationService
     {
         if ($notification->notifiable->id !== auth()->id()) {
             return [
-                'status' => 403,
+                'status' => 401,
                 'message' => 'Unauthorized.',
             ];
         }
