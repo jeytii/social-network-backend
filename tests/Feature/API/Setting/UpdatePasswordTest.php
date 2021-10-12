@@ -60,11 +60,7 @@ test('Should successfully update the password', function() {
             'new_password' => 'P@ssword12345',
             'new_password_confirmation' => 'P@ssword12345',
         ])
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully updated the password.',
-        ]);
+        ->assertOk();
 
     $this->assertTrue(Hash::check('P@ssword12345', $this->user->password));
 });

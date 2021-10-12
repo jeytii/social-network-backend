@@ -61,7 +61,6 @@ test('Should successfully create a comment', function() {
         ->assertCreated()
         ->assertJsonStructure([
             'status',
-            'message',
             'data' => [
                 'slug',
                 'body',
@@ -106,11 +105,7 @@ test('Should successfully update a comment', function() {
         ->putJson(route('comments.update', ['comment' => $comment->slug]), [
             'body' => 'Hello World'
         ])
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully updated a comment.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseHas('comments', [
         'id' => $comment->id,
@@ -139,11 +134,7 @@ test('Should successfully delete a comment', function() {
 
     $this->response
         ->deleteJson(route('comments.destroy', ['comment' => $slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully deleted a comment.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseMissing('comments', compact('slug'));
 });
@@ -166,10 +157,7 @@ test('Should be able to like a comment', function() {
 
     $this->response
         ->postJson(route('comments.like', ['comment' => $comment->slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-        ]);
+        ->assertOk();
 
     Notification::assertSentTo(
         $comment->user,
@@ -203,10 +191,7 @@ test('Should be able to dislike a comment', function() {
     // Suppose the selected comment has already been liked based on the test above.
     $this->response
         ->deleteJson(route('comments.dislike', ['comment' => $comment->slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-        ]);
+        ->assertOk();
 
     $this->assertFalse($this->user->likedComments()->where('id', $comment->id)->exists());
 });

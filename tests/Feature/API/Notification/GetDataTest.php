@@ -50,6 +50,5 @@ test('Should return a paginated list of notifications', function() {
             'has_more',
             'next_offset',
             'status',
-            'message',
         ]);
 });

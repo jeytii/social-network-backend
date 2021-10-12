@@ -44,7 +44,6 @@ test('Should return a paginated list of comments under a specific post', functio
             'has_more',
             'next_offset',
             'status',
-            'message',
         ]);
 });
 

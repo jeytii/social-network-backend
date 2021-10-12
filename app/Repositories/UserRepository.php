@@ -26,7 +26,6 @@ class UserRepository
 
         return array_merge($data, [
             'status' => 200,
-            'message' => 'Successfully retrieved data.',
         ]);
     }
 
@@ -44,10 +43,11 @@ class UserRepository
                     ->inRandomOrder()
                     ->limit($count)
                     ->get(config('api.response.user.basic'));
-        $message = 'Successfully retrieved data.';
-        $status = 200;
 
-        return compact('status', 'message', 'data');
+        return [
+            'status' => 200,
+            'data' => $data,
+        ];
     }
 
     /**
@@ -59,13 +59,9 @@ class UserRepository
      */
     public function search(Request $request, int $count = 5): array
     {
-        $status = 200;
-        $message = 'Successfully retrieved data.';
-
         if (!$request->has('query') || $request->isNotFilled('query')) {
             return [
-                'status' => $status,
-                'message' => $message,
+                'status' => 200,
                 'data' => [],
             ];
         }
@@ -75,6 +71,9 @@ class UserRepository
                     ->limit($count)
                     ->get(config('api.response.user.basic'));
 
-        return compact('status', 'message', 'data');
+        return [
+            'status' => 200,
+            'data' => $data,
+        ];
     }
 }

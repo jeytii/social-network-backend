@@ -6,7 +6,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 
 $userBody = ['slug', 'name', 'username', 'gender', 'image_url'];
 
-$miscBody = ['has_more', 'next_offset', 'status', 'message'];
+$miscBody = ['has_more', 'next_offset', 'status'];
 
 $postBody = [
     'slug',

@@ -20,7 +20,6 @@ class PostService
 
         return [
             'status' => 201,
-            'message' => 'Successfully created a post.',
             'data' => $data,
         ];
     }
@@ -38,10 +37,7 @@ class PostService
             ->find($post->id)
             ->update($request->only('body'));
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully updated a post.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -55,10 +51,7 @@ class PostService
     {
         $user->posts()->find($postId)->delete();
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully deleted a post.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -78,10 +71,7 @@ class PostService
             "/posts/{$post->slug}"
         ));
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully liked a post.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -95,10 +85,7 @@ class PostService
     {
         $user->likedPosts()->detach($postId);
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully disliked a post.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -112,10 +99,7 @@ class PostService
     {
         $user->bookmarks()->attach($postId);
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully bookmarked a post.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -129,9 +113,6 @@ class PostService
     {
         $user->bookmarks()->detach($postId);
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully unbookmarked a post.',
-        ];
+        return ['status' => 200];
     }
 }

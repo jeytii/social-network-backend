@@ -59,7 +59,6 @@ class NotificationRepository
             'has_more' => $notifications['has_more'],
             'next_offset' => $notifications['next_offset'],
             'status' => 200,
-            'message' => 'Successfully retrieved the notifications.',
         ];
     }
 }

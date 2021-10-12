@@ -52,10 +52,7 @@ class SettingService
                 auth()->user()->notify(new SendVerificationCode($code, $prefersSMS));
             });
 
-            return [
-                'status' => 200,
-                'message' => 'Successfully made a request.',
-            ];
+            return ['status' => 200];
         }
         catch (Exception $exception) {
             return [
@@ -82,10 +79,7 @@ class SettingService
 
         auth()->user()->update([$column => $data]);
 
-        return [
-            'status' => 200,
-            'message' => 'Update successful.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -100,9 +94,6 @@ class SettingService
             'password' => Hash::make($newPassword)
         ]);
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully updated the password.',
-        ];
+        return ['status' => 200];
     }
 }

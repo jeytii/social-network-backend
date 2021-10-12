@@ -41,7 +41,6 @@ test('Should return the paginated list of posts from followed users', function()
             'has_more',
             'next_offset',
             'status',
-            'message',
         ]);
 
     $this->response

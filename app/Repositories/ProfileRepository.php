@@ -15,10 +15,11 @@ class ProfileRepository
     public function get(User $user): array
     {
         $data = $user->loadCount(['followers', 'following'])->append('birth_date');
-        $message = 'Successfully retrieved the profile info.';
-        $status = 200;
 
-        return compact('status', 'message', 'data');
+        return [
+            'status' => 200,
+            'data' => $data,
+        ];
     }
 
     /**
@@ -42,7 +43,6 @@ class ProfileRepository
 
         return array_merge($data, [
             'status' => 200,
-            'message' => 'Successfully retrieved posts.',
         ]);
     }
 
@@ -60,7 +60,6 @@ class ProfileRepository
 
         return array_merge($data, [
             'status' => 200,
-            'message' => 'Successfully retrieved comments.',
         ]);
     }
 
@@ -77,7 +76,6 @@ class ProfileRepository
 
         return array_merge($data, [
             'status' => 200,
-            'message' => 'Successfully retrieved users.',
         ]);
     }
 }

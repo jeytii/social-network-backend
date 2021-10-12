@@ -54,11 +54,7 @@ test('Should successfully make a request to update email address', function() {
             'email' => 'johndoe@email.com',
             'password' => 'P@ssword123'
         ])
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully made a request.',
-        ]);
+        ->assertOk();
 
     Notification::assertSentTo(
         $this->user,
@@ -135,11 +131,7 @@ test('Should successfully update the email address', function() {
 
     $this->response
         ->putJson(route('settings.update.email'), compact('code'))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Update successful.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseHas('users', [
         'email' => 'johndoe@email.com',

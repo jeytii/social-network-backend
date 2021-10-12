@@ -21,11 +21,7 @@ test('Should successfully follow a user', function() {
     
     $this->response
         ->postJson(route('users.follow', ['user' => $userToFollow->slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully followed user.',
-        ]);
+        ->assertOk();
 
     $this->assertTrue((bool) $this->user->following()->find($userToFollow->id));
     $this->assertTrue((bool) $userToFollow->followers()->find($this->user->id));
@@ -61,11 +57,7 @@ test('Should successfully unfollow a user', function() {
     
     $this->response
         ->deleteJson(route('users.unfollow', ['user' => $userToUnfollow->slug]))
-        ->assertOk()
-        ->assertJson([
-            'status' => 200,
-            'message' => 'Successfully unfollowed user.',
-        ]);
+        ->assertOk();
 
     $this->assertFalse((bool) $this->user->following()->find($userToUnfollow->id));
     $this->assertFalse((bool) $userToUnfollow->followers()->find($this->user->id));

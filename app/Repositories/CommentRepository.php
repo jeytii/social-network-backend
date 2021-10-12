@@ -26,7 +26,6 @@ class CommentRepository
 
             return array_merge($data, [
                 'status' => 200,
-                'message' => 'Successfully retrieved the comments.',
             ]);
         }
         catch (ModelNotFoundException $exception) {

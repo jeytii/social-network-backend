@@ -64,9 +64,9 @@ test('Should throw an error if a user is not yet verified', function() {
 });
 
 test('Should return an auth token if successful', function() {
-    Event::fake([Login::class]);
-
     $user = User::factory()->create();
+
+    Event::fake([Login::class]);
 
     $this->postJson(route('auth.login'), [
         'username' => $user->username,
@@ -74,7 +74,13 @@ test('Should return an auth token if successful', function() {
     ])
         ->assertOk()
         ->assertJsonStructure([
-            'user' => array_shift(config('api.response.user.basic')),
+            'user' => [
+                'slug',
+                'name',
+                'username',
+                'gender',
+                'image_url'
+            ],
             'token',
             'message',
             'status',

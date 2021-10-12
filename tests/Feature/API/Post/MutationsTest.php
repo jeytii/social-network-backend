@@ -49,7 +49,6 @@ test('Should successfully create a post', function() {
                 'user' => config('api.response.user.basic')
             ],
             'status',
-            'message',
         ]);
 });
 
@@ -60,11 +59,7 @@ test('Should successfully update a post', function() {
         ->putJson(route('posts.update', ['post' => $slug]), [
             'body' => 'Hello World'
         ])
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully updated a post.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseHas('posts', [
         'body' => 'Hello World'
@@ -92,11 +87,7 @@ test('Should successfully delete a post', function() {
 
     $this->response
         ->deleteJson(route('posts.destroy', ['post' => $slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully deleted a post.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseMissing('posts', compact('slug'));
 });
@@ -119,11 +110,7 @@ test('Should be able to like a post', function() {
 
     $this->response
         ->postJson(route('posts.like', ['post' => $post->slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully liked a post.',
-        ]);
+        ->assertOk();
 
     Notification::assertSentTo(
         $post->user,
@@ -157,11 +144,7 @@ test('Should be able to dislike a post', function() {
     // Suppost the selected post has already been liked based on the test above.
     $this->response
         ->deleteJson(route('posts.dislike', ['post' => $post->slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully disliked a post.',
-        ]);
+        ->assertOk();
 
     $this->assertFalse($this->user->likedPosts()->where('id', $post->id)->exists());
 });
@@ -181,11 +164,7 @@ test('Should be able to bookmark a post', function() {
 
     $this->response
         ->postJson(route('posts.bookmark', ['post' => $post->slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully bookmarked a post.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseHas('bookmarks', [
         'user_id' => $this->user->id,
@@ -210,11 +189,7 @@ test('Should be able to unbookmark a post', function() {
     // Suppost the selected post has already been bookmarked based on the test above.
     $this->response
         ->deleteJson(route('posts.unbookmark', ['post' => $post->slug]))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully unbookmarked a post.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseMissing('bookmarks', [
         'user_id' => $this->user->id,

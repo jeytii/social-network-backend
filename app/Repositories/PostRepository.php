@@ -25,7 +25,6 @@ class PostRepository
 
         return array_merge($data, [
             'status' => 200,
-            'message' => 'Successfully retrieved posts.',
         ]);
     }
 }

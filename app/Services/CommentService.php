@@ -72,7 +72,6 @@ class CommentService
 
             return [
                 'status' => 201,
-                'message' => 'Successfully created a comment.',
                 'data' => $comment,
             ];
         }
@@ -97,10 +96,7 @@ class CommentService
             ->find($commentId)
             ->update($request->only('body'));
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully updated a comment.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -114,10 +110,7 @@ class CommentService
     {
         $user->comments()->find($commentId)->delete();
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully deleted a comment.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -137,9 +130,7 @@ class CommentService
             "/posts/{$comment->post->slug}"
         ));
 
-        return [
-            'status' => 200,
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -153,8 +144,6 @@ class CommentService
     {
         $user->likedComments()->detach($commentId);
 
-        return [
-            'status' => 200,
-        ];
+        return ['status' => 200];
     }
 }

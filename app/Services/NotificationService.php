@@ -16,10 +16,7 @@ class NotificationService
     {
         $user->notifications()->where('peeked_at', null)->update(['peeked_at' => now()]);
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully peeked at new notifications.'
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -39,10 +36,7 @@ class NotificationService
 
         $notification->markAsRead();
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully marked an unread notification as read.'
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -55,9 +49,6 @@ class NotificationService
     {
         $user->unreadNotifications->markAsRead();
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully marked all unread notifications as read.',
-        ];
+        return ['status' => 200];
     }
 }

@@ -23,7 +23,6 @@ test('Should throw a validation error if search query is not set or null', funct
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
-            'message' => 'Successfully retrieved data.',
             'data' => [],
         ]);
 });
@@ -34,7 +33,6 @@ test('Should return empty list if user doesn\'t exist', function() {
         ->assertOk()
         ->assertExactJson([
             'status' => 200,
-            'message' => 'Successfully retrieved data.',
             'data' => [],
         ]);
 });

@@ -54,11 +54,7 @@ test('Should successfully make a request to update phone number', function() {
             'phone_number' => '09123456789',
             'password' => 'P@ssword123'
         ])
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully made a request.',
-        ]);
+        ->assertOk();
 
     Notification::assertSentTo(
         $this->user,
@@ -135,11 +131,7 @@ test('Should successfully update the phone number', function() {
 
     $this->response
         ->putJson(route('settings.update.phone-number'), compact('code'))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Update successful.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseHas('users', [
         'phone_number' => '639123456789',

@@ -24,10 +24,7 @@ class UserService
             "/{$followedUser->username}"
         ));
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully followed user.',
-        ];
+        return ['status' => 200];
     }
 
     /**
@@ -41,9 +38,6 @@ class UserService
     {
         $follower->following()->detach($unfollowedUser->id);
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully unfollowed user.',
-        ];
+        return ['status' => 200];
     }
 }

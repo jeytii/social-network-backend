@@ -57,7 +57,7 @@ test('Should successfully upload a profile photo', function() {
             'image' => UploadedFile::fake()->image('sample.png', 200, 200)
         ])
         ->assertOk()
-        ->assertJsonStructure(['status', 'message', 'data']);
+        ->assertJsonStructure(['status', 'data']);
 });
 
 test('Should throw validation errors if input values are incorrect in update profile form', function() {

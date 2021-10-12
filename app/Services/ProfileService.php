@@ -43,7 +43,6 @@ class ProfileService
 
         return [
             'status' => 200,
-            'message' => 'Successfully uploaded an image.',
             'data' => $image['eager'][0]['secure_url'],
         ];
     }
@@ -67,9 +66,6 @@ class ProfileService
 
         $request->user()->update($body);
 
-        return [
-            'status' => 200,
-            'message' => 'Successfully updated the profile.',
-        ];
+        return ['status' => 200];
     }
 }

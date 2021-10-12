@@ -57,11 +57,7 @@ test('Should successfully make a request to update username via email', function
             'prefers_sms' => false,
             'password' => 'P@ssword123'
         ])
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully made a request.',
-        ]);
+        ->assertOk();
 
     Notification::assertSentTo(
         $this->user,
@@ -86,11 +82,7 @@ test('Should successfully make a request to update username via SMS', function()
             'prefers_sms' => true,
             'password' => 'P@ssword123'
         ])
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Successfully made a request.',
-        ]);
+        ->assertOk();
 
     Notification::assertSentTo(
         $this->user,
@@ -170,11 +162,7 @@ test('Should successfully update the username', function() {
 
     $this->response
         ->putJson(route('settings.update.username'), compact('code'))
-        ->assertOk()
-        ->assertExactJson([
-            'status' => 200,
-            'message' => 'Update successful.',
-        ]);
+        ->assertOk();
 
     $this->assertDatabaseHas('users', [
         'username' => 'user012345',
