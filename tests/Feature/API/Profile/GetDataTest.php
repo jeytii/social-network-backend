@@ -4,31 +4,31 @@ use App\Models\{User, Post, Comment};
 use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\WithFaker;
 
-$jsonStructure = [
-    'items' => [
-        '*' => [
-            'slug',
-            'body',
-            'likes_count',
-            'comments_count',
-            'timestamp',
-            'is_own_post',
-            'is_liked',
-            'is_edited',
-            'is_bookmarked',
-            'user' => [
-                'slug',
-                'name',
-                'username',
-                'gender',
-                'image_url',
-            ],
-        ],
-    ],
-    'has_more',
-    'next_offset',
-    'status',
-    'message',
+$userBody = ['slug', 'name', 'username', 'gender', 'image_url'];
+
+$miscBody = ['has_more', 'next_offset', 'status', 'message'];
+
+$postBody = [
+    'slug',
+    'body',
+    'likes_count',
+    'comments_count',
+    'timestamp',
+    'is_own_post',
+    'is_liked',
+    'is_edited',
+    'is_bookmarked',
+    'user' => $userBody,
+];
+
+$commentBody = [
+    'slug',
+    'body',
+    'is_own_comment',
+    'is_liked',
+    'is_edited',
+    'timestamp',
+    'user' => $userBody,
 ];
 
 uses(WithFaker::class);
@@ -79,7 +79,7 @@ test('Should return the profile data with followers count and following count', 
     $this->user->followers()->detach();
 });
 
-test('Should return the paginated list of owned posts', function() use ($jsonStructure) {
+test('Should return the paginated list of owned posts', function() use ($postBody, $miscBody) {
     $this->response
         ->getJson(route('profile.get.posts', [
             'user' => $this->user->username,
@@ -89,7 +89,9 @@ test('Should return the paginated list of owned posts', function() use ($jsonStr
         ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null)
-        ->assertJsonStructure($jsonStructure);
+        ->assertJsonStructure(array_merge($miscBody, [
+            'items' => ['*' => $postBody]
+        ]));
 
     $this->response
         ->getJson(route('profile.get.posts', [
@@ -102,7 +104,7 @@ test('Should return the paginated list of owned posts', function() use ($jsonStr
         ->assertJsonPath('next_offset', null);
 });
 
-test('Should return the paginated list of liked posts', function() use ($jsonStructure) {
+test('Should return the paginated list of liked posts', function() use ($postBody, $miscBody) {
     $likedIds = Post::inRandomOrder()->limit(5)->pluck('id');
 
     $this->user->likedPosts()->sync($likedIds);
@@ -116,7 +118,9 @@ test('Should return the paginated list of liked posts', function() use ($jsonStr
         ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null)
-        ->assertJsonStructure($jsonStructure);
+        ->assertJsonStructure(array_merge($miscBody, [
+            'items' => ['*' => $postBody]
+        ]));
 
     $this->response
         ->getJson(route('profile.get.likes.posts', [
@@ -129,7 +133,7 @@ test('Should return the paginated list of liked posts', function() use ($jsonStr
         ->assertJsonPath('next_offset', null);
 });
 
-test('Should return the paginated list of liked comments', function() {
+test('Should return the paginated list of liked comments', function() use ($commentBody, $miscBody) {
     $likedIds = Comment::factory(5)
                     ->for(User::firstWhere('id', '!=', $this->user->id))
                     ->for(Post::first())
@@ -147,23 +151,9 @@ test('Should return the paginated list of liked comments', function() {
         ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null)
-        ->assertJsonStructure([
-            'items' => [
-                '*' => [
-                    'slug',
-                    'body',
-                    'is_own_comment',
-                    'is_liked',
-                    'is_edited',
-                    'timestamp',
-                    'user' => array_merge(config('api.response.user.basic'), ['slug'])
-                ]
-            ],
-            'has_more',
-            'next_offset',
-            'status',
-            'message',
-        ]);
+        ->assertJsonStructure(array_merge($miscBody, [
+            'items' => ['*' => $commentBody]
+        ]));
 
     $this->response
         ->getJson(route('profile.get.likes.comments', [
@@ -176,7 +166,7 @@ test('Should return the paginated list of liked comments', function() {
         ->assertJsonPath('next_offset', null);
 });
 
-test('Should return the paginated list of comments', function() {
+test('Should return the paginated list of comments', function() use ($userBody, $postBody, $commentBody) {
     Comment::factory(7)
         ->for($this->user)
         ->for(Post::first())
@@ -191,35 +181,17 @@ test('Should return the paginated list of comments', function() {
         ->assertJsonCount(1, 'items')
         ->assertJsonStructure([
             'items' => [
-                '*' => [
-                    'slug',
-                    'body',
-                    'likes_count',
-                    'comments_count',
-                    'timestamp',
-                    'is_own_post',
-                    'is_liked',
-                    'is_edited',
-                    'is_bookmarked',
-                    'user' => array_merge(config('api.response.user.basic'), ['slug']),
-                    'comments' => [
-                        '*' => [
-                            'slug',
-                            'body',
-                            'is_own_comment',
-                            'is_edited',
-                            'timestamp',
-                            'user' => array_merge(config('api.response.user.basic'), ['slug']),
-                        ]
-                    ],
-                ],
+                '*' => array_merge($postBody, [
+                    'user' => $userBody,
+                    'comments' => ['*' => $commentBody],
+                ])
             ],
             'has_more',
             'next_offset'
         ]);
 });
 
-test('Should return the paginated list of bookmarked posts', function() use ($jsonStructure) {
+test('Should return the paginated list of bookmarked posts', function() use ($postBody, $miscBody) {
     $bookmarkedIds = Post::inRandomOrder()->limit(5)->pluck('id');
 
     $this->user->bookmarks()->sync($bookmarkedIds);
@@ -233,7 +205,9 @@ test('Should return the paginated list of bookmarked posts', function() use ($js
         ->assertJsonCount(5, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null)
-        ->assertJsonStructure($jsonStructure);
+        ->assertJsonStructure(array_merge($miscBody, [
+            'items' => ['*' => $postBody]
+        ]));
 
     $this->response
         ->getJson(route('profile.get.bookmarks', [
