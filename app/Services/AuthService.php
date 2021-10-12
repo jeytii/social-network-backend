@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Requests\{ResendCodeRequest, ResetPasswordRequest};
 use Illuminate\Support\Facades\{DB, Hash, Password};
 use Illuminate\Auth\Events\{Login, Registered, PasswordReset};
 use App\Notifications\SendVerificationCode;
@@ -152,10 +151,10 @@ class AuthService
     /**
      * Resend another verification code to the user.
      * 
-     * @param \App\Http\Requests\ResendCodeRequest  $request
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function resendVerificationCode(ResendCodeRequest $request): array
+    public function resendVerificationCode(Request $request): array
     {
         $user = User::whereUsername($request->username)->first();
         
@@ -200,10 +199,10 @@ class AuthService
     /**
      * Reset user's password.
      * 
-     * @param \App\Http\Requests\ResetPasswordRequest  $request
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function resetPassword(ResetPasswordRequest $request): array
+    public function resetPassword(Request $request): array
     {
         $user = User::where('email', $request->email)->firstWithBasicOnly();
 

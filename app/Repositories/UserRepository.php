@@ -8,33 +8,21 @@ use Illuminate\Support\Facades\DB;
 
 class UserRepository
 {
-    private array $columns;
-
-    /**
-     * Create a new notification instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->columns = array_merge(config('api.response.user.basic'), ['slug']);
-    }
-
     /**
      * Get 20 users on each offset.
      * 
-     * @param string|null  $query
+     * @param \Illuminate\Http\Request  $request
      * @return array
      */
-    public function get(?string $query): array
+    public function get(Request $request): array
     {
-        $hasQuery = isset($query);
+        $hasQuery = $request->has('query') || $request->filled('query');
         $data = User::when(!$hasQuery, fn($q) => (
                     $q->where('id', '!=', auth()->id())
                         ->whereDoesntHave('followers', fn($q) => $q->where('id', auth()->id()))
                 ))
-                ->when($hasQuery, fn($q) => $q->searchUser($query))
-                ->withPaginated(20, $this->columns);
+                ->when($hasQuery, fn($q) => $q->searchUser($request->query('query')))
+                ->withPaginated(20, config('api.response.user.basic'));
 
         return array_merge($data, [
             'status' => 200,
@@ -55,7 +43,7 @@ class UserRepository
         $data = User::whereNotIn('id', [auth()->id(), ...$exceptIds])
                     ->inRandomOrder()
                     ->limit($count)
-                    ->get($this->columns);
+                    ->get(config('api.response.user.basic'));
         $message = 'Successfully retrieved data.';
         $status = 200;
 
@@ -65,16 +53,16 @@ class UserRepository
     /**
      * Get search results according to the provided query.
      * 
-     * @param string|null  $query
+     * @param \Illuminate\Http\Request  $string
      * @param int  $count
      * @return array
      */
-    public function search(?string $query, int $count = 5): array
+    public function search(Request $request, int $count = 5): array
     {
         $status = 200;
         $message = 'Successfully retrieved data.';
 
-        if (!isset($query) || is_null($query) || empty($query)) {
+        if (!$request->has('query') || $request->isNotFilled('query')) {
             return [
                 'status' => $status,
                 'message' => $message,
@@ -83,9 +71,9 @@ class UserRepository
         }
 
         $data = DB::table('users')
-                    ->searchUser($query)
+                    ->searchUser($request->query('query'))
                     ->limit($count)
-                    ->get($this->columns);
+                    ->get(config('api.response.user.basic'));
 
         return compact('status', 'message', 'data');
     }

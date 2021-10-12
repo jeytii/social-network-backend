@@ -34,7 +34,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $response = $this->userRepository->get($request->query('query'));
+        $response = $this->userRepository->get($request);
 
         return response()->json($response, $response['status']);
     }
@@ -60,7 +60,7 @@ class UserController extends Controller
      */
     public function search(Request $request)
     {
-        $response = $this->userRepository->search($request->query('query'));
+        $response = $this->userRepository->search($request);
 
         return response()->json($response, $response['status']);
     }

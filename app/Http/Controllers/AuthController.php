@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\{UserRequest, ResendCodeRequest, ResetPasswordRequest};
+use App\Http\Requests\{AuthRequest, UserRequest};
 use App\Services\AuthService;
 
 class AuthController extends Controller
@@ -24,16 +24,11 @@ class AuthController extends Controller
     /**
      * Log in a user.
      *
-     * @param \Illuminate\Http\Request  $request
+     * @param \App\Http\Requests\AuthRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function login(Request $request)
+    public function login(AuthRequest $request)
     {
-        $request->validate([
-            'username' => 'required',
-            'password' => 'required',
-        ]);
-
         $response = $this->auth->login($request);
 
         return response()->json($response, $response['status']);
@@ -54,15 +49,11 @@ class AuthController extends Controller
     /**
      * Verify a user.
      * 
-     * @param \Illuminate\Http\Request  $request
+     * @param \App\Http\Requests\AuthRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function verify(Request $request)
+    public function verify(AuthRequest $request)
     {
-        $request->validate([
-            'code' => ['required', 'exists:verifications']
-        ]);
-
         $response = $this->auth->verify($request);
 
         return response()->json($response, $response['status']);
@@ -71,10 +62,10 @@ class AuthController extends Controller
     /**
      * Resend another verification code to the user.
      * 
-     * @param \App\Http\Requests\ResendCodeRequest  $request
+     * @param \App\Http\Requests\AuthRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function resendVerificationCode(ResendCodeRequest $request)
+    public function resendVerificationCode(AuthRequest $request)
     {
         $response = $this->auth->resendVerificationCode($request);
 
@@ -84,15 +75,11 @@ class AuthController extends Controller
     /**
      * Send a password-reset request link to the user.
      * 
-     * @param \Illuminate\Http\Request  $request
+     * @param \\App\Http\Requests\AuthRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function requestPasswordReset(Request $request)
+    public function requestPasswordReset(AuthRequest $request)
     {
-        $request->validate([
-            'email' => ['required', 'email', 'exists:users']
-        ]);
-
         $response = $this->auth->sendPasswordResetLink($request);
 
         return response()->json($response, $response['status']);
@@ -101,10 +88,10 @@ class AuthController extends Controller
      /**
      * Reset user's password.
      * 
-     * @param \App\Http\Requests\ResetPasswordRequest  $request
+     * @param \App\Http\Requests\AuthRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function resetPassword(ResetPasswordRequest $request)
+    public function resetPassword(AuthRequest $request)
     {
         $response = $this->auth->resetPassword($request);
 
