@@ -12,7 +12,7 @@ beforeAll(function() {
 beforeEach(function() {
     $this->columns = array_merge(
         config('api.response.user.basic'),
-        ['slug', 'is_followed', 'is_self']
+        ['is_followed', 'is_self']
     );
 });
 

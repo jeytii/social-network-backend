@@ -46,7 +46,7 @@ test('Should successfully create a post', function() {
                 'is_liked',
                 'is_edited',
                 'is_bookmarked',
-                'user' => array_merge(config('api.response.user.basic'), ['slug'])
+                'user' => config('api.response.user.basic')
             ],
             'status',
             'message',

@@ -74,7 +74,7 @@ test('Should return an auth token if successful', function() {
     ])
         ->assertOk()
         ->assertJsonStructure([
-            'user' => config('api.response.user.basic'),
+            'user' => array_shift(config('api.response.user.basic')),
             'token',
             'message',
             'status',

@@ -38,7 +38,7 @@ test('Should return a paginated list of comments under a specific post', functio
                     'is_liked',
                     'is_edited',
                     'timestamp',
-                    'user' => array_merge(config('api.response.user.basic'), ['slug'])
+                    'user' => config('api.response.user.basic')
                 ]
             ],
             'has_more',

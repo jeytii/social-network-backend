@@ -31,7 +31,7 @@ return [
 
     'response' => [
         'user' => [
-            'basic' => ['name', 'username', 'gender', 'image_url']
+            'basic' => ['slug', 'name', 'username', 'gender', 'image_url']
         ]
     ]
 ];

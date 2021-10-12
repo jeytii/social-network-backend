@@ -68,7 +68,7 @@ test('Should successfully create a comment', function() {
                 'timestamp',
                 'is_own_comment',
                 'is_edited',
-                'user' => array_merge(config('api.response.user.basic'), ['slug'])
+                'user' => config('api.response.user.basic')
             ]
         ]);
 
