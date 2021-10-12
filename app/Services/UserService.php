@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Models\{User, Notification};
 use Illuminate\Support\Facades\DB;
 use App\Notifications\NotifyUponAction;
 use Exception;
@@ -25,7 +25,7 @@ class UserService
 
                 $followedUser->notify(new NotifyUponAction(
                     $follower,
-                    config('constants.notifications.user_followed'),
+                    Notification::FOLLOWED,
                     "/{$followedUser->username}"
                 ));
             });

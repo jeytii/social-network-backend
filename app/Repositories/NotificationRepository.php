@@ -16,25 +16,30 @@ class NotificationRepository
     {
         $message = null;
 
-        if ($data->action === config('constants.notifications.user_followed')) {
+        if ($data->action === Notification::FOLLOWED) {
             $message = "{$data->user['name']} followed you.";
         }
         
-        if ($data->action === config('constants.notifications.post_liked')) {
+        if ($data->action === Notification::LIKED_POST) {
             $message = "{$data->user['name']} liked your post.";
         }
 
-        if ($data->action === config('constants.notifications.comment_liked')) {
+        if ($data->action === Notification::LIKED_COMMENT) {
             $message = "{$data->user['name']} liked your comment.";
         }
 
-        if ($data->action === config('constants.notifications.commented_on_post')) {
-            $message = "{$data->user['name']} commented on your post.";
+        if ($data->action === Notification::MENTIONED_ON_POST) {
+            $pronoun = $data->user['gender'] === 'Male' ? 'his' : 'her';
+            $message = "{$data->user['name']} mentioned you on {$pronoun} post.";
         }
 
-        if ($data->action === config('constants.notifications.mentioned_on_comment')) {
+        if ($data->action === Notification::MENTIONED_ON_COMMENT) {
             $pronoun = $data->user['gender'] === 'Male' ? 'his' : 'her';
             $message = "{$data->user['name']} mentioned you on {$pronoun} comment.";
+        }
+
+        if ($data->action === Notification::COMMENTED_ON_POST) {
+            $message = "{$data->user['name']} commented on your post.";
         }
 
         $data->message = $message;

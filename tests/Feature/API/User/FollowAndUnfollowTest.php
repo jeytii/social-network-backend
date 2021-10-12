@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\User;
+use App\Models\{User, Notification as NotificationModel};
 use Illuminate\Support\Facades\{DB, Notification};
 use App\Notifications\NotifyUponAction;
 
@@ -30,7 +30,7 @@ test('Should successfully follow a user', function() {
         $userToFollow,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('constants.notifications.user_followed')
+            $notification->action === NotificationModel::FOLLOWED
         )
     );
 });
