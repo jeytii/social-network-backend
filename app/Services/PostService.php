@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Models\{User, Post};
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Notifications\NotifyUponAction;
+use Exception;
 
 class PostService
 {
@@ -60,18 +62,29 @@ class PostService
      * @param \App\Models\User  $liker
      * @param \App\Models\Post  $post
      * @return array
+     * @throws \Exception
      */
     public function likePost(User $liker, Post $post): array
     {
-        $liker->likedPosts()->attach($post->id);
-        
-        $post->user->notify(new NotifyUponAction(
-            $liker,
-            config('constants.notifications.post_liked'),
-            "/posts/{$post->slug}"
-        ));
+        try {
+            DB::transaction(function() use ($liker, $post) {
+                $liker->likedPosts()->attach($post->id);
+                
+                $post->user->notify(new NotifyUponAction(
+                    $liker,
+                    config('constants.notifications.post_liked'),
+                    "/posts/{$post->slug}"
+                ));
+            });
 
-        return ['status' => 200];
+            return ['status' => 200];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**

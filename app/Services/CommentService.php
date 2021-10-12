@@ -5,8 +5,9 @@ namespace App\Services;
 use App\Models\{User, Post, Comment};
 use Illuminate\Http\Request;
 use Illuminate\Support\{Collection, Str};
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\{DB, Notification};
 use App\Notifications\NotifyUponAction;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
 class CommentService
@@ -47,38 +48,50 @@ class CommentService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      * @throws \Exception
      */
     public function createComment(Request $request): array
     {
         try {
             $post = Post::where('slug', $request->pid)->firstOrFail();
-            $comment = $request->user()->comments()
-                            ->create([
-                                'post_id' => $post->id,
-                                'body' => $request->body,
-                            ])
-                            ->first();
             $mentionedUsers = $this->getMentionedUsers($request->body);
 
-            if (!$mentionedUsers->contains('username', $post->user->username)) {
-                $post->user->notify($this->notifyOnComment($request->user(), 'commented_on_post', $request->pid));
-            }
+            $comment = DB::transaction(function() use ($request, $post, $mentionedUsers) {
+                $comment = $request->user()->comments()
+                                ->create([
+                                    'post_id' => $post->id,
+                                    'body' => $request->body,
+                                ])
+                                ->first();
+    
+                if (!$mentionedUsers->contains('username', $post->user->username)) {
+                    $post->user->notify($this->notifyOnComment($request->user(), 'commented_on_post', $request->pid));
+                }
+    
+                Notification::send(
+                    $mentionedUsers,
+                    $this->notifyOnComment($request->user(), 'mentioned_on_comment', $request->pid)
+                );
 
-            Notification::send(
-                $mentionedUsers,
-                $this->notifyOnComment($request->user(), 'mentioned_on_comment', $request->pid)
-            );
+                return $comment;
+            });
 
             return [
                 'status' => 201,
                 'data' => $comment,
             ];
         }
-        catch (Exception $e) {
+        catch (ModelNotFoundException $exception) {
             return [
                 'status' => 404,
                 'message' => 'Post not found.',
+            ];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
             ];
         }
     }
@@ -119,18 +132,29 @@ class CommentService
      * @param \App\Models\User  $liker
      * @param \App\Models\Comment  $comment
      * @return array
+     * @throws \Exception
      */
     public function likeComment(User $liker, Comment $comment): array
     {
-        $liker->likedComments()->attach($comment->id);
-        
-        $comment->user->notify(new NotifyUponAction(
-            $liker,
-            config('constants.notifications.comment_liked'),
-            "/posts/{$comment->post->slug}"
-        ));
+        try {
+            DB::transaction(function() use ($liker, $comment) {
+                $liker->likedComments()->attach($comment->id);
+                
+                $comment->user->notify(new NotifyUponAction(
+                    $liker,
+                    config('constants.notifications.comment_liked'),
+                    "/posts/{$comment->post->slug}"
+                ));
+            });
 
-        return ['status' => 200];
+            return ['status' => 200];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**

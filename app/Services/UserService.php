@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use App\Notifications\NotifyUponAction;
+use Exception;
 
 class UserService
 {
@@ -13,18 +15,29 @@ class UserService
      * @param \App\Models\User  $follower
      * @param \App\Models\User  $followedUser
      * @return array
+     * @throws \Exception
      */
     public function follow(User $follower, User $followedUser): array
     {
-        $follower->following()->sync([$followedUser->id]);
+        try {
+            DB::transaction(function() use ($follower, $followedUser) {
+                $follower->following()->sync([$followedUser->id]);
 
-        $followedUser->notify(new NotifyUponAction(
-            $follower,
-            config('constants.notifications.user_followed'),
-            "/{$followedUser->username}"
-        ));
+                $followedUser->notify(new NotifyUponAction(
+                    $follower,
+                    config('constants.notifications.user_followed'),
+                    "/{$followedUser->username}"
+                ));
+            });
 
-        return ['status' => 200];
+            return ['status' => 200];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**
