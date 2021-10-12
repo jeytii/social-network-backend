@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{User, Post, Comment};
+use App\Models\{User, Post, Comment, Notification as NotificationModel};
 use Illuminate\Http\Request;
 use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\{DB, Notification};
@@ -16,17 +16,13 @@ class CommentService
      * Make a notification upon commenting.
      * 
      * @param \App\Models\User  $notifier
-     * @param string  $notificationType
+     * @param int  $notificationType
      * @param string  $postSlug
      * @return mixed
      */
-    private function notifyOnComment(User $notifier, string $notificationType, string $postSlug)
+    private function notifyOnComment(User $notifier, int $notificationType, string $postSlug)
     {
-        return new NotifyUponAction(
-            $notifier,
-            config('constants.notifications.' . $notificationType),
-            "/posts/{$postSlug}"
-        );
+        return new NotifyUponAction($notifier, $notificationType, "/posts/{$postSlug}");
     }
 
     /**
@@ -38,7 +34,13 @@ class CommentService
     private function getMentionedUsers(string $body): Collection
     {
         $mentions = Str::of($body)->matchAll('/@[a-zA-Z0-9_]+/');
-        $usernames = $mentions->map(fn($mention) => Str::replace('@', '', $mention))->toArray();
+        $usernames = $mentions->unique()->reduce(function($list, $mention) {
+                        if ($mention !== '@' . auth()->user()->username) {
+                            array_push($list, Str::replace('@', '', $mention));
+                        }
+
+                        return $list;
+                    }, []);
         
         return User::whereIn('username', $usernames)->get();
     }
@@ -55,9 +57,8 @@ class CommentService
     {
         try {
             $post = Post::where('slug', $request->pid)->firstOrFail();
-            $mentionedUsers = $this->getMentionedUsers($request->body);
-
-            $comment = DB::transaction(function() use ($request, $post, $mentionedUsers) {
+            $comment = DB::transaction(function() use ($request, $post) {
+                $mentionedUsers = $this->getMentionedUsers($request->body);
                 $comment = $request->user()->comments()
                                 ->create([
                                     'post_id' => $post->id,
@@ -66,12 +67,20 @@ class CommentService
                                 ->first();
     
                 if (!$mentionedUsers->contains('username', $post->user->username)) {
-                    $post->user->notify($this->notifyOnComment($request->user(), 'commented_on_post', $request->pid));
+                    $post->user->notify($this->notifyOnComment(
+                        $request->user(),
+                        NotificationModel::COMMENTED_ON_POST,
+                        $request->pid
+                    ));
                 }
     
                 Notification::send(
                     $mentionedUsers,
-                    $this->notifyOnComment($request->user(), 'mentioned_on_comment', $request->pid)
+                    $this->notifyOnComment(
+                        $request->user(),
+                        NotificationModel::MENTIONED_ON_COMMENT,
+                        $request->pid
+                    )
                 );
 
                 return $comment;
@@ -142,7 +151,7 @@ class CommentService
                 
                 $comment->user->notify(new NotifyUponAction(
                     $liker,
-                    config('constants.notifications.comment_liked'),
+                    NotificationModel::LIKED_COMMENT,
                     "/posts/{$comment->post->slug}"
                 ));
             });

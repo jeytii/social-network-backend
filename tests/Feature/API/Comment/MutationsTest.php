@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\{User, Comment};
+use App\Models\{User, Comment, Notification as NotificationModel};
 use App\Notifications\NotifyUponAction;
 use Illuminate\Support\Facades\{DB, Notification};
 
@@ -75,7 +75,7 @@ test('Should successfully create a comment', function() {
         $user,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('constants.notifications.commented_on_post')
+            $notification->action === NotificationModel::COMMENTED_ON_POST
         )
     );
 });
@@ -87,11 +87,17 @@ test('Should notify the mentioned users along with OP upon commenting', function
     $slug = $user->posts()->first()->slug;
     $exceptionIds = [$this->user->id, $user->id];
     $usernames = User::whereNotIn('id', $exceptionIds)->limit(3)->pluck('username');
+    $body = $usernames->map(fn($username) => '@' . $username)
+                    ->merge([
+                        '@' . $this->user->username,
+                        '@' . $user->username,
+                    ])
+                    ->join(', ');
     
     $this->response
         ->postJson(route('comments.store'), [
             'pid' => $slug,
-            'body' => "Shoutout to @{$usernames[0]}, @{$usernames[1]}, and @{$usernames[2]}"
+            'body' => $body,
         ])
         ->assertCreated();
 
@@ -163,7 +169,7 @@ test('Should be able to like a comment', function() {
         $comment->user,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('constants.notifications.comment_liked')
+            $notification->action === NotificationModel::LIKED_COMMENT
         )
     );
 
