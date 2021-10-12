@@ -23,7 +23,7 @@ class PostFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'body' => $this->faker->text(config('api.max_lengths.long_text')),
+            'body' => $this->faker->text(config('validation.max_lengths.long_text')),
         ];
     }
 }

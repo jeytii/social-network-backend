@@ -50,8 +50,8 @@ class UserRequest extends FormRequest
                 [
                     'required',
                     'string',
-                    'between:' . config('api.min_lengths.username') . ',' . config('api.max_lengths.username'),
-                    'regex:' . config('api.formats.username'),
+                    'between:' . config('validation.min_lengths.username') . ',' . config('validation.max_lengths.username'),
+                    'regex:' . config('validation.formats.username'),
                     Rule::unique('users'),
                 ]
             ),
@@ -60,7 +60,7 @@ class UserRequest extends FormRequest
                 [
                     'required',
                     'numeric',
-                    'regex:' . config('api.formats.phone_number'),
+                    'regex:' . config('validation.formats.phone_number'),
                     Rule::unique('users'),
                 ]
             ),
@@ -82,16 +82,16 @@ class UserRequest extends FormRequest
             'image_url' => Rule::when($routeName === 'profile.update', ['nullable', 'string']),
             'bio' => Rule::when(
                 $routeName === 'profile.update',
-                ['nullable', 'string', 'max:' . config('api.max_lengths.bio')]
+                ['nullable', 'string', 'max:' . config('validation.max_lengths.bio')]
             ),
             'image' => Rule::when($routeName === 'profile.upload.profile-photo', [
                 'required',
                 'image',
                 Rule::dimensions()
-                    ->minWidth(config('api.image.min_res'))
-                    ->minHeight(config('api.image.min_res'))
-                    ->maxWidth(config('api.image.max_res'))
-                    ->maxHeight(config('api.image.max_res'))
+                    ->minWidth(config('validation.image.min_res'))
+                    ->minHeight(config('validation.image.min_res'))
+                    ->maxWidth(config('validation.image.max_res'))
+                    ->maxHeight(config('validation.image.max_res'))
             ]),
             'password' => [
                 Rule::requiredIf(in_array($routeName, [
@@ -146,8 +146,8 @@ class UserRequest extends FormRequest
      */
     public function messages()
     {
-        $minRes = config('api.image.min_res');
-        $maxRes = config('api.image.max_res');
+        $minRes = config('validation.image.min_res');
+        $maxRes = config('validation.image.max_res');
 
         return [
             'required' => 'The :attribute is required.',

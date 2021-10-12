@@ -75,7 +75,7 @@ test('Should successfully create a comment', function() {
         $user,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('api.notifications.commented_on_post')
+            $notification->action === config('constants.notifications.commented_on_post')
         )
     );
 });
@@ -163,7 +163,7 @@ test('Should be able to like a comment', function() {
         $comment->user,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('api.notifications.comment_liked')
+            $notification->action === config('constants.notifications.comment_liked')
         )
     );
 

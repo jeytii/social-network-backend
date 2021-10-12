@@ -33,7 +33,7 @@ class PostAndCommentRequest extends FormRequest
             'body' => [
                 'required',
                 'string',
-                'max:' . config('api.max_lengths.long_text')
+                'max:' . config('validation.max_lengths.long_text')
             ],
         ];
     }

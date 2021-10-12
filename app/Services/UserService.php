@@ -20,7 +20,7 @@ class UserService
 
         $followedUser->notify(new NotifyUponAction(
             $follower,
-            config('api.notifications.user_followed'),
+            config('constants.notifications.user_followed'),
             "/{$followedUser->username}"
         ));
 

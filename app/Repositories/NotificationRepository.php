@@ -16,23 +16,23 @@ class NotificationRepository
     {
         $message = null;
 
-        if ($data->action === config('api.notifications.user_followed')) {
+        if ($data->action === config('constants.notifications.user_followed')) {
             $message = "{$data->user['name']} followed you.";
         }
         
-        if ($data->action === config('api.notifications.post_liked')) {
+        if ($data->action === config('constants.notifications.post_liked')) {
             $message = "{$data->user['name']} liked your post.";
         }
 
-        if ($data->action === config('api.notifications.comment_liked')) {
+        if ($data->action === config('constants.notifications.comment_liked')) {
             $message = "{$data->user['name']} liked your comment.";
         }
 
-        if ($data->action === config('api.notifications.commented_on_post')) {
+        if ($data->action === config('constants.notifications.commented_on_post')) {
             $message = "{$data->user['name']} commented on your post.";
         }
 
-        if ($data->action === config('api.notifications.mentioned_on_comment')) {
+        if ($data->action === config('constants.notifications.mentioned_on_comment')) {
             $pronoun = $data->user['gender'] === 'Male' ? 'his' : 'her';
             $message = "{$data->user['name']} mentioned you on {$pronoun} comment.";
         }

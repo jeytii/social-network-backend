@@ -116,7 +116,7 @@ test('Should be able to like a post', function() {
         $post->user,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('api.notifications.post_liked')
+            $notification->action === config('constants.notifications.post_liked')
         )
     );
 

@@ -23,7 +23,7 @@ class CommentService
     {
         return new NotifyUponAction(
             $notifier,
-            config('api.notifications.' . $notificationType),
+            config('constants.notifications.' . $notificationType),
             "/posts/{$postSlug}"
         );
     }
@@ -126,7 +126,7 @@ class CommentService
         
         $comment->user->notify(new NotifyUponAction(
             $liker,
-            config('api.notifications.comment_liked'),
+            config('constants.notifications.comment_liked'),
             "/posts/{$comment->post->slug}"
         ));
 

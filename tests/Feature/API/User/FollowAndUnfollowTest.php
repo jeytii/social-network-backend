@@ -30,7 +30,7 @@ test('Should successfully follow a user', function() {
         $userToFollow,
         NotifyUponAction::class,
         fn($notification) => (
-            $notification->action === config('api.notifications.user_followed')
+            $notification->action === config('constants.notifications.user_followed')
         )
     );
 });
