@@ -109,6 +109,7 @@ class UserRequest extends FormRequest
                     ['current_password']
                 ),
             ],
+            // TODO: Rename into prefers_sms
             'prefers_sms_verification' => Rule::when(
                 $routeName === 'auth.register',
                 ['required', 'boolean']
@@ -121,7 +122,7 @@ class UserRequest extends FormRequest
                 $routeName === 'settings.change.password',
                 [
                     'required',
-                    'confirmed',
+                    'confirmed', // TODO: Remove password confirmation
                     $passwordRule,
                     new NotCurrentPassword,
                 ]

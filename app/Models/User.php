@@ -5,10 +5,9 @@ namespace App\Models;
 use Illuminate\Support\Str;
 use App\Models\Notification;
 use Laravel\Sanctum\HasApiTokens;
-use App\Notifications\ResetPassword;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\{
@@ -215,19 +214,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function routeNotificationForNexmo($notification)
     {
         return $this->phone_number;
-    }
-
-    /**
-     * Send a password reset notification to the user.
-     *
-     * @param  string  $token
-     * @return void
-     */
-    public function sendPasswordResetNotification($token)
-    {
-        $url = config('app.client_url') . "/reset-password/{$token}";
-
-        $this->notify(new ResetPassword($url));
     }
 
     // =============================

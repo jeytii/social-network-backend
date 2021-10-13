@@ -72,7 +72,9 @@ class ProfileRepository
      */
     public function getConnections(User $user, string $type): array
     {
-        $data = $user->{$type}()->withPaginated(20, config('api.response.user.basic'));
+        $data = $user->{$type}()
+                    ->orderByPivot('created_at', 'desc')
+                    ->withPaginated(20, config('api.response.user.basic'));
 
         return array_merge($data, [
             'status' => 200,
