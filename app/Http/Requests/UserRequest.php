@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
-use App\Rules\{NotCurrentPassword, ValidVerificationCode};
+use App\Rules\NotCurrentPassword;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,14 +39,14 @@ class UserRequest extends FormRequest
         return [
             'name' => Rule::when(
                 in_array($routeName, ['auth.register', 'profile.update']),
-                ['required', 'string', 'min:2']
+                ['required', 'string', 'min:' . config('validation.min_lengths.name')]
             ),
             'email' => Rule::when(
-                in_array($routeName, ['auth.register', 'settings.request-update.email']),
-                ['required', 'string', 'email', Rule::unique('users')]
+                in_array($routeName, ['auth.register', 'settings.change.email']),
+                ['required', 'email', Rule::unique('users')]
             ),
             'username' => Rule::when(
-                in_array($routeName, ['auth.register', 'settings.request-update.username']),
+                in_array($routeName, ['auth.register', 'settings.change.username']),
                 [
                     'required',
                     'string',
@@ -56,10 +56,9 @@ class UserRequest extends FormRequest
                 ]
             ),
             'phone_number' => Rule::when(
-                in_array($routeName, ['auth.register', 'settings.request-update.phone-number']),
+                in_array($routeName, ['auth.register', 'settings.change.phone-number']),
                 [
                     'required',
-                    'numeric',
                     'regex:' . config('validation.formats.phone_number'),
                     Rule::unique('users'),
                 ]
@@ -96,52 +95,44 @@ class UserRequest extends FormRequest
             'password' => [
                 Rule::requiredIf(in_array($routeName, [
                     'auth.register',
-                    'settings.request-update.username',
-                    'settings.request-update.email',
-                    'settings.request-update.phone-number',
+                    'settings.change.username',
+                    'settings.change.email',
+                    'settings.change.phone-number',
                 ])),
                 Rule::when($routeName === 'auth.register', ['confirmed', $passwordRule]),
                 Rule::when(
                     in_array($routeName, [
-                        'settings.request-update.username',
-                        'settings.request-update.email',
-                        'settings.request-update.phone-number',
+                        'settings.change.username',
+                        'settings.change.email',
+                        'settings.change.phone-number',
                     ]),
                     ['current_password']
                 ),
             ],
-            'prefers_sms' => Rule::when(
-                $routeName === 'settings.request-update.username',
-                ['required', 'boolean']
-            ),
             'prefers_sms_verification' => Rule::when(
                 $routeName === 'auth.register',
                 ['required', 'boolean']
             ),
             'current_password' => Rule::when(
-                $routeName === 'settings.update.password',
+                $routeName === 'settings.change.password',
                 ['required', 'current_password']
             ),
-            'new_password' => Rule::when($routeName === 'settings.update.password', [
-                'required',
-                $passwordRule,
-                'confirmed',
-                new NotCurrentPassword,
-            ]),
-            'code' => Rule::when(
-                in_array($routeName, [
-                    'settings.update.username',
-                    'settings.update.email',
-                    'settings.update.phone-number',
-                ]),
-                ['required', new ValidVerificationCode($routeName)]
-            )
+            'new_password' => Rule::when(
+                $routeName === 'settings.change.password',
+                [
+                    'required',
+                    'confirmed',
+                    $passwordRule,
+                    new NotCurrentPassword,
+                ]
+            ),
         ];
     }
 
     /**
      * Get the error messages for the defined validation rules.
      *
+     * TODO: Capitalize some placeholders
      * @return array
      */
     public function messages()
@@ -157,7 +148,7 @@ class UserRequest extends FormRequest
             'in' => 'Invalid :attribute.',
             'email' => 'Invalid :attribute.',
             'max' => 'The number of characters exceeds the maximum length.',
-            'unique' => 'Someone has already taken that :attribute.',
+            'unique' => ':Attribute already taken.',
             'image' => 'Please upload an image file.',
             'dimensions' => "Resolution must be from {$minRes}x{$minRes} to {$maxRes}x{$maxRes}.",
             'current_password' => 'Incorrect password.',
@@ -177,9 +168,7 @@ class UserRequest extends FormRequest
     {
         return [
             'email' => 'email address',
-            'code' => 'verification code',
             'prefers_sms_verification' => 'verification method',
-            'prefers_sms' => 'verification method',
         ];
     }
 }

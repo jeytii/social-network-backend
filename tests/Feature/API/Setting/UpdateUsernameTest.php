@@ -1,8 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\{DB, Notification};
-use App\Notifications\SendVerificationCode;
+use Illuminate\Support\Facades\DB;
 
 beforeAll(function() {
     User::factory()->create();
@@ -10,161 +9,71 @@ beforeAll(function() {
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
+
     DB::table('users')->truncate();
+    DB::table('settings_updates')->truncate();
 });
 
-test('Should throw 422 errors in requesting to update the username', function() {
-    Notification::fake();
-
+test('Should throw errors for invalid inputs', function() {
     $this->response
-        ->postJson(route('settings.request-update.username'), [
-            'prefers_sms' => 'true',
-            'password' => 'password123'
+        ->putJson(route('settings.change.username'), [
+            'username' => '$ampleusername',
+            'password' => 'wrongpassword',
         ])
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
-                'username' => ['The username field is required.'],
-                'prefers_sms' => ['Must be true or false only.'],
+                'username' => ['Invalid username.'],
                 'password' => ['Incorrect password.'],
             ]
         ]);
 
-    Notification::assertNothingSent();
-    $this->assertDatabaseCount('username_updates', 0);
+    $this->assertDatabaseMissing('settings_updates', [
+        'user_id' => $this->user->id,
+        'type' => 'username',
+    ]);
+});
+
+test('Should throw an error if the length is out of range', function() {
+    $this->response
+        ->putJson(route('settings.change.username'), [
+            'username' => 'user',
+            'password' => 'P@ssword123',
+        ])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.username', ['The username must be between 6 and 30 characters long.']);
+
+    $this->assertDatabaseMissing('settings_updates', [
+        'user_id' => $this->user->id,
+        'type' => 'username',
+    ]);
 });
 
 test('Should throw an error for entering the current username', function() {
-    Notification::fake();
-
     $this->response
-        ->postJson(route('settings.request-update.username'), [
+        ->putJson(route('settings.change.username'), [
             'username' => $this->user->username,
+            'password' => 'P@ssword123',
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.username', ['Someone has already taken that username.']);
+        ->assertJsonPath('errors.username', ['Username already taken.']);
 
-    Notification::assertNothingSent();
-    $this->assertDatabaseCount('username_updates', 0);
-});
-
-test('Should successfully make a request to update username via email', function() {
-    Notification::fake();
-
-    $this->response
-        ->postJson(route('settings.request-update.username'), [
-            'username' => 'sampleuser_123',
-            'prefers_sms' => false,
-            'password' => 'P@ssword123'
-        ])
-        ->assertOk();
-
-    Notification::assertSentTo(
-        $this->user,
-        fn(SendVerificationCode $notification, $channels) => (
-            $notification->prefersSMS === false &&
-            $channels === ['mail']
-        )
-    );
-
-    $this->assertDatabaseCount('username_updates', 1);
-    $this->assertDatabaseHas('username_updates', [
-        'user_id' => $this->user->id
-    ]);
-});
-
-test('Should successfully make a request to update username via SMS', function() {
-    Notification::fake();
-
-    $this->response
-        ->postJson(route('settings.request-update.username'), [
-            'username' => 'sampleuser_12345',
-            'prefers_sms' => true,
-            'password' => 'P@ssword123'
-        ])
-        ->assertOk();
-
-    Notification::assertSentTo(
-        $this->user,
-        fn(SendVerificationCode $notification, $channels) => (
-            $notification->prefersSMS === true &&
-            $channels === ['nexmo']
-        )
-    );
-
-    $this->assertDatabaseCount('username_updates', 1);
-    $this->assertDatabaseHas('username_updates', [
-        'user_id' => $this->user->id
-    ]);
-});
-
-test('Should throw an error if the verification code doesn\'t exist', function() {
-    Notification::fake();
-
-    $this->response
-        ->putJson(route('settings.update.username'), [
-            'code' => 123456
-        ])
-        ->assertStatus(422)
-        ->assertJsonFragment([
-            'errors' => [
-                'code' => ['Invalid verification code.']
-            ]
-        ]);
-
-    Notification::assertNothingSent();
-});
-
-test('Should throw an error for attempting to update username with expired verification code', function() {
-    $update = DB::table('username_updates')
-                ->where('user_id', $this->user->id)
-                ->whereNull('completed_at');
-    
-    $update->update(['expiration' => now()->subMinutes(40)]);
-
-    Notification::fake();
-
-    $this->response
-        ->putJson(route('settings.update.username'), [
-            'code' => $update->first()->code
-        ])
-        ->assertStatus(422)
-        ->assertJsonFragment([
-            'errors' => [
-                'code' => ['Invalid verification code.']
-            ]
-        ]);
-
-    Notification::assertNothingSent();
-
-    $this->assertDatabaseMissing('users', [
-        'username' => $update->first()->data
+    $this->assertDatabaseMissing('settings_updates', [
+        'user_id' => $this->user->id,
+        'type' => 'username',
     ]);
 });
 
 test('Should successfully update the username', function() {
-    Notification::fake();
-
     $this->response
-        ->postJson(route('settings.request-update.username'), [
+        ->putJson(route('settings.change.username'), [
             'username' => 'user012345',
-            'prefers_sms' => false,
-            'password' => 'P@ssword123'
+            'password' => 'P@ssword123',
         ])
         ->assertOk();
 
-    Notification::assertSentTo($this->user, SendVerificationCode::class);
-
-    $code = DB::table('username_updates')
-                ->where('user_id', $this->user->id)
-                ->whereNull('completed_at')
-                ->first()->code;
-
-    $this->response
-        ->putJson(route('settings.update.username'), compact('code'))
-        ->assertOk();
-
-    $this->assertDatabaseHas('users', [
-        'username' => 'user012345',
+    $this->assertDatabaseHas('settings_updates', [
+        'user_id' => $this->user->id,
+        'type' => 'username',
     ]);
 });

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateUsernameUpdatesTable extends Migration
+class CreateSettingsUpdatesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,13 +13,9 @@ class CreateUsernameUpdatesTable extends Migration
      */
     public function up()
     {
-        Schema::create('username_updates', function (Blueprint $table) {
+        Schema::create('settings_updates', function (Blueprint $table) {
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
-            $table->integer('code');
-            $table->string('data');
-            $table->boolean('prefers_sms');
-            $table->timestamp('expiration');
-            $table->timestamp('completed_at')->nullable();
+            $table->enum('type', ['username', 'email', 'phone_number']);
             $table->timestamp('created_at')->useCurrent();
         });
     }
@@ -31,6 +27,6 @@ class CreateUsernameUpdatesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('username_updates');
+        Schema::dropIfExists('settings_updates');
     }
 }

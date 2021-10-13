@@ -62,17 +62,11 @@ Route::prefix('comments')->name('comments.')->group(function() {
 });
 
 Route::prefix('settings')->name('settings.')->group(function() {
-    Route::prefix('request-update')->name('request-update.')->group(function() {
-        Route::post('username', [SettingController::class, 'requestUsernameUpdate'])->name('username');
-        Route::post('email', [SettingController::class, 'requestEmailAddressUpdate'])->name('email');
-        Route::post('phone', [SettingController::class, 'requestPhoneNumberUpdate'])->name('phone-number');
-    });
-
-    Route::prefix('update')->name('update.')->group(function() {
-        Route::put('username', [SettingController::class, 'updateUsername'])->name('username');
-        Route::put('email', [SettingController::class, 'updateEmailAddress'])->name('email');
-        Route::put('phone', [SettingController::class, 'updatePhoneNumber'])->name('phone-number');
-        Route::put('password', [SettingController::class, 'updatePassword'])->name('password');
+    Route::prefix('update')->name('change.')->group(function() {
+        Route::put('username', [SettingController::class, 'changeUsername'])->name('username');
+        Route::put('email', [SettingController::class, 'changeEmailAddress'])->name('email');
+        Route::put('phone', [SettingController::class, 'changePhoneNumber'])->name('phone-number');
+        Route::put('password', [SettingController::class, 'changePassword'])->name('password');
     });
 });
 
