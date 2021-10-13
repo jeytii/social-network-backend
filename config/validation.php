@@ -13,6 +13,7 @@ return [
     ],
 
     'min_lengths' => [
+        'name' => 2,
         'username' => 6,
     ],
 

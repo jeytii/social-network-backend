@@ -10,6 +10,7 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * The policy mappings for the application.
      *
+     * TODO: Register policies
      * @var array
      */
     protected $policies = [

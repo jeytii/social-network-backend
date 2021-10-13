@@ -10,6 +10,7 @@ class EventServiceProvider extends ServiceProvider
     /**
      * The event listener mappings for the application.
      *
+     * TODO: Add the event and listener for registration action.
      * @var array
      */
     protected $listen = [
