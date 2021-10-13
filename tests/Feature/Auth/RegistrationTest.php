@@ -107,8 +107,8 @@ test('Should throw an error is user already exists', function() {
     
     $this->postJson(route('auth.register'), $user->only('email', 'username'))
         ->assertStatus(422)
-        ->assertJsonPath('errors.email', ['Someone has already taken that email address.'])
-        ->assertJsonPath('errors.username', ['Someone has already taken that username.']);
+        ->assertJsonPath('errors.email', ['Email address already taken.'])
+        ->assertJsonPath('errors.username', ['Username already taken.']);
 
     Event::assertNothingDispatched();
     Notification::assertNothingSent();

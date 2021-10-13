@@ -35,9 +35,9 @@ class CommentController extends Controller
      */
     public function index(Request $request)
     {
-        $data = $this->commentRepository->get($request);
+        $response = $this->commentRepository->get($request);
 
-        return response()->json($data, $data['status']);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -48,9 +48,9 @@ class CommentController extends Controller
      */
     public function store(PostAndCommentRequest $request)
     {
-        $data = $this->commentService->createComment($request);
+        $response = $this->commentService->createComment($request);
 
-        return response()->json($data, 201);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -65,9 +65,9 @@ class CommentController extends Controller
     {
         $this->authorize('update', $comment);
         
-        $data = $this->commentService->updateComment($request, $comment->id);
+        $response = $this->commentService->updateComment($request, $comment->id);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**
@@ -82,9 +82,9 @@ class CommentController extends Controller
     {
         $this->authorize('delete', $comment);
 
-        $data = $this->commentService->deleteComment($request->user(), $comment->id);
+        $response = $this->commentService->deleteComment($request->user(), $comment->id);
 
-        return response()->json($data);
+        return response()->json($response, $response['status']);
     }
 
     /**

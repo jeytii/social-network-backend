@@ -18,8 +18,8 @@ test('Should throw an error in if all inputs are blank', function() {
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
-                'current_password' => ['Please enter your current password.'],
-                'new_password' => ['Please enter your new password.'],
+                'current_password' => ['The current password is required.'],
+                'new_password' => ['The new password is required.'],
             ]
         ]);
 });
