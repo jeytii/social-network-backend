@@ -40,14 +40,13 @@ class AuthRequest extends FormRequest
                     [new ExistsInEmailOrUsername]
                 )
             ],
-            'email' => Rule::when(
-                in_array($routeName, ['auth.forgot-password', 'auth.reset-password']),
-                [
-                    'required',
-                    'email',
-                    Rule::exists('users'),
-                ]
-            ),
+            'email' => [
+                Rule::when(
+                    in_array($routeName, ['auth.forgot-password', 'auth.reset-password']),
+                    ['required', 'email']
+                ),
+                Rule::when($routeName === 'auth.forgot-password', [Rule::exists('users')]),
+            ],
             'password' => [
                 Rule::when(
                     in_array($routeName, ['auth.login', 'auth.reset-password']),
@@ -61,6 +60,10 @@ class AuthRequest extends FormRequest
                     ]
                 ),
             ],
+            'prefers_sms' => Rule::when(
+                $routeName === 'auth.forgot-password',
+                ['required', 'boolean']
+            ),
             'prefers_sms_verification' => Rule::when(
                 $routeName === 'auth.verify.resend',
                 ['required', 'boolean']
@@ -71,7 +74,7 @@ class AuthRequest extends FormRequest
             ),
             'token' => Rule::when(
                 $routeName === 'auth.reset-password',
-                ['required']
+                ['required', 'string']
             )
         ];
     }
@@ -103,6 +106,8 @@ class AuthRequest extends FormRequest
         return [
             'email' => 'email address',
             'code' => 'verification code',
+            'prefers_sms' => 'verification method',
+            'prefers_sms_verification' => 'verification method',
         ];
     }
 }

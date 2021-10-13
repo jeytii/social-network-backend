@@ -4,11 +4,13 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{DB, Hash, Password};
-use Illuminate\Auth\Events\{Login, Registered, PasswordReset};
-use App\Notifications\SendVerificationCode;
+use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Facades\{DB, Hash};
+use Illuminate\Auth\Events\{Login, Registered};
+use App\Notifications\{ResetPassword, SendVerificationCode};
+use Exception;
 
-class AuthService
+class AuthService extends RateLimitService
 {
     /**
      * Give access to a user.
@@ -178,22 +180,54 @@ class AuthService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Exception
      */
     public function sendPasswordResetLink(Request $request): array
     {
-        if (User::firstWhere('email', $request->email)->hasVerifiedEmail()) {
+        $emailAddress = $request->input('email');
+        $query = DB::table('password_resets')->where('email', $emailAddress)->whereNotNull('completed_at');
+        
+        if ($this->rateLimitReached($query, 7, 24, 'completed_at')) {
             return [
-                'status' => 409,
-                'message' => 'You have already verified your account.',
+                'status' => 429,
+                'message' => "You're doing too much. Try again later.",
             ];
         }
 
-        Password::sendResetLink($request->only('email'));
+        try {
+            $type = DB::transaction(function() use ($request, $emailAddress) {
+                $user = User::firstWhere('email', $emailAddress);
+                $token = Hash::make($emailAddress);
+                $prefersSMS = $request->boolean('prefers_sms');
+                $url = config('app.client_url') . "/reset-password/{$token}";
+                
+                DB::table('password_resets')->updateOrInsert(
+                    [
+                        'email' => $emailAddress,
+                        'completed_at' => null,
+                    ],
+                    [
+                        'token' => $token,
+                        'expiration' => now()->addMinutes(30),
+                    ]
+                );
+                
+                $user->notify(new ResetPassword($url, $prefersSMS));
 
-        return [
-            'status' => 200,
-            'message' => 'Please check for the link that has been sent to your email address.',
-        ];
+                return $prefersSMS ? 'phone number' : 'email address';
+            });
+    
+            return [
+                'status' => 200,
+                'message' => "Please check for the link that has been sent to your {$type}.",
+            ];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**
@@ -201,29 +235,50 @@ class AuthService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Exception
      */
     public function resetPassword(Request $request): array
     {
-        $user = User::where('email', $request->email)->firstWithBasicOnly();
+        $user = User::where('email', $request->input('email'));
+        $pr = DB::table('password_resets')
+                ->where('token', $request->input('token'))
+                ->where('expiration', '>', now())
+                ->whereNull('completed_at');
 
-        $status = Password::reset($request->validated(), function($user, $password) {
-            $user->forceFill([
-                'password' => Hash::make($password)
-            ]);
-
-            $user->save();
-
-            event(new PasswordReset($user));
-        });
-
-        if ($status === Password::INVALID_TOKEN) {
+        if ($pr->doesntExist()) {
             return [
                 'status' => 401,
-                'message' => 'Permission denied. You entered an invalid token.',
+                'message' => 'Invalid token.',
             ];
         }
 
-        return $this->authenticateUser($user, 'You have successfully reset your password.');
+        if (!Hash::check($request->input('email'), $request->input('token'))) {
+            return [
+                'status' => 401,
+                'message' => 'Invalid email address.',
+            ];
+        }
+
+        try {
+            DB::transaction(function() use ($request, $user, $pr) {
+                $user->update(['password' => Hash::make($request->input('password'))]);
+    
+                $pr->update(['completed_at' => now()]);
+        
+                event(new PasswordReset($user->first()));
+            });
+    
+            return $this->authenticateUser(
+                $user->firstWithBasicOnly(),
+                'You have successfully reset your password.'
+            );
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**

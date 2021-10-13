@@ -14,7 +14,7 @@ afterAll(function() {
 
 test('Should throw an error in if all inputs are blank', function() {
     $this->response
-        ->putJson(route('settings.update.password'))
+        ->putJson(route('settings.change.password'))
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
@@ -26,7 +26,7 @@ test('Should throw an error in if all inputs are blank', function() {
 
 test('Should throw an error for incorrect current password', function() {
     $this->response
-        ->putJson(route('settings.update.password'), [
+        ->putJson(route('settings.change.password'), [
             'current_password' => 'password123'
         ])
         ->assertStatus(422)
@@ -35,7 +35,7 @@ test('Should throw an error for incorrect current password', function() {
 
 test('Should throw an error for unconfirmed new password', function() {
     $this->response
-        ->putJson(route('settings.update.password'), [
+        ->putJson(route('settings.change.password'), [
             'new_password' => 'P@ssword12345',
             'new_password_confirmation' => 'wrongpassword',
         ])
@@ -45,7 +45,7 @@ test('Should throw an error for unconfirmed new password', function() {
 
 test('Should throw an error for entering the current password as the new one', function() {
     $this->response
-        ->putJson(route('settings.update.password'), [
+        ->putJson(route('settings.change.password'), [
             'new_password' => 'P@ssword123',
             'new_password_confirmation' => 'P@ssword123',
         ])
@@ -55,7 +55,7 @@ test('Should throw an error for entering the current password as the new one', f
 
 test('Should successfully update the password', function() {
     $this->response
-        ->putJson(route('settings.update.password'), [
+        ->putJson(route('settings.change.password'), [
             'current_password' => 'P@ssword123',
             'new_password' => 'P@ssword12345',
             'new_password_confirmation' => 'P@ssword12345',

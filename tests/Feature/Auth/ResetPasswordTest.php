@@ -4,6 +4,23 @@ use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\{DB, Event, Hash, Notification};
 
+beforeAll(function() {
+    $user = User::factory()->create();
+
+    $resets = collect(range(1, 7))->map(fn($reset) => [
+        'email' => $user->email,
+        'token' => Hash::make($user->email),
+        // 'expiration' => now()->subHours($reset * 1),
+        // 'completed_at' => now()->subHours($reset * 1),
+    ])->toArray();
+
+    DB::table('password_resets')->insert($resets);
+});
+
+beforeEach(function() {
+    $this->user = User::first();
+});
+
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
     
@@ -11,37 +28,64 @@ afterAll(function() {
     DB::table('password_resets')->truncate();
 });
 
-test('Should throw an error if all inputs are not set', function() {
+test('Should throw an error if token is missing', function() {
     Event::fake([PasswordReset::class]);
 
-    $this->putJson(route('auth.reset-password'))
-        ->assertStatus(422)
-        ->assertJsonValidationErrors(['email', 'password', 'token']);
-    
+    $this->putJson(route('auth.reset-password'), [
+        'email' => $this->user->email,
+        'password' => 'P@ssword12345',
+        'password_confirmation' => 'P@ssword12345',
+    ])->assertStatus(422);
+
     Event::assertNothingDispatched();
 });
 
-// test('Resetting the password successfully', function() {
-//     Notification::fake();
+test('Should throw an error if email address is missing', function() {
+    Event::fake([PasswordReset::class]);
 
-//     $user = User::factory()->create();
+    $this->putJson(route('auth.reset-password'), [
+        'token' => Hash::make($this->user->email),
+        'password' => 'P@ssword12345',
+        'password_confirmation' => 'P@ssword12345',
+    ])->assertStatus(422);
+
+    Event::assertNothingDispatched();
+});
+
+test('Should throw an error if token is invalid', function() {
+    Event::fake([PasswordReset::class]);
+
+    $this->putJson(route('auth.reset-password'), [
+        'email' => 'sample@email.com',
+        'token' => Hash::make($this->user->email),
+        'password' => 'P@ssword12345',
+        'password_confirmation' => 'P@ssword12345',
+    ])->assertUnauthorized();
+
+    Event::assertNothingDispatched();
+});
+
+test('Should successfully reset the password', function() {
+    Notification::fake();
     
-//     $this->postJson('/forgot-password', ['email' => $user->email])
-//         ->assertOk();
+    $this->postJson(route('auth.forgot-password'), [
+        'email' => $this->user->email,
+        'prefers_sms' => false,
+    ])->assertOk();
     
-//     Event::fake([ PasswordReset::class ]);
+    Event::fake([PasswordReset::class]);
 
-//     $passwordReset = DB::table('password_resets')->where('email', $user->email)->first();
+    $passwordReset = DB::table('password_resets')->where('email', $this->user->email)->first();
     
-//     $this->putJson('/reset-password', [
-//         'email' => $passwordReset->email,
-//         'password' => 'P@ssword12345',
-//         'password_confirmation' => 'P@ssword12345',
-//         'token' => $passwordReset->token,
-//     ])->assertOk();
+    $this->putJson(route('auth.reset-password'), [
+        'email' => $passwordReset->email,
+        'password' => 'P@ssword12345',
+        'password_confirmation' => 'P@ssword12345',
+        'token' => $passwordReset->token,
+    ])->assertOk();
 
-//     $user = DB::table('users')->where('email', $passwordReset->email)->first();
+    $user = DB::table('users')->where('email', $passwordReset->email)->first();
 
-//     $this->assertTrue(Hash::check('P@ssword12345', $user->password));
-//     Event::assertDispatched(fn(PasswordReset $event) => $event->user->id === $user->id);
-// });
+    $this->assertTrue(Hash::check('P@ssword12345', $user->password));
+    Event::assertDispatched(fn(PasswordReset $event) => $event->user->id === $user->id);
+});

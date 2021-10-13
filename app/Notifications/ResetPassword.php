@@ -3,9 +3,10 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\NexmoMessage;
 
 class ResetPassword extends Notification
 {
@@ -15,11 +16,13 @@ class ResetPassword extends Notification
      * Create a new notification instance.
      *
      * @param string  $url
+     * @param bool  $prefersSMS
      * @return void
      */
-    public function __construct(string $url)
+    public function __construct(string $url, bool $prefersSMS)
     {
         $this->url = $url;
+        $this->prefersSMS = $prefersSMS;
     }
 
     /**
@@ -30,7 +33,7 @@ class ResetPassword extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        return $this->prefersSMS ? ['nexmo'] : ['mail'];
     }
 
     /**
@@ -48,5 +51,20 @@ class ResetPassword extends Notification
                         'name' => $notifiable->username,
                         'url' => $this->url,
                     ]);
+    }
+
+    /**
+     * Get the Vonage / SMS representation of the notification.
+     *
+     * @param  mixed  $notifiable
+     * @return \Illuminate\Notifications\Messages\NexmoMessage
+     */
+    public function toNexmo($notifiable)
+    {
+        $appName = config('app.name');
+
+        return (new NexmoMessage)
+            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. The password reset link is {$this->url}.")
+            ->from($appName);
     }
 }
