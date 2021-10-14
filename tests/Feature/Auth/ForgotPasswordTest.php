@@ -35,10 +35,8 @@ test('Should throw an error if user has reached the rate limit', function() {
 
     Notification::fake();
 
-    $this->postJson(route('auth.forgot-password'), [
-        'email' => $user->email,
-        'prefers_sms' => false,
-    ])->assertStatus(429);
+    $this->postJson(route('auth.forgot-password'), $user->only('email'))
+        ->assertStatus(429);
     
     Notification::assertNothingSent();
 });
@@ -48,10 +46,8 @@ test('Should send password reset request successfully', function() {
 
     Notification::fake();
 
-    $this->postJson(route('auth.forgot-password'), [
-        'email' => $user->email,
-        'prefers_sms' => false,
-    ])->assertOk();
+    $this->postJson(route('auth.forgot-password'), $user->only('email'))
+        ->assertOk();
 
     Notification::assertSentTo(
         $user,
@@ -74,4 +70,13 @@ test('Should send password reset request successfully', function() {
         'email' => $user->email,
         'completed_at' => null,
     ]);
+});
+
+test('Should throw an error if account is not yet verified', function() {
+    $user = User::factory()->create([
+        'email_verified_at' => null
+    ]);
+
+    $this->postJson(route('auth.forgot-password'), $user->only('email'))
+        ->assertUnauthorized();
 });

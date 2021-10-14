@@ -201,7 +201,6 @@ class AuthService extends RateLimitService
     /**
      * Send a password-reset request link to the user.
      * 
-     * FIXME: Prevent unverified user from resetting password.
      * @param \Illuminate\Http\Request  $request
      * @return array
      * @throws \Exception
@@ -209,9 +208,17 @@ class AuthService extends RateLimitService
     public function sendPasswordResetLink(Request $request): array
     {
         $emailAddress = $request->input('email');
+        $user = User::firstWhere('email', $emailAddress);
         $query = DB::table('password_resets')->where('email', $emailAddress)->whereNotNull('completed_at');
         $maxAttempts = config('validation.attempts.change_password.max');
         $interval = config('validation.attempts.change_password.interval');
+
+        if (!$user->hasVerifiedEmail()) {
+            return [
+                'status' => 401,
+                'message' => 'Please verify your account first.',
+            ];
+        }
         
         if ($this->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
             return [
@@ -220,40 +227,28 @@ class AuthService extends RateLimitService
             ];
         }
 
-        try {
-            $type = DB::transaction(function() use ($request, $emailAddress) {
-                $user = User::firstWhere('email', $emailAddress);
-                $token = Hash::make($emailAddress);
-                $prefersSMS = $request->boolean('prefers_sms');
-                $url = config('app.client_url') . "/reset-password/{$token}";
-                
-                DB::table('password_resets')->updateOrInsert(
-                    [
-                        'email' => $emailAddress,
-                        'completed_at' => null,
-                    ],
-                    [
-                        'token' => $token,
-                        'expiration' => now()->addMinutes(config('validation.expiration.password_reset')),
-                    ]
-                );
-                
-                $user->notify(new ResetPassword($url, $prefersSMS));
+        $token = Hash::make($emailAddress);
+        $prefersSMS = $request->boolean('prefers_sms');
+        $url = config('app.client_url') . "/reset-password/{$token}";
+        $type = $prefersSMS ? 'phone number' : 'email address';
 
-                return $prefersSMS ? 'phone number' : 'email address';
-            });
-    
-            return [
-                'status' => 200,
-                'message' => "Please check for the link that has been sent to your {$type}.",
-            ];
-        }
-        catch (Exception $exception) {
-            return [
-                'status' => 500,
-                'message' => 'Something went wrong. Please check your connection then try again.',
-            ];
-        }
+        DB::table('password_resets')->updateOrInsert(
+            [
+                'email' => $emailAddress,
+                'completed_at' => null,
+            ],
+            [
+                'token' => $token,
+                'expiration' => now()->addMinutes(config('validation.expiration.password_reset')),
+            ]
+        );
+        
+        $user->notify(new ResetPassword($url, $prefersSMS));
+
+        return [
+            'status' => 200,
+            'message' => "Please check for the link that has been sent to your {$type}.",
+        ];
     }
 
     /**
@@ -282,6 +277,13 @@ class AuthService extends RateLimitService
             return [
                 'status' => 401,
                 'message' => 'Invalid email address.',
+            ];
+        }
+
+        if (!$user->first()->hasVerifiedEmail()) {
+            return [
+                'status' => 401,
+                'message' => 'Please verify your account first.',
             ];
         }
 
