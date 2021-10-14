@@ -68,7 +68,7 @@ test('Should throw validation errors if input values are incorrect in update pro
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
-                'name' => ['The name is required.'],
+                'name' => ['Name is required.'],
                 'bio' => ['The number of characters exceeds the maximum length.'],
             ]
         ]);

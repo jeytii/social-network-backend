@@ -90,7 +90,7 @@ test('Should throw an error if the character length is out of range', function()
         'username' => 'thebigbrownfoxjumpsoverthelazydog'
     ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.username', ['The username must be between 6 and 30 characters long.']);
+        ->assertJsonPath('errors.username', ['Username must be between 6 and 30 characters long.']);
 
     Event::assertNothingDispatched();
     Notification::assertNothingSent();

@@ -132,7 +132,6 @@ class UserRequest extends FormRequest
     /**
      * Get the error messages for the defined validation rules.
      *
-     * TODO: Capitalize some placeholders
      * @return array
      */
     public function messages()
@@ -141,8 +140,8 @@ class UserRequest extends FormRequest
         $maxRes = config('validation.image.max_res');
 
         return [
-            'required' => 'The :attribute is required.',
-            'numeric' => 'The :attribute must be numeric.',
+            'required' => ':Attribute is required.',
+            'numeric' => ':Attribute must be numeric.',
             'boolean' => 'Must be true or false only.',
             'regex' => 'Invalid :attribute.',
             'in' => 'Invalid :attribute.',
@@ -152,8 +151,8 @@ class UserRequest extends FormRequest
             'image' => 'Please upload an image file.',
             'dimensions' => "Resolution must be from {$minRes}x{$minRes} to {$maxRes}x{$maxRes}.",
             'current_password' => 'Incorrect password.',
-            'between' => 'The :attribute must be between :min and :max characters long.',
-            'between.numeric' => 'The :attribute must be between :min to :max only.',
+            'between' => ':Attribute must be between :min and :max characters long.',
+            'between.numeric' => ':Attribute must be between :min and :max.',
             'password.confirmed' => 'Password not confirmed.',
             'new_password.confirmed' => 'New password not confirmed.',
         ];

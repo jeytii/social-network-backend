@@ -83,11 +83,11 @@ class AuthRequest extends FormRequest
     public function messages()
     {
         return [
-            'required' => 'The :attribute is required.',
-            'min' => 'The :attribute must be at least :min characters long.',
+            'required' => ':Attribute is required.',
+            'min' => ':Attribute must be at least :min characters long.',
             'boolean' => 'Must be true or false only.',
             'email' => 'Invalid :attribute.',
-            'exists' => 'The :attribute does not exist.',
+            'exists' => ':Attribute does not exist.',
             'confirmed' => 'Password not confirmed.',
         ];
     }

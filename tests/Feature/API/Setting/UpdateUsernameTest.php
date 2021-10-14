@@ -41,7 +41,7 @@ test('Should throw an error if the length is out of range', function() {
             'password' => 'P@ssword123',
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.username', ['The username must be between 6 and 30 characters long.']);
+        ->assertJsonPath('errors.username', ['Username must be between 6 and 30 characters long.']);
 
     $this->assertDatabaseMissing('settings_updates', [
         'user_id' => $this->user->id,
