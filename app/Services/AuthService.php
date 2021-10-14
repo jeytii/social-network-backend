@@ -95,22 +95,32 @@ class AuthService extends RateLimitService
      * @return array
      */
     public function register(Request $request): array
-    {
-        $body = $request->only([
-            'name', 'email', 'username', 'phone_number',
-            'gender', 'birth_month', 'birth_day', 'birth_year'
-        ]);
-        $password = Hash::make($request->password);
-        $user = User::create(array_merge($body, compact('password')));
-
-        event(new Registered($user));
-        
-        $type = $this->sendVerificationCode($user, $request->prefers_sms);
-
-        return [
-            'status' => 201,
-            'message' => "Account successfully created. Please enter the verification code that was sent to your {$type}.",
-        ];
+    {   
+        try {
+            $type = DB::transaction(function() use ($request) {
+                $body = $request->only([
+                    'name', 'email', 'username', 'phone_number',
+                    'gender', 'birth_month', 'birth_day', 'birth_year'
+                ]);
+                $password = Hash::make($request->password);
+                $user = User::create(array_merge($body, compact('password')));
+    
+                event(new Registered($user));
+                
+                return $this->sendVerificationCode($user, $request->prefers_sms);
+            });
+    
+            return [
+                'status' => 201,
+                'message' => "Account successfully created. Please enter the verification code that was sent to your {$type}.",
+            ];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**
