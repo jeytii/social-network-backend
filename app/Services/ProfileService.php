@@ -55,16 +55,13 @@ class ProfileService
      */
     public function update(Request $request): array
     {
-        $body = $request->user()->no_birthdate ?
-                $request->validated() :
-                $request->only(['name', 'location', 'bio', 'image_url']);
-
-        if (empty($request->image_url) && !is_null($request->user()->image_url)) {
+        if (empty($request->input('image_url')) && !is_null($request->user()->image_url)) {
             $id = (string) Str::of($request->user()->image_url)->match('/social\/\w+/');
+
             $this->cloudinary->uploadApi()->destroy($id);
         }
 
-        $request->user()->update($body);
+        $request->user()->update($request->only(['name', 'location', 'bio', 'image_url']));
 
         return ['status' => 200];
     }

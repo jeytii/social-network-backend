@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\{Collection, Str};
 use Illuminate\Support\Facades\{DB, Notification};
 use App\Notifications\NotifyUponAction;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
 class CommentService
@@ -50,27 +49,26 @@ class CommentService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      * @throws \Exception
      */
     public function createComment(Request $request): array
     {
         try {
-            $post = Post::where('slug', $request->pid)->firstOrFail();
-            $comment = DB::transaction(function() use ($request, $post) {
-                $mentionedUsers = $this->getMentionedUsers($request->body);
-                $comment = $request->user()->comments()
-                                ->create([
-                                    'post_id' => $post->id,
-                                    'body' => $request->body,
-                                ])
+            $comment = DB::transaction(function() use ($request) {
+                $postId = $request->input('pid');
+                $body = $request->input('body');
+                $post = Post::firstWhere('slug', $postId);
+                $mentionedUsers = $this->getMentionedUsers($body);
+                $comment = $request->user()
+                                ->comments()
+                                ->create(['post_id' => $post->id, 'body' => $body])
                                 ->first();
     
                 if (!$mentionedUsers->contains('username', $post->user->username)) {
                     $post->user->notify($this->notifyOnComment(
                         $request->user(),
                         NotificationModel::COMMENTED_ON_POST,
-                        $request->pid
+                        $postId
                     ));
                 }
     
@@ -79,7 +77,7 @@ class CommentService
                     $this->notifyOnComment(
                         $request->user(),
                         NotificationModel::MENTIONED_ON_COMMENT,
-                        $request->pid
+                        $postId
                     )
                 );
 
@@ -89,12 +87,6 @@ class CommentService
             return [
                 'status' => 201,
                 'data' => $comment,
-            ];
-        }
-        catch (ModelNotFoundException $exception) {
-            return [
-                'status' => 404,
-                'message' => 'Post not found.',
             ];
         }
         catch (Exception $exception) {
@@ -109,6 +101,7 @@ class CommentService
      * Update a comment.
      * 
      * @param \Illuminate\Http\Request  $request
+     * @param string  $commentId
      * @return array
      */
     public function updateComment(Request $request, string $commentId): array
