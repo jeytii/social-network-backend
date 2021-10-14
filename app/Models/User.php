@@ -170,16 +170,6 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if the user has not set the birth date yet.
-     *
-     * @return bool
-     */
-    public function getNoBirthdateAttribute(): bool
-    {
-        return $this->isClean(['birth_month', 'birth_day', 'birth_year']);
-    }
-
-    /**
      * Check if the user is the authenticated one.
      *
      * @return bool
