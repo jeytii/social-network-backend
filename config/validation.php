@@ -21,4 +21,28 @@ return [
         'min_res' => 100,
         'max_res' => 800,
     ],
+
+    'expiration' => [
+        'verification' => 10,
+        'password_reset' => 30,
+    ],
+
+    'attempts' => [
+        'change_username' => [
+            'max' => 3,
+            'interval' => 72,
+        ],
+        'change_email_address' => [
+            'max' => 3,
+            'interval' => 72,
+        ],
+        'change_phone_number' => [
+            'max' => 3,
+            'interval' => 72,
+        ],
+        'change_password' => [
+            'max' => 3,
+            'interval' => 24,
+        ],
+    ]
 ];
