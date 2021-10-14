@@ -105,7 +105,7 @@ class AuthService extends RateLimitService
 
         event(new Registered($user));
         
-        $type = $this->sendVerificationCode($user, $request->prefers_sms_verification);
+        $type = $this->sendVerificationCode($user, $request->prefers_sms);
 
         return [
             'status' => 201,
@@ -167,7 +167,7 @@ class AuthService extends RateLimitService
             ];
         }
 
-        $type = $this->sendVerificationCode($user, $request->prefers_sms_verification);
+        $type = $this->sendVerificationCode($user, $request->prefers_sms);
 
         return [
             'status' => 200,

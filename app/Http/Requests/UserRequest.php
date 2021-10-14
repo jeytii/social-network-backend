@@ -109,8 +109,7 @@ class UserRequest extends FormRequest
                     ['current_password']
                 ),
             ],
-            // TODO: Rename into prefers_sms
-            'prefers_sms_verification' => Rule::when(
+            'prefers_sms' => Rule::when(
                 $routeName === 'auth.register',
                 ['required', 'boolean']
             ),
@@ -169,7 +168,7 @@ class UserRequest extends FormRequest
     {
         return [
             'email' => 'email address',
-            'prefers_sms_verification' => 'verification method',
+            'prefers_sms' => 'verification method',
         ];
     }
 }

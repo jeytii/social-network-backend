@@ -152,7 +152,7 @@ test('Should successfully register an account', function() use ($requiredFields)
         array_merge($body, [
             'password' => 'P@ssword123',
             'password_confirmation' => 'P@ssword123',
-            'prefers_sms_verification' => false,
+            'prefers_sms' => false,
         ])
     )->assertCreated();
 

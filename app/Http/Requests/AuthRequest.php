@@ -61,11 +61,7 @@ class AuthRequest extends FormRequest
                 ),
             ],
             'prefers_sms' => Rule::when(
-                $routeName === 'auth.forgot-password',
-                ['required', 'boolean']
-            ),
-            'prefers_sms_verification' => Rule::when(
-                $routeName === 'auth.verify.resend',
+                in_array($routeName, ['auth.forgot-password', 'auth.verify.resend']),
                 ['required', 'boolean']
             ),
             'code' => Rule::when(
@@ -107,7 +103,6 @@ class AuthRequest extends FormRequest
             'email' => 'email address',
             'code' => 'verification code',
             'prefers_sms' => 'verification method',
-            'prefers_sms_verification' => 'verification method',
         ];
     }
 }
