@@ -113,10 +113,6 @@ class UserRequest extends FormRequest
                 $routeName === 'auth.register',
                 ['required', 'same:password']
             ),
-            'prefers_sms' => Rule::when(
-                $routeName === 'auth.register',
-                ['required', 'boolean']
-            ),
             'current_password' => Rule::when(
                 $routeName === 'settings.change.password',
                 ['required', 'current_password']
@@ -145,7 +141,6 @@ class UserRequest extends FormRequest
         return [
             'required' => ':Attribute is required.',
             'numeric' => ':Attribute must be numeric.',
-            'boolean' => 'Must be true or false only.',
             'regex' => 'Invalid :attribute.',
             'in' => 'Invalid :attribute.',
             'email' => 'Invalid :attribute.',
@@ -171,7 +166,6 @@ class UserRequest extends FormRequest
     {
         return [
             'email' => 'email address',
-            'prefers_sms' => 'verification method',
         ];
     }
 }

@@ -28,22 +28,6 @@ afterAll(function() {
     DB::table('users')->truncate();
 });
 
-test('Should throw errors for non-existing username and invalid prefers_sms type', function() {
-    Notification::fake();
-
-    $this->postJson(route('auth.verify.resend'), [
-        'username' => 'invaliduser',
-        'prefers_sms' => 'true',
-    ])
-        ->assertStatus(422)
-        ->assertJsonFragment([
-            'username' => ['User does not exist.'],
-            'prefers_sms' => ['Must be true or false only.'],
-        ]);
-
-    Notification::assertNothingSent();
-});
-
 test('Should throw an error if the user is already verified.', function() {
     Notification::fake();
 
@@ -88,10 +72,7 @@ test('Can enter username and resend email notification', function() {
         'email_verified_at' => null
     ]);
 
-    $this->postJson(route('auth.verify.resend'), [
-        'username' => $user->username,
-        'prefers_sms' => false,
-    ])
+    $this->postJson(route('auth.verify.resend'), $user->only('username'))
         ->assertOk()
         ->assertExactJson([
             'status' => 200,

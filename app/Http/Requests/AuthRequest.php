@@ -61,10 +61,6 @@ class AuthRequest extends FormRequest
                 $routeName === 'auth.reset-password',
                 ['required', 'same:password']
             ),
-            'prefers_sms' => Rule::when(
-                in_array($routeName, ['auth.forgot-password', 'auth.verify.resend']),
-                ['required', 'boolean']
-            ),
             'code' => Rule::when(
                 $routeName === 'auth.verify',
                 ['required', Rule::exists('verifications')]
@@ -105,7 +101,6 @@ class AuthRequest extends FormRequest
         return [
             'email' => 'email address',
             'code' => 'verification code',
-            'prefers_sms' => 'verification method',
         ];
     }
 }

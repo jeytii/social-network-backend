@@ -68,10 +68,8 @@ test('Should throw an error if token is invalid', function() {
 test('Should successfully reset the password', function() {
     Notification::fake();
     
-    $this->postJson(route('auth.forgot-password'), [
-        'email' => $this->user->email,
-        'prefers_sms' => false,
-    ])->assertOk();
+    $this->postJson(route('auth.forgot-password'), $this->user->only('email'))
+        ->assertOk();
     
     Event::fake([PasswordReset::class]);
 
