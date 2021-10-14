@@ -99,7 +99,7 @@ class UserRequest extends FormRequest
                     'settings.change.email',
                     'settings.change.phone-number',
                 ])),
-                Rule::when($routeName === 'auth.register', ['confirmed', $passwordRule]),
+                Rule::when($routeName === 'auth.register', [$passwordRule]),
                 Rule::when(
                     in_array($routeName, [
                         'settings.change.username',
@@ -109,6 +109,10 @@ class UserRequest extends FormRequest
                     ['current_password']
                 ),
             ],
+            'password_confirmation' => Rule::when(
+                $routeName === 'auth.register',
+                ['required', 'same:password']
+            ),
             'prefers_sms' => Rule::when(
                 $routeName === 'auth.register',
                 ['required', 'boolean']
@@ -119,13 +123,12 @@ class UserRequest extends FormRequest
             ),
             'new_password' => Rule::when(
                 $routeName === 'settings.change.password',
-                [
-                    'required',
-                    'confirmed', // TODO: Remove password confirmation
-                    $passwordRule,
-                    new NotCurrentPassword,
-                ]
+                ['required', $passwordRule, new NotCurrentPassword]
             ),
+            'new_password_confirmation' => Rule::when(
+                $routeName === 'settings.change.password',
+                ['required', 'same:new_password']
+            )
         ];
     }
 
@@ -153,8 +156,9 @@ class UserRequest extends FormRequest
             'current_password' => 'Incorrect password.',
             'between' => ':Attribute must be between :min and :max characters long.',
             'between.numeric' => ':Attribute must be between :min and :max.',
-            'password.confirmed' => 'Password not confirmed.',
-            'new_password.confirmed' => 'New password not confirmed.',
+            'same' => 'Does not match with the password above.',
+            'password_confirmation.required' => 'Confirmation is required.',
+            'new_password_confirmation.required' => 'Confirmation is required.',
         ];
     }
 

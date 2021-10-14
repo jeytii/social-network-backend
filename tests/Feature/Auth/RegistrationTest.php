@@ -5,29 +5,9 @@ use App\Notifications\SendVerificationCode;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\{DB, Event, Notification};
 
-/**
- * The required form fields.
- * 
- * @var array
- */
-$requiredFields = [
-    'name', 'email', 'username', 'phone_number',
-    'gender', 'birth_month', 'birth_day', 'birth_year',
-];
-
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
     DB::table('users')->truncate();
-});
-
-test('Should throw an error if all inputs are not set', function() use ($requiredFields) {
-    Event::fake([Registered::class]);
-
-    $this->postJson(route('auth.register'))
-        ->assertStatus(422)
-        ->assertJsonValidationErrors($requiredFields);
-
-    Event::assertNothingDispatched();
 });
 
 test('Should throw an error if some inputs are not set', function() {
@@ -57,7 +37,7 @@ test('Should throw an error if passwords don\'t match', function() {
         'password_confirmation' => 'asdasdasd'
     ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.password', ['Password not confirmed.']);
+        ->assertJsonPath('errors.password_confirmation', ['Does not match with the password above.']);
     
     Event::assertNothingDispatched();
     Notification::assertNothingSent();
@@ -140,9 +120,12 @@ test('Should throw an error if phone number is invalid', function() {
     Notification::assertNothingSent();
 });
 
-test('Should successfully register an account', function() use ($requiredFields) {
+test('Should successfully register an account', function() {
     $user = User::factory()->make();
-    $body = $user->only($requiredFields);
+    $body = $user->only([
+        'name', 'email', 'username', 'phone_number',
+        'gender', 'birth_month', 'birth_day', 'birth_year',
+    ]);
 
     Event::fake([Registered::class]);
     Notification::fake();

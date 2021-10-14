@@ -12,18 +12,6 @@ afterAll(function() {
     DB::table('users')->truncate();
 });
 
-test('Should throw an error in if all inputs are blank', function() {
-    $this->response
-        ->putJson(route('settings.change.password'))
-        ->assertStatus(422)
-        ->assertJsonFragment([
-            'errors' => [
-                'current_password' => ['Current password is required.'],
-                'new_password' => ['New password is required.'],
-            ]
-        ]);
-});
-
 test('Should throw an error for incorrect current password', function() {
     $this->response
         ->putJson(route('settings.change.password'), [
@@ -33,14 +21,14 @@ test('Should throw an error for incorrect current password', function() {
         ->assertJsonPath('errors.current_password', ['Incorrect password.']);
 });
 
-test('Should throw an error for unconfirmed new password', function() {
+test('Should throw an error for confirmation does not match with new password', function() {
     $this->response
         ->putJson(route('settings.change.password'), [
             'new_password' => 'P@ssword12345',
             'new_password_confirmation' => 'wrongpassword',
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.new_password', ['New password not confirmed.']);
+        ->assertJsonPath('errors.new_password_confirmation', ['Does not match with the password above.']);
 });
 
 test('Should throw an error for entering the current password as the new one', function() {

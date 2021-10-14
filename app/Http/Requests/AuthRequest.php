@@ -54,12 +54,13 @@ class AuthRequest extends FormRequest
                 ),
                 Rule::when(
                     $routeName === 'auth.reset-password',
-                    [
-                        'confirmed',
-                        Password::min(8)->mixedCase()->numbers()->symbols(),
-                    ]
+                    [Password::min(8)->mixedCase()->numbers()->symbols()]
                 ),
             ],
+            'password_confirmation' => Rule::when(
+                $routeName === 'auth.reset-password',
+                ['required', 'same:password']
+            ),
             'prefers_sms' => Rule::when(
                 in_array($routeName, ['auth.forgot-password', 'auth.verify.resend']),
                 ['required', 'boolean']
@@ -88,7 +89,8 @@ class AuthRequest extends FormRequest
             'boolean' => 'Must be true or false only.',
             'email' => 'Invalid :attribute.',
             'exists' => ':Attribute does not exist.',
-            'confirmed' => 'Password not confirmed.',
+            'same' => 'Does not match with the password above.',
+            'password_confirmation.required' => 'Confirmation is required.',
         ];
     }
 
