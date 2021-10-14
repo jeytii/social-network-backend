@@ -19,7 +19,6 @@ test('Should throw an error if the entered email address doesn\'t exist', functi
         ->assertJsonValidationErrors(['email']);
 
     Notification::assertNothingSent();
-    $this->assertDatabaseCount('password_resets', 0);
 });
 
 test('Should throw an error if user has reached the rate limit', function() {
