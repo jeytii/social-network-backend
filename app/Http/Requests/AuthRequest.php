@@ -32,13 +32,13 @@ class AuthRequest extends FormRequest
         return [
             'username' => [
                 Rule::when(
-                    in_array($routeName, ['auth.login', 'auth.verify.resend']),
+                    in_array($routeName, ['auth.login', 'auth.verify', 'auth.verify.resend']),
                     ['required']
                 ),
                 Rule::when(
                     $routeName === 'auth.verify.resend',
                     [new ExistsInEmailOrUsername]
-                )
+                ),
             ],
             'email' => [
                 Rule::when(
@@ -91,6 +91,7 @@ class AuthRequest extends FormRequest
             'exists' => ':Attribute does not exist.',
             'same' => 'Does not match with the password above.',
             'password_confirmation.required' => 'Confirmation is required.',
+            'code.exists' => 'Invalid :attribute.',
         ];
     }
 

@@ -41,7 +41,7 @@ class PostService
     {
         try {
             $data = DB::transaction(function() use ($request) {
-                $mentionedUsers = $this->getMentionedUsers($request->body);
+                $mentionedUsers = $this->getMentionedUsers($request->input('body'));
                 $post = $request->user()->posts()->create($request->only('body'))->first();
     
                 Notification::send(
@@ -49,7 +49,7 @@ class PostService
                     new NotifyUponAction(
                         $request->user(),
                         NotificationModel::MENTIONED_ON_POST,
-                        "/posts/{$request->pid}"
+                        "/posts/{$request->input('pid')}"
                     )
                 );
 

@@ -8,6 +8,7 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\{DB, Hash};
 use Illuminate\Auth\Events\{Login, Registered};
 use App\Notifications\{ResetPassword, SendVerificationCode};
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
 class AuthService extends RateLimitService
@@ -47,7 +48,7 @@ class AuthService extends RateLimitService
             [
                 'code' => $code,
                 'prefers_sms' => $prefersSMS,
-                'expiration' => now()->addMinutes(10),
+                'expiration' => now()->addMinutes(config('validation.expiration.verification')),
             ]
         );
 
@@ -64,11 +65,11 @@ class AuthService extends RateLimitService
      */
     public function login(Request $request): array
     {
-        $user = User::whereUsername($request->username);
+        $user = User::whereUsername($request->input('username'));
 
         if (
             !$user->exists() ||
-            !Hash::check($request->password, $user->first()->password)
+            !Hash::check($request->input('password'), $user->first()->password)
         ) {
             return [
                 'status' => 404,
@@ -80,6 +81,10 @@ class AuthService extends RateLimitService
             return [
                 'status' => 401,
                 'message' => 'Your account is not yet verified.',
+                'data' => [
+                    'url' => route('auth.verify.resend'),
+                    'username' => $request->input('username'),
+                ],
             ];
         }
 
@@ -102,12 +107,12 @@ class AuthService extends RateLimitService
                     'name', 'email', 'username', 'phone_number',
                     'gender', 'birth_month', 'birth_day', 'birth_year'
                 ]);
-                $password = Hash::make($request->password);
+                $password = Hash::make($request->input('password'));
                 $user = User::create(array_merge($body, compact('password')));
     
                 event(new Registered($user));
                 
-                return $this->sendVerificationCode($user, $request->prefers_sms);
+                return $this->sendVerificationCode($user, $request->boolean('prefers_sms'));
             });
     
             return [
@@ -128,36 +133,44 @@ class AuthService extends RateLimitService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
     public function verify(Request $request): array
     {
-        $verification = DB::table('verifications')
-                            ->where('user_id', auth()->id())
-                            ->where('code', $request->code)
-                            ->where('expiration', '>', now());
+        try {
+            $user = User::whereUsername($request->input('username'))->firstOrFail();
+            $verification = DB::table('verifications')
+                                ->where('user_id', $user->id)
+                                ->where('code', $request->input('code'))
+                                ->where('expiration', '>', now());
 
-        if ($verification->doesntExist()) {
+            if ($verification->doesntExist()) {
+                return [
+                    'status' => 401,
+                    'message' => 'Invalid verification code.',
+                ];
+            }
+
+            if ($user->hasVerifiedEmail()) {
+                return [
+                    'status' => 409,
+                    'message' => 'You have already verified your account.',
+                ];
+            }
+            
+            $user->markEmailAsVerified();
+
             return [
-                'status' => 410,
-                'message' => 'Verification code already expired.',
+                'status' => 200,
+                'message' => 'You have successfully verified your account.',
             ];
         }
-
-        $user = User::find($verification->first()->user_id);
-
-        if ($user->hasVerifiedEmail()) {
+        catch (ModelNotFoundException $exception) {
             return [
-                'status' => 409,
-                'message' => 'You have already verified your account.',
+                'status' => 404,
+                'message' => $exception->getMessage(),
             ];
         }
-        
-        $user->markEmailAsVerified();
-
-        return [
-            'status' => 200,
-            'message' => 'You have successfully verified your account.',
-        ];
     }
 
     /**
@@ -168,7 +181,7 @@ class AuthService extends RateLimitService
      */
     public function resendVerificationCode(Request $request): array
     {
-        $user = User::whereUsername($request->username)->first();
+        $user = User::whereUsername($request->input('username'))->first();
         
         if ($user->hasVerifiedEmail()) {
             return [
@@ -177,7 +190,7 @@ class AuthService extends RateLimitService
             ];
         }
 
-        $type = $this->sendVerificationCode($user, $request->prefers_sms);
+        $type = $this->sendVerificationCode($user, $request->boolean('prefers_sms'));
 
         return [
             'status' => 200,
@@ -188,6 +201,7 @@ class AuthService extends RateLimitService
     /**
      * Send a password-reset request link to the user.
      * 
+     * FIXME: Prevent unverified user from resetting password.
      * @param \Illuminate\Http\Request  $request
      * @return array
      * @throws \Exception
@@ -196,8 +210,10 @@ class AuthService extends RateLimitService
     {
         $emailAddress = $request->input('email');
         $query = DB::table('password_resets')->where('email', $emailAddress)->whereNotNull('completed_at');
+        $maxAttempts = config('validation.attempts.change_password.max');
+        $interval = config('validation.attempts.change_password.interval');
         
-        if ($this->rateLimitReached($query, 7, 24, 'completed_at')) {
+        if ($this->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
             return [
                 'status' => 429,
                 'message' => "You're doing too much. Try again later.",
@@ -218,7 +234,7 @@ class AuthService extends RateLimitService
                     ],
                     [
                         'token' => $token,
-                        'expiration' => now()->addMinutes(30),
+                        'expiration' => now()->addMinutes(config('validation.expiration.password_reset')),
                     ]
                 );
                 

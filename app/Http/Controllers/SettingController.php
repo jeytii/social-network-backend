@@ -67,7 +67,7 @@ class SettingController extends Controller
      */
     public function changePassword(UserRequest $request)
     {
-        $response = $this->settings->changePassword($request->new_password);
+        $response = $this->settings->changePassword($request);
 
         return response()->json($response, $response['status']);
     }
