@@ -15,6 +15,7 @@ return [
     'min_lengths' => [
         'name' => 2,
         'username' => 6,
+        'password' => 8,
     ],
 
     'image' => [
