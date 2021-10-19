@@ -16,7 +16,7 @@ test('Should throw an error if the entered email address doesn\'t exist', functi
 
     $this->postJson(route('auth.forgot-password'), ['email' => 'dummy@email.com'])
         ->assertStatus(422)
-        ->assertJsonValidationErrors(['email']);
+        ->assertJsonPath('errors.email', ['Email address does not exist.']);
 
     Notification::assertNothingSent();
 });
@@ -78,5 +78,6 @@ test('Should throw an error if account is not yet verified', function() {
     ]);
 
     $this->postJson(route('auth.forgot-password'), $user->only('email'))
-        ->assertUnauthorized();
+        ->assertStatus(422)
+        ->assertJsonPath('errors.email', ['Email address not yet verified.']);
 });

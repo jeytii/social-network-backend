@@ -212,13 +212,6 @@ class AuthService
         $query = DB::table('password_resets')->where('email', $emailAddress)->whereNotNull('completed_at');
         $maxAttempts = config('validation.attempts.change_password.max');
         $interval = config('validation.attempts.change_password.interval');
-
-        if (!$user->hasVerifiedEmail()) {
-            return [
-                'status' => 401,
-                'message' => 'Please verify your account first.',
-            ];
-        }
         
         if ($user->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
             return [
@@ -270,20 +263,6 @@ class AuthService
             return [
                 'status' => 401,
                 'message' => 'Invalid token.',
-            ];
-        }
-
-        if (!Hash::check($request->input('email'), $request->input('token'))) {
-            return [
-                'status' => 401,
-                'message' => 'Invalid email address.',
-            ];
-        }
-
-        if (!$user->hasVerifiedEmail()) {
-            return [
-                'status' => 401,
-                'message' => 'Please verify your account first.',
             ];
         }
 

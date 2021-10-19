@@ -56,7 +56,7 @@ test('Should throw an error if token is invalid', function() {
     Event::fake([PasswordReset::class]);
 
     $this->putJson(route('auth.reset-password'), [
-        'email' => 'sample@email.com',
+        'email' => $this->user->email,
         'token' => Hash::make($this->user->email),
         'password' => 'P@ssword12345',
         'password_confirmation' => 'P@ssword12345',

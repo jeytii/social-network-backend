@@ -6,7 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
-use App\Rules\ExistsInEmailOrUsername;
+use App\Rules\{
+    ExistsInEmailOrUsername,
+    PasswordResetEmailAddress,
+    VerifiedEmailAddress
+};
 
 class AuthRequest extends FormRequest
 {
@@ -46,6 +50,14 @@ class AuthRequest extends FormRequest
                     ['required', 'email']
                 ),
                 Rule::when($routeName === 'auth.forgot-password', [Rule::exists('users')]),
+                Rule::when(
+                    $routeName === 'auth.reset-password',
+                    [new PasswordResetEmailAddress($this->input('token'))]
+                ),
+                Rule::when(
+                    in_array($routeName, ['auth.forgot-password', 'auth.reset-password']),
+                    [new VerifiedEmailAddress]
+                ),
             ],
             'password' => [
                 Rule::when(
