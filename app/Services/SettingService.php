@@ -7,7 +7,7 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\{DB, Hash};
 use Exception;
 
-class SettingService extends RateLimitService
+class SettingService
 {
     /**
      * Update a column.
@@ -35,7 +35,7 @@ class SettingService extends RateLimitService
             $interval = config('validation.attempts.change_phone_number.interval');
         }
 
-        if ($this->rateLimitReached($query, $maxAttempts, $interval)) {
+        if ($request->user()->rateLimitReached($query, $maxAttempts, $interval)) {
             return [
                 'status' => 429,
                 'message' => "You're doing too much. Try again later.",
@@ -77,7 +77,7 @@ class SettingService extends RateLimitService
                     ->where('email', $request->user()->email)
                     ->whereNotNull('completed_at');
         
-        if ($this->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
+        if ($request->user()->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
             return [
                 'status' => 429,
                 'message' => "You're doing too much. Try again later.",

@@ -11,7 +11,7 @@ use App\Notifications\{ResetPassword, SendVerificationCode};
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
-class AuthService extends RateLimitService
+class AuthService
 {
     /**
      * Give access to a user.
@@ -220,7 +220,7 @@ class AuthService extends RateLimitService
             ];
         }
         
-        if ($this->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
+        if ($user->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
             return [
                 'status' => 429,
                 'message' => "You're doing too much. Try again later.",
@@ -260,7 +260,7 @@ class AuthService extends RateLimitService
      */
     public function resetPassword(Request $request): array
     {
-        $user = User::where('email', $request->input('email'));
+        $user = User::firstWhere('email', $request->input('email'));
         $pr = DB::table('password_resets')
                 ->where('token', $request->input('token'))
                 ->where('expiration', '>', now())
@@ -280,7 +280,7 @@ class AuthService extends RateLimitService
             ];
         }
 
-        if (!$user->first()->hasVerifiedEmail()) {
+        if (!$user->hasVerifiedEmail()) {
             return [
                 'status' => 401,
                 'message' => 'Please verify your account first.',
@@ -293,7 +293,7 @@ class AuthService extends RateLimitService
     
                 $pr->update(['completed_at' => now()]);
         
-                event(new PasswordReset($user->first()));
+                event(new PasswordReset($user));
             });
     
             return $this->authenticateUser(

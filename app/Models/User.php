@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Str;
 use App\Models\Notification;
+use Illuminate\Support\Str;
+use App\Traits\HasRateLimit;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\{
     HasMany,
     BelongsToMany,
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\{
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, HasRateLimit;
 
     /**
      * The "type" of the primary key ID.
