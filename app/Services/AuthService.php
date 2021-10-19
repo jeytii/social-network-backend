@@ -220,28 +220,39 @@ class AuthService
             ];
         }
 
-        $token = Hash::make($emailAddress);
-        $prefersSMS = $request->boolean('prefers_sms');
-        $url = config('app.client_url') . "/reset-password/{$token}";
-        $type = $prefersSMS ? 'phone number' : 'email address';
-
-        DB::table('password_resets')->updateOrInsert(
-            [
-                'email' => $emailAddress,
-                'completed_at' => null,
-            ],
-            [
-                'token' => $token,
-                'expiration' => now()->addMinutes(config('validation.expiration.password_reset')),
-            ]
-        );
+        try {
+            $type = DB::transaction(function() use ($request, $user, $emailAddress) {
+                $token = Hash::make($emailAddress);
+                $prefersSMS = $request->boolean('prefers_sms');
+                $url = config('app.client_url') . "/reset-password/{$token}";
         
-        $user->notify(new ResetPassword($url, $prefersSMS));
-
-        return [
-            'status' => 200,
-            'message' => "Please check for the link that has been sent to your {$type}.",
-        ];
+                DB::table('password_resets')->updateOrInsert(
+                    [
+                        'email' => $emailAddress,
+                        'completed_at' => null,
+                    ],
+                    [
+                        'token' => $token,
+                        'expiration' => now()->addMinutes(config('validation.expiration.password_reset')),
+                    ]
+                );
+                
+                $user->notify(new ResetPassword($url, $prefersSMS));
+    
+                return $prefersSMS ? 'phone number' : 'email address';
+            });
+    
+            return [
+                'status' => 200,
+                'message' => "Please check for the link that has been sent to your {$type}.",
+            ];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
+            ];
+        }
     }
 
     /**
