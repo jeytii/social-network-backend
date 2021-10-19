@@ -17,7 +17,6 @@ class CreateVerificationsTable extends Migration
             $table->id();
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
             $table->integer('code');
-            $table->boolean('prefers_sms');
             $table->timestamp('expiration');
             $table->timestamp('created_at')->useCurrent();
         });

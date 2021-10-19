@@ -5,7 +5,7 @@ You just recently registered a {{ config('app.name') }} account and chose to ver
 
 <h1>Your verification code is: {{ $code }}</h1>
 
-The verification code will expire <b>{{ config('validation.expiration.verification') }} minutes</b> after you received this email, so you have to submit the code as soon as possible. Otherwise, log in then click "request a new verification code".
+You only have <b>{{ config('validation.expiration.verification') }} minutes</b> to verify your account. Otherwise, request for another verification code.
 
 Regards,<br>
 {{ config('app.name') }}

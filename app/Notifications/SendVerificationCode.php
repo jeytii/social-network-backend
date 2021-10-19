@@ -61,9 +61,10 @@ class SendVerificationCode extends Notification
     public function toNexmo($notifiable)
     {
         $appName = config('app.name');
+        $minutesLeft = config('validation.expiration.verification');
 
         return (new NexmoMessage)
-            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. The verification code is {$this->code}.")
+            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. Your verification code is {$this->code}. You only have {$minutesLeft} minutes to verify your account. Otherwise, request for another verification code.")
             ->from($appName);
     }
 }

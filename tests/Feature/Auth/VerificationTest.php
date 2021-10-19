@@ -12,7 +12,6 @@ beforeAll(function() {
     DB::table('verifications')->insert([
         'user_id' => $user->id,
         'code' => random_int(100000, 999999),
-        'prefers_sms' => false,
         'expiration' => now()->addMinutes(config('validation.expiration.verification')),
     ]);
 });

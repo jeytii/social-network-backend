@@ -62,9 +62,10 @@ class ResetPassword extends Notification
     public function toNexmo($notifiable)
     {
         $appName = config('app.name');
+        $minutesLeft = config('validation.expiration.password_reset');
 
         return (new NexmoMessage)
-            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. The password reset link is {$this->url}.")
+            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. Your password-reset link is {$this->url}. You only have {$minutesLeft} minutes to reset your password. Otherwise, do another request.")
             ->from($appName);
     }
 }

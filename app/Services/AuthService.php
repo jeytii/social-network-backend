@@ -47,7 +47,6 @@ class AuthService
             ['user_id' => $user->id],
             [
                 'code' => $code,
-                'prefers_sms' => $prefersSMS,
                 'expiration' => now()->addMinutes(config('validation.expiration.verification')),
             ]
         );
