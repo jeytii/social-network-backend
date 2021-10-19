@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use App\Rules\NotCurrentPassword;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,7 +26,6 @@ class UserRequest extends FormRequest
      */
     public function rules()
     {
-        $routeName = Route::currentRouteName();
         $passwordRule = Password::min(8)->mixedCase()->numbers()->symbols();
         $latestYear = now()->subYear(1)->year;
         $centuryAgo = $latestYear - 100;
@@ -38,15 +36,15 @@ class UserRequest extends FormRequest
 
         return [
             'name' => Rule::when(
-                in_array($routeName, ['auth.register', 'profile.update']),
+                $this->routeIs(['auth.register', 'profile.update']),
                 ['required', 'string', 'min:' . config('validation.min_lengths.name')]
             ),
             'email' => Rule::when(
-                in_array($routeName, ['auth.register', 'settings.change.email']),
+                $this->routeIs(['auth.register', 'settings.change.email']),
                 ['required', 'email', Rule::unique('users')]
             ),
             'username' => Rule::when(
-                in_array($routeName, ['auth.register', 'settings.change.username']),
+                $this->routeIs(['auth.register', 'settings.change.username']),
                 [
                     'required',
                     'string',
@@ -56,7 +54,7 @@ class UserRequest extends FormRequest
                 ]
             ),
             'phone_number' => Rule::when(
-                in_array($routeName, ['auth.register', 'settings.change.phone-number']),
+                $this->routeIs(['auth.register', 'settings.change.phone-number']),
                 [
                     'required',
                     'regex:' . config('validation.formats.phone_number'),
@@ -64,44 +62,53 @@ class UserRequest extends FormRequest
                 ]
             ),
             'gender' => Rule::when(
-                $routeName === 'auth.register',
+                $this->routeIs('auth.register'),
                 ['required', Rule::in(['Male', 'Female'])]
             ),
-            'birth_month' => Rule::when($routeName === 'auth.register', ['required', Rule::in($months)]),
+            'birth_month' => Rule::when(
+                $this->routeIs('auth.register'),
+                ['required', Rule::in($months)]
+            ),
             'birth_day' => Rule::when(
-                $routeName === 'auth.register',
+                $this->routeIs('auth.register'),
                 ['required', 'numeric', 'between:1,31']
             ),
-            'birth_year' => Rule::when($routeName === 'auth.register', [
-                'required',
-                'numeric',
-                "between:{$centuryAgo},{$latestYear}",
-            ]),
-            'location' => Rule::when($routeName === 'profile.update', ['nullable', 'string']),
-            'image_url' => Rule::when($routeName === 'profile.update', ['nullable', 'string']),
+            'birth_year' => Rule::when(
+                $this->routeIs('auth.register'),
+                [
+                    'required',
+                    'numeric',
+                    "between:{$centuryAgo},{$latestYear}",
+                ]
+            ),
+            'location' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
+            'image_url' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
             'bio' => Rule::when(
-                $routeName === 'profile.update',
+                $this->routeIs('profile.update'),
                 ['nullable', 'string', 'max:' . config('validation.max_lengths.bio')]
             ),
-            'image' => Rule::when($routeName === 'profile.upload.profile-photo', [
-                'required',
-                'image',
-                Rule::dimensions()
-                    ->minWidth(config('validation.image.min_res'))
-                    ->minHeight(config('validation.image.min_res'))
-                    ->maxWidth(config('validation.image.max_res'))
-                    ->maxHeight(config('validation.image.max_res'))
-            ]),
+            'image' => Rule::when(
+                $this->routeIs('profile.upload.profile-photo'),
+                [
+                    'required',
+                    'image',
+                    Rule::dimensions()
+                        ->minWidth(config('validation.image.min_res'))
+                        ->minHeight(config('validation.image.min_res'))
+                        ->maxWidth(config('validation.image.max_res'))
+                        ->maxHeight(config('validation.image.max_res'))
+                ]
+            ),
             'password' => [
-                Rule::requiredIf(in_array($routeName, [
+                Rule::requiredIf($this->routeIs([
                     'auth.register',
                     'settings.change.username',
                     'settings.change.email',
                     'settings.change.phone-number',
                 ])),
-                Rule::when($routeName === 'auth.register', [$passwordRule]),
+                Rule::when($this->routeIs('auth.register'), [$passwordRule]),
                 Rule::when(
-                    in_array($routeName, [
+                    $this->routeIs([
                         'settings.change.username',
                         'settings.change.email',
                         'settings.change.phone-number',
@@ -110,19 +117,19 @@ class UserRequest extends FormRequest
                 ),
             ],
             'password_confirmation' => Rule::when(
-                $routeName === 'auth.register',
+                $this->routeIs('auth.register'),
                 ['required', 'same:password']
             ),
             'current_password' => Rule::when(
-                $routeName === 'settings.change.password',
+                $this->routeIs('settings.change.password'),
                 ['required', 'current_password']
             ),
             'new_password' => Rule::when(
-                $routeName === 'settings.change.password',
+                $this->routeIs('settings.change.password'),
                 ['required', $passwordRule, new NotCurrentPassword]
             ),
             'new_password_confirmation' => Rule::when(
-                $routeName === 'settings.change.password',
+                $this->routeIs('settings.change.password'),
                 ['required', 'same:new_password']
             )
         ];

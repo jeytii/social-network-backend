@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use App\Rules\{
@@ -31,54 +30,52 @@ class AuthRequest extends FormRequest
      */
     public function rules()
     {
-        $routeName = Route::currentRouteName();
-
         return [
             'username' => [
                 Rule::when(
-                    in_array($routeName, ['auth.login', 'auth.verify', 'auth.verify.resend']),
+                    $this->routeIs(['auth.login', 'auth.verify', 'auth.verify.resend']),
                     ['required']
                 ),
                 Rule::when(
-                    $routeName === 'auth.verify.resend',
+                    $this->routeIs('auth.verify.resend'),
                     [new ExistsInEmailOrUsername]
                 ),
             ],
             'email' => [
                 Rule::when(
-                    in_array($routeName, ['auth.forgot-password', 'auth.reset-password']),
+                    $this->routeIs(['auth.forgot-password', 'auth.reset-password']),
                     ['required', 'email']
                 ),
-                Rule::when($routeName === 'auth.forgot-password', [Rule::exists('users')]),
+                Rule::when($this->routeIs('auth.forgot-password'), [Rule::exists('users')]),
                 Rule::when(
-                    $routeName === 'auth.reset-password',
+                    $this->routeIs('auth.reset-password'),
                     [new PasswordResetEmailAddress($this->input('token'))]
                 ),
                 Rule::when(
-                    in_array($routeName, ['auth.forgot-password', 'auth.reset-password']),
+                    $this->routeIs(['auth.forgot-password', 'auth.reset-password']),
                     [new VerifiedEmailAddress]
                 ),
             ],
             'password' => [
                 Rule::when(
-                    in_array($routeName, ['auth.login', 'auth.reset-password']),
+                    $this->routeIs(['auth.login', 'auth.reset-password']),
                     ['required']
                 ),
                 Rule::when(
-                    $routeName === 'auth.reset-password',
-                    [Password::min(8)->mixedCase()->numbers()->symbols()]
+                    $this->routeIs('auth.reset-password'),
+                    [Password::min(config('validation.min_lengths.password'))->mixedCase()->numbers()->symbols()]
                 ),
             ],
             'password_confirmation' => Rule::when(
-                $routeName === 'auth.reset-password',
+                $this->routeIs('auth.reset-password'),
                 ['required', 'same:password']
             ),
             'code' => Rule::when(
-                $routeName === 'auth.verify',
+                $this->routeIs('auth.verify'),
                 ['required', Rule::exists('verifications')]
             ),
             'token' => Rule::when(
-                $routeName === 'auth.reset-password',
+                $this->routeIs('auth.reset-password'),
                 ['required', 'string']
             )
         ];

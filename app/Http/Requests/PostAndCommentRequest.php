@@ -27,7 +27,7 @@ class PostAndCommentRequest extends FormRequest
     {   
         return [
             'pid' => [
-                Rule::requiredIf(Route::currentRouteName() === 'comments.store'),
+                Rule::requiredIf($this->routeIs('comments.store')),
                 Rule::exists('posts', 'slug'),
             ],
             'body' => [
