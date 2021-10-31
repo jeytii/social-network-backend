@@ -103,8 +103,8 @@ class AuthService
         try {
             $type = DB::transaction(function() use ($request) {
                 $body = $request->only([
-                    'name', 'email', 'username', 'phone_number',
-                    'gender', 'birth_month', 'birth_day', 'birth_year'
+                    'name', 'email', 'username',
+                    'phone_number', 'gender', 'birth_date'
                 ]);
                 $password = Hash::make($request->input('password'));
                 $user = User::create(array_merge($body, compact('password')));

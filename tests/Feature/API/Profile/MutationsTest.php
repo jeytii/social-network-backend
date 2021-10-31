@@ -74,21 +74,6 @@ test('Should throw validation errors if input values are incorrect in update pro
         ]);
 });
 
-test('Can\'t update the birth date that has been already set', function() {
-    $this->response
-        ->putJson(route('profile.update'), [
-            'name' => $this->user->name,
-            'birth_month' => 'January',
-            'birth_day' => 12,
-            'birth_year' => 1996,
-        ])
-        ->assertOk();
-   
-    $updatedUser = User::find($this->user->id);
-
-    $this->assertTrue($this->user->birth_date === $updatedUser->birth_date);
-});
-
 test('Can update the profile successfully', function() {
     $user = User::factory()->create();
 

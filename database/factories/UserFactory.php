@@ -4,7 +4,6 @@ namespace Database\Factories;
 
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Carbon\Carbon;
 
 class UserFactory extends Factory
 {
@@ -31,7 +30,6 @@ class UserFactory extends Factory
         $name = $this->faker->name(strtolower($gender));
         $username = join('', $this->faker->words());
         $phoneNumber = (string) random_int(100000000, 999999999);
-        $date = Carbon::parse($this->faker->date());
 
         return [
             'name' => $name,
@@ -39,9 +37,7 @@ class UserFactory extends Factory
             'username' => $username,
             'phone_number' => "9{$phoneNumber}",
             'gender' => $gender,
-            'birth_month' => $date->monthName,
-            'birth_day' => $date->day,
-            'birth_year' => $date->year,
+            'birth_date' => $this->faker->date(),
             'email_verified_at' => now(),
             'password' => '$2y$10$LZ3lEGrSDY7lDNzaWmHkJ.DimdflkD1oCN9XXBotJUZ1Wbbfv7wDS', // P@ssword123
         ];

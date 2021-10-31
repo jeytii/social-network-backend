@@ -10,24 +10,6 @@ afterAll(function() {
     DB::table('users')->truncate();
 });
 
-test('Should throw an error if some inputs are not set', function() {
-    Event::fake([Registered::class]);
-    Notification::fake();
-
-    $this->postJson(route('auth.register'), [
-        'name' => 'John Doe',
-        'password' => 'password'
-    ])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors([
-            'email', 'username', 'phone_number', 'gender',
-            'birth_month', 'birth_day', 'birth_year'
-        ]);
-
-    Event::assertNothingDispatched();
-    Notification::assertNothingSent();
-});
-
 test('Should throw an error if passwords don\'t match', function() {
     Event::fake([Registered::class]);
     Notification::fake();
@@ -122,9 +104,10 @@ test('Should throw an error if phone number is invalid', function() {
 
 test('Should successfully register an account', function() {
     $user = User::factory()->make();
-    $body = $user->only([
-        'name', 'email', 'username', 'phone_number',
-        'gender', 'birth_month', 'birth_day', 'birth_year',
+    $birthDate = $user->birth_date->format('Y-m-d');
+    $body = $user->only(['name', 'email', 'username', 'phone_number', 'gender']);
+    $request = array_merge($body, [
+        'birth_date' => $birthDate
     ]);
 
     Event::fake([Registered::class]);
@@ -132,7 +115,7 @@ test('Should successfully register an account', function() {
     
     $this->postJson(
         route('auth.register'),
-        array_merge($body, [
+        array_merge($request, [
             'password' => 'P@ssword123',
             'password_confirmation' => 'P@ssword123',
         ])

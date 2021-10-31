@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use App\Models\Notification;
-use Illuminate\Support\Str;
 use App\Traits\HasRateLimit;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\{Str, Carbon};
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -47,9 +47,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'username',
         'phone_number',
         'gender',
-        'birth_month',
-        'birth_day',
-        'birth_year',
+        'birth_date',
         'location',
         'bio',
         'image_url',
@@ -63,9 +61,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $hidden = [
         'id',
-        'birth_month',
-        'birth_day',
-        'birth_year',
+        'birth_date',
         'password',
         'email_verified_at',
         'updated_at',
@@ -88,6 +84,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $casts = [
+        'birth_date' => 'date:F d, Y',
         'created_at' => 'date:F Y',
         'email_verified_at' => 'datetime',
     ];
@@ -104,12 +101,14 @@ class User extends Authenticatable implements MustVerifyEmail
 
             $user->setAttribute('id', (string) Str::uuid());
             $user->setAttribute('slug', uniqid());
+            $user->setAttribute('birth_date', Carbon::parse($user->birth_date));
             $user->phone_number = $formattedPhoneNumber;
         });
-
+        
         static::updating(function ($user) {
             $formattedPhoneNumber = (string) Str::of($user->phone_number)->replaceMatches('/^0?9/', '639');
-
+            
+            $user->setAttribute('birth_date', Carbon::parse($user->birth_date));
             $user->phone_number = $formattedPhoneNumber;
         });
     }
@@ -159,16 +158,6 @@ class User extends Authenticatable implements MustVerifyEmail
     // =============================
     // CUSTOM ATTRIBUTES
     // =============================
-
-    /**
-     * Get the user's full birth date.
-     *
-     * @return string
-     */
-    public function getBirthDateAttribute(): string
-    {
-        return "$this->birth_month $this->birth_day, $this->birth_year";
-    }
 
     /**
      * Check if the user is the authenticated one.

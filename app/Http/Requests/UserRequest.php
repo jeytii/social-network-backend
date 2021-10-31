@@ -27,12 +27,6 @@ class UserRequest extends FormRequest
     public function rules()
     {
         $passwordRule = Password::min(8)->mixedCase()->numbers()->symbols();
-        $latestYear = now()->subYear(1)->year;
-        $centuryAgo = $latestYear - 100;
-        $months = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
 
         return [
             'name' => Rule::when(
@@ -65,21 +59,9 @@ class UserRequest extends FormRequest
                 $this->routeIs('auth.register'),
                 ['required', Rule::in(['Male', 'Female'])]
             ),
-            'birth_month' => Rule::when(
+            'birth_date' => Rule::when(
                 $this->routeIs('auth.register'),
-                ['required', Rule::in($months)]
-            ),
-            'birth_day' => Rule::when(
-                $this->routeIs('auth.register'),
-                ['required', 'numeric', 'between:1,31']
-            ),
-            'birth_year' => Rule::when(
-                $this->routeIs('auth.register'),
-                [
-                    'required',
-                    'numeric',
-                    "between:{$centuryAgo},{$latestYear}",
-                ]
+                ['required', 'regex:/^(\d{4})-(\d{2})-(\d{2})$/']
             ),
             'location' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
             'image_url' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
@@ -147,7 +129,6 @@ class UserRequest extends FormRequest
 
         return [
             'required' => ':Attribute is required.',
-            'numeric' => ':Attribute must be numeric.',
             'regex' => 'Invalid :attribute.',
             'in' => 'Invalid :attribute.',
             'email' => 'Invalid :attribute.',
@@ -157,7 +138,6 @@ class UserRequest extends FormRequest
             'dimensions' => "Resolution must be from {$minRes}x{$minRes} to {$maxRes}x{$maxRes}.",
             'current_password' => 'Incorrect password.',
             'between' => ':Attribute must be between :min and :max characters long.',
-            'between.numeric' => ':Attribute must be between :min and :max.',
             'same' => 'Does not match with the password above.',
             'password_confirmation.required' => 'Confirmation is required.',
             'new_password_confirmation.required' => 'Confirmation is required.',

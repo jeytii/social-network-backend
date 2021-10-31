@@ -21,9 +21,7 @@ class CreateUsersTable extends Migration
             $table->string('username')->unique();
             $table->string('phone_number')->unique();
             $table->enum('gender', ['Male', 'Female']);
-            $table->string('birth_month')->nullable();
-            $table->tinyInteger('birth_day')->nullable();
-            $table->smallInteger('birth_year')->nullable();
+            $table->date('birth_date')->nullable();
             $table->string('location')->nullable();
             $table->tinyText('bio')->nullable();
             $table->string('image_url')->nullable();
