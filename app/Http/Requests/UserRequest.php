@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use App\Rules\NotCurrentPassword;
+use App\Rules\ValidDate;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -27,6 +28,8 @@ class UserRequest extends FormRequest
     public function rules()
     {
         $passwordRule = Password::min(8)->mixedCase()->numbers()->symbols();
+        $minDate = now()->subCentury()->format('Y-m-d');
+        $maxDate = now()->subYears(18)->format('Y-m-d');
 
         return [
             'name' => Rule::when(
@@ -60,8 +63,14 @@ class UserRequest extends FormRequest
                 ['required', Rule::in(['Male', 'Female'])]
             ),
             'birth_date' => Rule::when(
-                $this->routeIs('auth.register'),
-                ['required', 'regex:/^(\d{4})-(\d{2})-(\d{2})$/']
+                $this->routeIs(['auth.register', 'profile.update']),
+                [
+                    'required',
+                    'date',
+                    new ValidDate,
+                    'after_or_equal:' . $minDate,
+                    'before_or_equal:' . $maxDate,
+                ]
             ),
             'location' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
             'image_url' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
@@ -139,6 +148,9 @@ class UserRequest extends FormRequest
             'current_password' => 'Incorrect password.',
             'between' => ':Attribute must be between :min and :max characters long.',
             'same' => 'Does not match with the password above.',
+            'date' => 'Invalid :attribute.',
+            'before_or_equal' => 'Invalid :attribute.',
+            'after_or_equal' => 'Invalid :attribute.',
             'password_confirmation.required' => 'Confirmation is required.',
             'new_password_confirmation.required' => 'Confirmation is required.',
         ];

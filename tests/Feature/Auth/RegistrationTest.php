@@ -102,12 +102,47 @@ test('Should throw an error if phone number is invalid', function() {
     Notification::assertNothingSent();
 });
 
+test('Should throw an error for invalid birth date format', function() {
+    $this->postJson(route('auth.register'), ['birth_date' => '0020-01-01'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.birth_date', ['Invalid birth date.']);
+
+    $this->postJson(route('auth.register'), ['birth_date' => '2021-13-01'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.birth_date', ['Invalid birth date.']);
+
+    $this->postJson(route('auth.register'), ['birth_date' => '0020-01-40'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.birth_date', ['Invalid birth date.']);
+
+    $this->postJson(route('auth.register'), ['birth_date' => '2019-02-30'])
+        ->assertStatus(422)
+        ->assertJsonPath('errors.birth_date', ['Invalid birth date.']);
+});
+
+test('Should throw an error for entering a birth date earlier than 100 years ago', function() {
+    $this->postJson(route('auth.register'), [
+        'birth_date' => now()->subYears(101)->format('Y-m-d')
+    ])
+    ->assertStatus(422)
+    ->assertJsonPath('errors.birth_date', ['Invalid birth date.']);
+});
+
+test('Should throw an error for entering a birth date later than 18 years ago', function() {
+    $this->postJson(route('auth.register'), [
+        'birth_date' => now()->subYears(16)->format('Y-m-d')
+    ])
+    ->assertStatus(422)
+    ->assertJsonPath('errors.birth_date', ['Invalid birth date.']);
+});
+
 test('Should successfully register an account', function() {
-    $user = User::factory()->make();
-    $birthDate = $user->birth_date->format('Y-m-d');
-    $body = $user->only(['name', 'email', 'username', 'phone_number', 'gender']);
-    $request = array_merge($body, [
-        'birth_date' => $birthDate
+    $user = User::factory()->make([
+        'birth_date' => '1998-05-05'
+    ]);
+    $body = $user->only([
+        'name', 'email', 'username',
+        'phone_number', 'gender', 'birth_date'
     ]);
 
     Event::fake([Registered::class]);
@@ -115,7 +150,7 @@ test('Should successfully register an account', function() {
     
     $this->postJson(
         route('auth.register'),
-        array_merge($request, [
+        array_merge($body, [
             'password' => 'P@ssword123',
             'password_confirmation' => 'P@ssword123',
         ])
