@@ -1,9 +1,10 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\{DB, Storage};
 use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\{DB, Storage};
+use Carbon\Carbon;
 
 uses(WithFaker::class);
 
@@ -69,6 +70,7 @@ test('Should throw validation errors if input values are incorrect in update pro
         ->assertJsonFragment([
             'errors' => [
                 'name' => ['Name is required.'],
+                'birth_date' => ['Birth date is required.'],
                 'bio' => ['The number of characters exceeds the maximum length.'],
             ]
         ]);
@@ -80,16 +82,16 @@ test('Can update the profile successfully', function() {
     $this->actingAs($user)
         ->putJson(route('profile.update'), [
             'name' => 'John Doe',
-            'location' => 'Philippines',
             'bio' => 'Hello World',
+            'birth_date' => '1995-05-05',
         ])
         ->assertOk();
    
     $updatedUser = User::where([
         ['id', '=', $user->id],
         ['name', '=', 'John Doe'],
-        ['location', '=', 'Philippines'],
         ['bio', '=', 'Hello World'],
+        ['birth_date', '=', Carbon::create(1995, 5, 5)],
     ]);
 
     $this->assertTrue($updatedUser->exists());

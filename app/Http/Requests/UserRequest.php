@@ -72,7 +72,6 @@ class UserRequest extends FormRequest
                     'before_or_equal:' . $maxDate,
                 ]
             ),
-            'location' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
             'image_url' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
             'bio' => Rule::when(
                 $this->routeIs('profile.update'),

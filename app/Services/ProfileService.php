@@ -61,7 +61,7 @@ class ProfileService
             $this->cloudinary->uploadApi()->destroy($id);
         }
 
-        $request->user()->update($request->only(['name', 'location', 'bio', 'image_url']));
+        $request->user()->update($request->only(['name', 'birth_date', 'bio', 'image_url']));
 
         return ['status' => 200];
     }
