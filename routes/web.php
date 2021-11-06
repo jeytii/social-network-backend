@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ViewController;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,6 +14,13 @@ use App\Http\Controllers\AuthController;
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+Route::get('/public', fn() => response()->json(['status' => 200]))->middleware('guest');
+Route::get('/private', fn() => response()->json(['status' => 200]))->middleware('auth:sanctum');
+
+Route::get('/post/{post}', [ViewController::class, 'authenticatePost']);
+Route::get('/reset-password/{token}', [ViewController::class, 'authenticateResetPasswordToken']);
+Route::get('/verify/{token}', [ViewController::class, 'authenticateVerificationToken']);
 
 Route::middleware('guest')->name('auth.')->group(function() {
     Route::post('/login', [AuthController::class, 'login'])->name('login');

@@ -40,6 +40,19 @@ class UserController extends Controller
     }
 
     /**
+     * Get the column values that will be used as route parameters on the client.
+     * 
+     * @param string  $column
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getParams(string $column)
+    {
+        $response = $this->userRepository->getParams($column);
+
+        return response()->json($response, $response['status']);
+    }
+
+    /**
      * Get 3 randomly suggested users that the user is not yet following.
      *
      * @param \Illuminate\Http\Request  $request

@@ -24,6 +24,7 @@ use App\Http\Controllers\{
 
 Route::prefix('users')->name('users.')->group(function() {
     Route::get('/', [UserController::class, 'index'])->name('index');
+    Route::get('/params/{column}', [UserController::class, 'getParams'])->name('get.params');
     Route::get('/random', [UserController::class, 'getRandom'])->name('get.random');
     Route::get('/search', [UserController::class, 'search'])->name('search');
     Route::post('/{user}/follow', [UserController::class, 'follow'])->name('follow');

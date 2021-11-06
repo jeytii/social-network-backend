@@ -51,6 +51,22 @@ class UserRepository
     }
 
     /**
+     * Get the column values that will be used as route parameters on the client.
+     * 
+     * @param string  $column
+     * @return array
+     */
+    public function getParams(string $column): array
+    {
+        $data = User::pluck($column);
+
+        return [
+            'status' => 200,
+            'data' => $data,
+        ];
+    }
+
+    /**
      * Get search results according to the provided query.
      * 
      * @param \Illuminate\Http\Request  $string
