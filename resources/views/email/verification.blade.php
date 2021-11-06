@@ -3,7 +3,11 @@
 
 You just recently registered a {{ config('app.name') }} account and chose to verify your account through email.
 
-<h1>Your verification code is: {{ $code }}</h1>
+<h1>Click the button below then enter your verification code: {{ $code }}</h1>
+
+@component('mail::button', compact('url'))
+Verify my account
+@endcomponent
 
 You only have <b>{{ config('validation.expiration.verification') }} minutes</b> to verify your account. Otherwise, request for another verification code.
 

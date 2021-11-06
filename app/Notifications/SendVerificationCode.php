@@ -15,13 +15,15 @@ class SendVerificationCode extends Notification
      * Create a new notification instance.
      *
      * @param int  $code
+     * @param string  $token
      * @param bool  $prefersSMS
      * @return void
      */
-    public function __construct(int $code, bool $prefersSMS)
+    public function __construct(int $code, string $token, bool $prefersSMS)
     {
         $this->code = $code;
         $this->prefersSMS = $prefersSMS;
+        $this->url = config('app.client_url') . "/verify/{$token}";
     }
 
     /**
@@ -49,6 +51,7 @@ class SendVerificationCode extends Notification
                     ->markdown('email.verification', [
                         'name' => $notifiable->username,
                         'code' => $this->code,
+                        'url' => $this->url,
                     ]);
     }
 
@@ -64,7 +67,7 @@ class SendVerificationCode extends Notification
         $minutesLeft = config('validation.expiration.verification');
 
         return (new NexmoMessage)
-            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. Your verification code is {$this->code}. You only have {$minutesLeft} minutes to verify your account. Otherwise, request for another verification code.")
+            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. Redirect to the link {$this->url}, then enter the verification code {$this->code}. You only have {$minutesLeft} minutes to verify your account. Otherwise, request for another verification code.")
             ->from($appName);
     }
 }
