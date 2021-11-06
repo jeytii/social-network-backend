@@ -42,16 +42,18 @@ class AuthService
     private function sendVerificationCode(User $user, bool $prefersSMS): string
     {
         $code = random_int(100000, 999999);
+        $token = Hash::make($prefersSMS ? $user->phone_number : $user->email);
 
         DB::table('verifications')->updateOrInsert(
             ['user_id' => $user->id],
             [
+                'token' => $token,
                 'code' => $code,
                 'expiration' => now()->addMinutes(config('validation.expiration.verification')),
             ]
         );
 
-        $user->notify(new SendVerificationCode($code, $prefersSMS));
+        $user->notify(new SendVerificationCode($code, $prefersSMS, $token));
 
         return $prefersSMS ? 'phone number' : 'email address';
     }
