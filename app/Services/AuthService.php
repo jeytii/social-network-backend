@@ -37,12 +37,12 @@ class AuthService
      * 
      * @param \App\Models\User  $user
      * @param string  $method
-     * @return string
+     * @param string  $token
+     * @return void
      */
-    private function sendVerificationCode(User $user, string $method): string
+    private function sendVerificationCode(User $user, string $method, string $token)
     {
         $code = random_int(100000, 999999);
-        $token = Hash::make($method === 'sms' ? $user->phone_number : $user->email);
 
         DB::table('verifications')->updateOrInsert(
             ['user_id' => $user->id],
@@ -54,8 +54,6 @@ class AuthService
         );
 
         $user->notify(new SendVerificationCode($code, $token, $method));
-
-        return $method === 'sms' ? 'phone number' : 'email address';
     }
 
     /**
@@ -103,22 +101,26 @@ class AuthService
     public function register(Request $request): array
     {   
         try {
-            $type = DB::transaction(function() use ($request) {
+            $url = DB::transaction(function() use ($request) {
                 $body = $request->only([
                     'name', 'email', 'username',
                     'phone_number', 'gender', 'birth_date'
                 ]);
+                $method = $request->input('method');
                 $password = Hash::make($request->input('password'));
                 $user = User::create(array_merge($body, compact('password')));
+                $token = Hash::make($method === 'sms' ? $user->phone_number : $user->email);
     
                 event(new Registered($user));
                 
-                return $this->sendVerificationCode($user, $request->input('method'));
+                $this->sendVerificationCode($user, $method, $token);
+
+                return "/verify/{$token}";
             });
     
             return [
                 'status' => 201,
-                'message' => "Account successfully created. Please enter the verification code that was sent to your {$type}.",
+                'url' => $url,
             ];
         }
         catch (Exception $exception) {
@@ -190,12 +192,15 @@ class AuthService
                 'message' => 'You have already verified your account.',
             ];
         }
+        
+        $method = $request->input('method');
+        $token = Hash::make($method === 'sms' ? $user->phone_number : $user->email);
 
-        $type = $this->sendVerificationCode($user, $request->input('method'));
+        $this->sendVerificationCode($user, $method, $token);
 
         return [
             'status' => 200,
-            'message' => "A verification code has been sent your {$type}.",
+            'url' => "/verify/{$token}",
         ];
     }
 
