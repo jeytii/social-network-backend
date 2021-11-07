@@ -15,7 +15,6 @@ use App\Http\Controllers\ViewController;
 |
 */
 
-Route::get('/public', fn() => response()->json(['status' => 200]))->middleware('guest');
 Route::get('/private', fn() => response()->json(['status' => 200]))->middleware('auth:sanctum');
 
 Route::get('/post/{post}', [ViewController::class, 'authenticatePost']);
