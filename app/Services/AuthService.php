@@ -36,13 +36,13 @@ class AuthService
      * Generate a verification code for newly created user.
      * 
      * @param \App\Models\User  $user
-     * @param bool  $prefersSMS
+     * @param int  $method
      * @return string
      */
-    private function sendVerificationCode(User $user, bool $prefersSMS): string
+    private function sendVerificationCode(User $user, int $method): string
     {
         $code = random_int(100000, 999999);
-        $token = Hash::make($prefersSMS ? $user->phone_number : $user->email);
+        $token = Hash::make($method ? $user->phone_number : $user->email);
 
         DB::table('verifications')->updateOrInsert(
             ['user_id' => $user->id],
@@ -53,9 +53,9 @@ class AuthService
             ]
         );
 
-        $user->notify(new SendVerificationCode($code, $prefersSMS, $token));
+        $user->notify(new SendVerificationCode($code, $token, $method));
 
-        return $prefersSMS ? 'phone number' : 'email address';
+        return $method ? 'phone number' : 'email address';
     }
 
     /**
@@ -113,7 +113,7 @@ class AuthService
     
                 event(new Registered($user));
                 
-                return $this->sendVerificationCode($user, $request->boolean('prefers_sms'));
+                return $this->sendVerificationCode($user, (int) $request->input('method'));
             });
     
             return [
@@ -191,7 +191,7 @@ class AuthService
             ];
         }
 
-        $type = $this->sendVerificationCode($user, $request->boolean('prefers_sms'));
+        $type = $this->sendVerificationCode($user, (int) $request->input('method'));
 
         return [
             'status' => 200,
@@ -224,7 +224,7 @@ class AuthService
         try {
             $type = DB::transaction(function() use ($request, $user, $emailAddress) {
                 $token = Hash::make($emailAddress);
-                $prefersSMS = $request->boolean('prefers_sms');
+                $prefersSMS = (int) $request->input('method') === 1;
                 $url = config('app.client_url') . "/reset-password/{$token}";
         
                 DB::table('password_resets')->updateOrInsert(

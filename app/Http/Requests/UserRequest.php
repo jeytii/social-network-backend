@@ -106,6 +106,10 @@ class UserRequest extends FormRequest
                     ['current_password']
                 ),
             ],
+            'method' => Rule::when(
+                $this->routeIs('auth.register'),
+                ['required', 'in:0,1']
+            ),
             'password_confirmation' => Rule::when(
                 $this->routeIs('auth.register'),
                 ['required', 'same:password']
@@ -164,6 +168,7 @@ class UserRequest extends FormRequest
     {
         return [
             'email' => 'email address',
+            'method' => 'verification method',
         ];
     }
 }

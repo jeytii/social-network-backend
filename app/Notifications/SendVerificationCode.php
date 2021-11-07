@@ -16,13 +16,13 @@ class SendVerificationCode extends Notification
      *
      * @param int  $code
      * @param string  $token
-     * @param bool  $prefersSMS
+     * @param int  $method
      * @return void
      */
-    public function __construct(int $code, string $token, bool $prefersSMS)
+    public function __construct(int $code, string $token, int $method)
     {
         $this->code = $code;
-        $this->prefersSMS = $prefersSMS;
+        $this->method = $method;
         $this->url = config('app.client_url') . "/verify/{$token}";
     }
 
@@ -34,7 +34,7 @@ class SendVerificationCode extends Notification
      */
     public function via($notifiable)
     {
-        return $this->prefersSMS ? ['nexmo'] : ['mail'];
+        return $this->method ? ['nexmo'] : ['mail'];
     }
 
     /**

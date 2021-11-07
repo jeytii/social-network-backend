@@ -57,7 +57,7 @@ test('Should send password reset request successfully', function() {
 
     $this->postJson(route('auth.forgot-password'), [
         'email' => $user->email,
-        'prefers_sms' => true,
+        'method' => 1,
     ])->assertOk();
 
     Notification::assertSentTo(

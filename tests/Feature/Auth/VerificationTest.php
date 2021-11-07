@@ -34,7 +34,7 @@ test('Should throw an error if the user is already verified.', function() {
 
     $this->postJson(route('auth.verify.resend'), [
         'username' => $user->username,
-        'prefers_sms' => true,
+        'method' => 1,
     ])->assertStatus(409);
 
     Notification::assertNothingSent();
@@ -49,7 +49,7 @@ test('Can enter email address and resend SMS notification', function() {
 
     $this->postJson(route('auth.verify.resend'), [
         'username' => $user->email,
-        'prefers_sms' => true,
+        'method' => 1,
     ])
         ->assertOk()
         ->assertExactJson([
