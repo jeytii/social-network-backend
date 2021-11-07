@@ -36,7 +36,7 @@ class ViewController extends Controller
             $status = 404;
         }
 
-        return response()->json(compact('status'));
+        return response()->json(compact('status'), $status);
     }
 
     /**
@@ -53,6 +53,6 @@ class ViewController extends Controller
             $status = 404;
         }
 
-        return response()->json(compact('status'));
+        return response()->json(compact('status'), $status);
     }
 }

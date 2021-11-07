@@ -33,7 +33,7 @@ class AuthRequest extends FormRequest
         return [
             'username' => [
                 Rule::when(
-                    $this->routeIs(['auth.login', 'auth.verify', 'auth.verify.resend']),
+                    $this->routeIs(['auth.login', 'auth.verify.resend']),
                     ['required']
                 ),
                 Rule::when(
