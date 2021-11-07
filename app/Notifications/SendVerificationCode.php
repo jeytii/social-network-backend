@@ -16,10 +16,10 @@ class SendVerificationCode extends Notification
      *
      * @param int  $code
      * @param string  $token
-     * @param int  $method
+     * @param string  $method
      * @return void
      */
-    public function __construct(int $code, string $token, int $method)
+    public function __construct(int $code, string $token, string $method)
     {
         $this->code = $code;
         $this->method = $method;
@@ -34,7 +34,7 @@ class SendVerificationCode extends Notification
      */
     public function via($notifiable)
     {
-        return $this->method ? ['nexmo'] : ['mail'];
+        return $this->method === 'sms' ? ['nexmo'] : ['mail'];
     }
 
     /**

@@ -36,13 +36,13 @@ class AuthService
      * Generate a verification code for newly created user.
      * 
      * @param \App\Models\User  $user
-     * @param int  $method
+     * @param string  $method
      * @return string
      */
-    private function sendVerificationCode(User $user, int $method): string
+    private function sendVerificationCode(User $user, string $method): string
     {
         $code = random_int(100000, 999999);
-        $token = Hash::make($method ? $user->phone_number : $user->email);
+        $token = Hash::make($method === 'sms' ? $user->phone_number : $user->email);
 
         DB::table('verifications')->updateOrInsert(
             ['user_id' => $user->id],
@@ -55,7 +55,7 @@ class AuthService
 
         $user->notify(new SendVerificationCode($code, $token, $method));
 
-        return $method ? 'phone number' : 'email address';
+        return $method === 'sms' ? 'phone number' : 'email address';
     }
 
     /**
@@ -113,7 +113,7 @@ class AuthService
     
                 event(new Registered($user));
                 
-                return $this->sendVerificationCode($user, (int) $request->input('method'));
+                return $this->sendVerificationCode($user, $request->input('method'));
             });
     
             return [
@@ -191,7 +191,7 @@ class AuthService
             ];
         }
 
-        $type = $this->sendVerificationCode($user, (int) $request->input('method'));
+        $type = $this->sendVerificationCode($user, $request->input('method'));
 
         return [
             'status' => 200,
@@ -224,7 +224,7 @@ class AuthService
         try {
             $type = DB::transaction(function() use ($request, $user, $emailAddress) {
                 $token = Hash::make($emailAddress);
-                $prefersSMS = (int) $request->input('method') === 1;
+                $prefersSMS = $request->input('method') === 'sms';
                 $url = config('app.client_url') . "/reset-password/{$token}";
         
                 DB::table('password_resets')->updateOrInsert(
