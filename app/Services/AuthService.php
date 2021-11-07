@@ -109,7 +109,7 @@ class AuthService
                 $method = $request->input('method');
                 $password = Hash::make($request->input('password'));
                 $user = User::create(array_merge($body, compact('password')));
-                $token = Hash::make($method === 'sms' ? $user->phone_number : $user->email);
+                $token = uniqid();
     
                 event(new Registered($user));
                 
@@ -141,9 +141,7 @@ class AuthService
     public function verify(Request $request): array
     {
         try {
-            $user = User::whereUsername($request->input('username'))->firstOrFail();
             $verification = DB::table('verifications')
-                                ->where('user_id', $user->id)
                                 ->where('code', $request->input('code'))
                                 ->where('expiration', '>', now());
 
@@ -154,6 +152,8 @@ class AuthService
                 ];
             }
 
+            $user = User::find($verification->first()->user_id);
+
             if ($user->hasVerifiedEmail()) {
                 return [
                     'status' => 409,
@@ -163,10 +163,10 @@ class AuthService
             
             $user->markEmailAsVerified();
 
-            return [
-                'status' => 200,
-                'message' => 'You have successfully verified your account.',
-            ];
+            return $this->authenticateUser(
+                $user->firstWithBasicOnly(),
+                'You have successfully verified your account.'
+            );
         }
         catch (ModelNotFoundException $exception) {
             return [
@@ -194,7 +194,7 @@ class AuthService
         }
         
         $method = $request->input('method');
-        $token = Hash::make($method === 'sms' ? $user->phone_number : $user->email);
+        $token = uniqid();
 
         $this->sendVerificationCode($user, $method, $token);
 
