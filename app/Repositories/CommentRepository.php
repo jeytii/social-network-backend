@@ -19,7 +19,7 @@ class CommentRepository
     {
         try {
             $post = Post::where('slug', $request->query('pid'))->firstOrFail();
-            $sortBy = $request->query('by', 'created_at');
+            $sortBy = $request->query('sort', 'created_at');
             $type = $sortBy === 'likes' ? 'likes_count' : 'created_at';
 
             $data = $post->comments()->orderByDesc($type)->withPaginated();

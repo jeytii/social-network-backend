@@ -59,7 +59,7 @@ test('Should return a paginated list of comments ordered by number of likes', fu
         ->getJson(route('comments.index', [
             'pid' => $post->slug,
             'page' => 1,
-            'by' => 'likes',
+            'sort' => 'likes',
         ]))
         ->assertOk()
         ->assertJsonCount(20, 'items')
