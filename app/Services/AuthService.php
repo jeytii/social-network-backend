@@ -161,17 +161,29 @@ class AuthService
                 ];
             }
             
-            $user->markEmailAsVerified();
+            $response = DB::transaction(function() use ($user) {
+                $user->markEmailAsVerified();
 
-            return $this->authenticateUser(
-                $user->firstWithBasicOnly(),
-                'You have successfully verified your account.'
-            );
+                event(new Login('api', $user->firstWithBasicOnly(), true));
+
+                return $this->authenticateUser(
+                    $user->firstWithBasicOnly(),
+                    'You have successfully verified your account.'
+                );
+            });
+
+            return $response;
         }
         catch (ModelNotFoundException $exception) {
             return [
                 'status' => 404,
                 'message' => $exception->getMessage(),
+            ];
+        }
+        catch (Exception $exception) {
+            return [
+                'status' => 500,
+                'message' => 'Something went wrong. Please check your connection then try again.',
             ];
         }
     }
@@ -228,7 +240,7 @@ class AuthService
 
         try {
             $type = DB::transaction(function() use ($request, $user, $emailAddress) {
-                $token = Hash::make($emailAddress);
+                $token = uniqid();
                 $prefersSMS = $request->input('method') === 'sms';
                 $url = config('app.client_url') . "/reset-password/{$token}";
         
@@ -270,32 +282,27 @@ class AuthService
      */
     public function resetPassword(Request $request): array
     {
-        $user = User::firstWhere('email', $request->input('email'));
-        $pr = DB::table('password_resets')
-                ->where('token', $request->input('token'))
-                ->where('expiration', '>', now())
-                ->whereNull('completed_at');
-
-        if ($pr->doesntExist()) {
-            return [
-                'status' => 401,
-                'message' => 'Invalid token.',
-            ];
-        }
-
         try {
-            DB::transaction(function() use ($request, $user, $pr) {
+            $response = DB::transaction(function() use ($request) {
+                $user = User::firstWhere('email', $request->input('email'));
+
                 $user->update(['password' => Hash::make($request->input('password'))]);
     
-                $pr->update(['completed_at' => now()]);
+                DB::table('password_resets')
+                    ->where('token', $request->input('token'))
+                    ->update(['completed_at' => now()]);
         
                 event(new PasswordReset($user));
+
+                event(new Login('api', $user->firstWithBasicOnly(), true));
+
+                return $this->authenticateUser(
+                    $user->firstWithBasicOnly(),
+                    'You have successfully reset your password.'
+                );
             });
     
-            return $this->authenticateUser(
-                $user->firstWithBasicOnly(),
-                'You have successfully reset your password.'
-            );
+            return $response;
         }
         catch (Exception $exception) {
             return [
