@@ -3,7 +3,7 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class PasswordResetEmailAddress implements Rule
 {
@@ -27,7 +27,12 @@ class PasswordResetEmailAddress implements Rule
      */
     public function passes($attribute, $value)
     {
-        return empty($this->token) ? true : Hash::check($value, $this->token);
+        return DB::table('password_resets')
+                ->where('email', $value)
+                ->where('token', $this->token)
+                ->where('expiration', '>', now())
+                ->whereNull('completed_at')
+                ->exists();
     }
 
     /**
@@ -37,6 +42,6 @@ class PasswordResetEmailAddress implements Rule
      */
     public function message()
     {
-        return 'Invalid email address.';
+        return 'Invalid email address or token.';
     }
 }
