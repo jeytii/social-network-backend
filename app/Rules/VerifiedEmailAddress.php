@@ -26,9 +26,7 @@ class VerifiedEmailAddress implements Rule
      */
     public function passes($attribute, $value)
     {
-        $user = User::where('email', $value);
-
-        return $user->exists() ? $user->first()->hasVerifiedEmail() : true;
+        return User::firstWhere('email', $value)->hasVerifiedEmail();
     }
 
     /**
