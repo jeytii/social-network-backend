@@ -127,7 +127,7 @@ class Post extends Model
      */
     public function getIsEditedAttribute(): bool
     {
-        return $this->isDirty('body');
+        return $this->created_at < $this->updated_at;
     }
 
     /**
