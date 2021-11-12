@@ -20,13 +20,18 @@ class PostService
     private function getMentionedUsers(string $body): Collection
     {
         $mentions = Str::of($body)->matchAll('/@[a-zA-Z0-9_]+/');
-        $usernames = $mentions->unique()->reduce(function($list, $mention) {
-                        if ($mention !== '@' . auth()->user()->username) {
-                            array_push($list, Str::replace('@', '', $mention));
-                        }
 
-                        return $list;
-                    }, []);
+        if (!$mentions->count()) {
+            return collect([]);
+        }
+
+        $usernames = $mentions->unique()->reduce(function($list, $mention) {
+            if ($mention !== '@' . auth()->user()->username) {
+                array_push($list, Str::replace('@', '', $mention));
+            }
+
+            return $list;
+        }, []);
         
         return User::whereIn('username', $usernames)->get();
     }
@@ -41,19 +46,21 @@ class PostService
     {
         try {
             $data = DB::transaction(function() use ($request) {
+                $post = $request->user()->posts()->create($request->only('body'));
                 $mentionedUsers = $this->getMentionedUsers($request->input('body'));
-                $post = $request->user()->posts()->create($request->only('body'))->first();
-    
-                Notification::send(
-                    $mentionedUsers,
-                    new NotifyUponAction(
-                        $request->user(),
-                        NotificationModel::MENTIONED_ON_POST,
-                        "/posts/{$request->input('pid')}"
-                    )
-                );
 
-                return $post;
+                if ($mentionedUsers->count()) {
+                    Notification::send(
+                        $mentionedUsers,
+                        new NotifyUponAction(
+                            $request->user(),
+                            NotificationModel::MENTIONED_ON_POST,
+                            "/posts/{$request->input('pid')}"
+                        )
+                    );
+                }
+
+                return $request->user()->posts()->find($post->id);
             });
 
             return [
