@@ -26,9 +26,7 @@ Route::middleware('guest')->name('auth.')->group(function() {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
     Route::put('/verify', [AuthController::class, 'verify'])->name('verify');
 
-    Route::post('/verify/resend', [AuthController::class, 'resendVerificationCode'])
-        ->middleware('throttle:3,30')
-        ->name('verify.resend');
+    Route::post('/verify/resend', [AuthController::class, 'resendVerificationCode'])->name('verify.resend');
     
     Route::post('/forgot-password', [AuthController::class, 'requestPasswordReset'])->name('forgot-password');
     Route::put('/reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
