@@ -8,7 +8,6 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\{DB, Hash};
 use Illuminate\Auth\Events\{Login, Registered};
 use App\Notifications\{ResetPassword, SendVerificationCode};
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
 class AuthService
@@ -136,7 +135,6 @@ class AuthService
      * 
      * @param \Illuminate\Http\Request  $request
      * @return array
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
     public function verify(Request $request): array
     {
@@ -173,12 +171,6 @@ class AuthService
             });
 
             return $response;
-        }
-        catch (ModelNotFoundException $exception) {
-            return [
-                'status' => 404,
-                'message' => $exception->getMessage(),
-            ];
         }
         catch (Exception $exception) {
             return [
