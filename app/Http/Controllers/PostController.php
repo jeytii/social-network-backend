@@ -82,7 +82,7 @@ class PostController extends Controller
     {
         $this->authorize('delete', $post);
 
-        $response = $this->postService->deletePost($request->user(), $post->id);
+        $response = $this->postService->deletePost($post);
 
         return response()->json($response, $response['status']);
     }
@@ -133,7 +133,7 @@ class PostController extends Controller
     {
         $this->authorize('bookmark', $post);
 
-        $response = $this->postService->bookmarkPost($request->user(), $post->id);
+        $response = $this->postService->bookmarkPost($request->user(), $post);
 
         return response()->json($response, $response['status']);
     }
@@ -150,7 +150,7 @@ class PostController extends Controller
     {
         $this->authorize('unbookmark', $post);
 
-        $response = $this->postService->unbookmarkPost($request->user(), $post->id);
+        $response = $this->postService->unbookmarkPost($request->user(), $post);
 
         return response()->json($response, $response['status']);
     }

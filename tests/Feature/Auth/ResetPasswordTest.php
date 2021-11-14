@@ -9,7 +9,7 @@ beforeAll(function() {
 
     $resets = collect(range(1, 7))->map(fn($reset) => [
         'email' => $user->email,
-        'token' => Hash::make($user->email),
+        'token' => uniqid(),
         // 'expiration' => now()->subHours($reset * 1),
         // 'completed_at' => now()->subHours($reset * 1),
     ])->toArray();
@@ -44,7 +44,7 @@ test('Should throw an error if email address is missing', function() {
     Event::fake([PasswordReset::class]);
 
     $this->putJson(route('auth.reset-password'), [
-        'token' => Hash::make($this->user->email),
+        'token' => uniqid(),
         'password' => 'P@ssword12345',
         'password_confirmation' => 'P@ssword12345',
     ])->assertStatus(422);
@@ -57,10 +57,12 @@ test('Should throw an error if token is invalid', function() {
 
     $this->putJson(route('auth.reset-password'), [
         'email' => $this->user->email,
-        'token' => Hash::make($this->user->email),
+        'token' => '123456789',
         'password' => 'P@ssword12345',
         'password_confirmation' => 'P@ssword12345',
-    ])->assertUnauthorized();
+    ])
+    ->assertStatus(422)
+    ->assertJsonValidationErrors(['email']);
 
     Event::assertNothingDispatched();
 });
@@ -68,8 +70,10 @@ test('Should throw an error if token is invalid', function() {
 test('Should successfully reset the password', function() {
     Notification::fake();
     
-    $this->postJson(route('auth.forgot-password'), $this->user->only('email'))
-        ->assertOk();
+    $this->postJson(route('auth.forgot-password'), [
+        'email' => $this->user->email,
+        'method' => 'email',
+    ])->assertOk();
     
     Event::fake([PasswordReset::class]);
 

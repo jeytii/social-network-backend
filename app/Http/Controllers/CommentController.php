@@ -65,7 +65,7 @@ class CommentController extends Controller
     {
         $this->authorize('update', $comment);
         
-        $response = $this->commentService->updateComment($request, $comment->id);
+        $response = $this->commentService->updateComment($request, $comment);
 
         return response()->json($response, $response['status']);
     }
@@ -82,7 +82,7 @@ class CommentController extends Controller
     {
         $this->authorize('delete', $comment);
 
-        $response = $this->commentService->deleteComment($request->user(), $comment->id);
+        $response = $this->commentService->deleteComment($comment);
 
         return response()->json($response, $response['status']);
     }

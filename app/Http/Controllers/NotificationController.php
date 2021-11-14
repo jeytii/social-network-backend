@@ -43,7 +43,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Peek at the newly received notifications.
+     * Peek at newly received notifications.
      * 
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
@@ -56,7 +56,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Update an unread notification's status into read.
+     * Mark a notification as read.
      * 
      * @param \App\Models\Notification  $notification
      * @return \Illuminate\Http\JsonResponse
@@ -69,7 +69,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Update all unread notifications' status into read.
+     * Mark all notifications as read.
      * 
      * @param \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse

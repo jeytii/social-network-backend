@@ -40,7 +40,8 @@ class AuthController extends Controller
      * @param \App\Http\Requests\UserRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function register(UserRequest $request) {
+    public function register(UserRequest $request)
+    {
         $response = $this->auth->register($request);
 
         return response()->json($response, $response['status']);

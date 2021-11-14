@@ -135,7 +135,7 @@ class Comment extends Model
     public function getTimestampAttribute(): string
     {
         if (now()->diffInSeconds($this->created_at) <= 59) {
-            return 'A few seconds ago';
+            return 'Just now';
         }
 
         $minutes = now()->diffInMinutes($this->created_at);

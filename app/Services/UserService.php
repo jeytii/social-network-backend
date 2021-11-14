@@ -21,13 +21,11 @@ class UserService
     {
         try {
             DB::transaction(function() use ($follower, $followedUser) {
+                $actionType = Notification::FOLLOWED;
+
                 $follower->following()->sync([$followedUser->id]);
 
-                $followedUser->notify(new NotifyUponAction(
-                    $follower,
-                    Notification::FOLLOWED,
-                    "/{$followedUser->username}"
-                ));
+                $followedUser->notify(new NotifyUponAction($follower, $actionType, "/{$followedUser->username}"));
             });
 
             return ['status' => 200];
@@ -49,7 +47,7 @@ class UserService
      */
     public function unfollow(User $follower, User $unfollowedUser): array
     {
-        $follower->following()->detach($unfollowedUser->id);
+        $follower->following()->detach($unfollowedUser);
 
         return ['status' => 200];
     }

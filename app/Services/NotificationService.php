@@ -7,20 +7,22 @@ use App\Models\{User, Notification};
 class NotificationService
 {
     /**
-     * Peek at all newly received notifications.
+     * Peek at newly received notifications.
      * 
      * @param \App\Models\User  $user
      * @return array
      */
     public function peek(User $user): array
     {
-        $user->notifications()->where('peeked_at', null)->update(['peeked_at' => now()]);
+        $user->notifications()
+            ->where('peeked_at', null)
+            ->update(['peeked_at' => now()]);
 
         return ['status' => 200];
     }
 
     /**
-     * Update an unread notification's status into read.
+     * Mark a notification as read.
      * 
      * @param \App\Models\Notification  $notification
      * @return array
@@ -40,7 +42,7 @@ class NotificationService
     }
 
     /**
-     * Update all unread notifications' status into read.
+     * Mark all notifications as read.
      * 
      * @param \App\Models\User  $user
      * @return array

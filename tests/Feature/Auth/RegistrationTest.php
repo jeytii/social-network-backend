@@ -153,6 +153,7 @@ test('Should successfully register an account', function() {
         array_merge($body, [
             'password' => 'P@ssword123',
             'password_confirmation' => 'P@ssword123',
+            'method' => 'email',
         ])
     )->assertCreated();
 

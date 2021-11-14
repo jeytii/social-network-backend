@@ -207,7 +207,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function followers(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\User', 'connections', 'following_id', 'follower_id')->withPivot('created_at');
+        return $this->belongsToMany('App\Models\User', 'connections', 'following_id', 'follower_id')
+                    ->withPivot('created_at');
     }
 
     /**
@@ -217,7 +218,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function following(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\User', 'connections', 'follower_id', 'following_id')->withPivot('created_at');
+        return $this->belongsToMany('App\Models\User', 'connections', 'follower_id', 'following_id')
+                    ->withPivot('created_at');
     }
 
     /**
@@ -247,8 +249,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function likedPosts(): MorphToMany
     {
-        return $this->morphedByMany('App\Models\Post', 'likable')
-                    ->withPivot('created_at');
+        return $this->morphedByMany('App\Models\Post', 'likable')->withPivot('created_at');
     }
 
     /**
@@ -258,8 +259,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function likedComments(): MorphToMany
     {
-        return $this->morphedByMany('App\Models\Comment', 'likable')
-                    ->withPivot('created_at');
+        return $this->morphedByMany('App\Models\Comment', 'likable')->withPivot('created_at');
     }
 
     /**
@@ -269,7 +269,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function bookmarks(): BelongsToMany
     {
-        return $this->belongsToMany('App\Models\Post', 'bookmarks', 'user_id', 'bookmark_id')->withPivot('created_at');
+        return $this->belongsToMany('App\Models\Post', 'bookmarks', 'user_id', 'bookmark_id')
+                    ->withPivot('created_at');
     }
 
     /**
