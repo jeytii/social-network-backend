@@ -205,14 +205,10 @@ class AuthService
             ];
         }
         
-        $method = $request->input('method');
-        $token = uniqid();
-
-        $this->sendVerificationCode($user, $method, $token);
+        $this->sendVerificationCode($user, $request->input('method'), uniqid());
 
         return [
             'status' => 200,
-            'url' => "/verify/{$token}",
         ];
     }
 
