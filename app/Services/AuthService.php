@@ -79,10 +79,7 @@ class AuthService
             return [
                 'status' => 401,
                 'message' => 'Your account is not yet verified.',
-                'data' => [
-                    'url' => route('auth.verify.resend'),
-                    'username' => $request->input('username'),
-                ],
+                'data' => $request->only('username'),
             ];
         }
 
@@ -98,21 +95,17 @@ class AuthService
      * @return array
      */
     public function register(Request $request): array
-    {   
+    {
         try {
             $url = DB::transaction(function() use ($request) {
-                $body = $request->only([
-                    'name', 'email', 'username',
-                    'phone_number', 'gender', 'birth_date'
-                ]);
-                $method = $request->input('method');
+                $body = $request->except('password', 'password_confirmation', 'method');
                 $password = Hash::make($request->input('password'));
                 $user = User::create(array_merge($body, compact('password')));
                 $token = uniqid();
     
                 event(new Registered($user));
                 
-                $this->sendVerificationCode($user, $method, $token);
+                $this->sendVerificationCode($user, $request->input('method'), $token);
 
                 return "/verify/{$token}";
             });
@@ -228,9 +221,8 @@ class AuthService
 
         try {
             $type = DB::transaction(function() use ($request, $user, $emailAddress) {
-                $token = uniqid();
                 $prefersSMS = $request->input('method') === 'sms';
-                $url = config('app.client_url') . "/reset-password/{$token}";
+                $token = uniqid();
         
                 DB::table('password_resets')->updateOrInsert(
                     [
@@ -243,7 +235,10 @@ class AuthService
                     ]
                 );
                 
-                $user->notify(new ResetPassword($url, $prefersSMS));
+                $user->notify(new ResetPassword(
+                    config('app.client_url') . "/reset-password/{$token}",
+                    $prefersSMS
+                ));
     
                 return $prefersSMS ? 'phone number' : 'email address';
             });
