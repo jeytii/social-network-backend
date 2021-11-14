@@ -127,7 +127,10 @@ class PostService
                 ));
             });
 
-            return ['status' => 200];
+            return [
+                'status' => 200,
+                'data' => $post->likers()->count(),
+            ];
         }
         catch (Exception $exception) {
             return [
@@ -141,14 +144,17 @@ class PostService
      * Dislike a post.
      * 
      * @param \App\Models\User  $user
-     * @param string  $postId
+     * @param \App\Models\Post  $post
      * @return array
      */
-    public function dislikePost(User $user, string $postId): array
+    public function dislikePost(User $user, Post $post): array
     {
-        $user->likedPosts()->detach($postId);
+        $user->likedPosts()->detach($post);
 
-        return ['status' => 200];
+        return [
+            'status' => 200,
+            'data' => $post->likers()->count(),
+        ];
     }
 
     /**
