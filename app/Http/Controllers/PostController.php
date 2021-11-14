@@ -116,7 +116,7 @@ class PostController extends Controller
     {
         $this->authorize('dislike', $post);
 
-        $response = $this->postService->dislikePost($request->user(), $post->id);
+        $response = $this->postService->dislikePost($request->user(), $post);
 
         return response()->json($response, $response['status']);
     }
