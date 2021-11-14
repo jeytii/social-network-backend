@@ -10,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UserRequest extends FormRequest
 {
-/**
+    /**
      * Determine if the user is authorized to make this request.
      *
      * @return bool
@@ -30,103 +30,94 @@ class UserRequest extends FormRequest
         $passwordRule = Password::min(8)->mixedCase()->numbers()->symbols();
         $minDate = now()->subCentury()->format('Y-m-d');
         $maxDate = now()->subYears(18)->format('Y-m-d');
+        $minNameLength = config('validation.min_lengths.name');
+        $minUsernameLength = config('validation.min_lengths.username');
+        $maxUsernameLength = config('validation.max_lengths.username');
+        $maxBioLength = config('validation.max_lengths.bio');
+        $usernameFormat = config('validation.formats.username');
+        $phoneNumberFormat = config('validation.formats.phone_number');
+        $usernameRule = [
+            'required',
+            'string',
+            'between:' . $minUsernameLength . ',' . $maxUsernameLength,
+            'regex:' . $usernameFormat,
+            'unique:users',
+        ];
+        $birthDateRule = [
+            'required',
+            'date',
+            new ValidDate,
+            'after_or_equal:' . $minDate,
+            'before_or_equal:' . $maxDate,
+        ];
 
-        return [
-            'name' => Rule::when(
-                $this->routeIs(['auth.register', 'profile.update']),
-                ['required', 'string', 'min:' . config('validation.min_lengths.name')]
-            ),
-            'email' => Rule::when(
-                $this->routeIs(['auth.register', 'settings.change.email']),
-                ['required', 'email', Rule::unique('users')]
-            ),
-            'username' => Rule::when(
-                $this->routeIs(['auth.register', 'settings.change.username']),
-                [
-                    'required',
-                    'string',
-                    'between:' . config('validation.min_lengths.username') . ',' . config('validation.max_lengths.username'),
-                    'regex:' . config('validation.formats.username'),
-                    Rule::unique('users'),
-                ]
-            ),
-            'phone_number' => Rule::when(
-                $this->routeIs(['auth.register', 'settings.change.phone-number']),
-                [
-                    'required',
-                    'regex:' . config('validation.formats.phone_number'),
-                    Rule::unique('users'),
-                ]
-            ),
-            'gender' => Rule::when(
-                $this->routeIs('auth.register'),
-                ['required', Rule::in(['Male', 'Female'])]
-            ),
-            'birth_date' => Rule::when(
-                $this->routeIs(['auth.register', 'profile.update']),
-                [
-                    'required',
-                    'date',
-                    new ValidDate,
-                    'after_or_equal:' . $minDate,
-                    'before_or_equal:' . $maxDate,
-                ]
-            ),
-            'image_url' => Rule::when($this->routeIs('profile.update'), ['nullable', 'string']),
-            'bio' => Rule::when(
-                $this->routeIs('profile.update'),
-                ['nullable', 'string', 'max:' . config('validation.max_lengths.bio')]
-            ),
-            'image' => Rule::when(
-                $this->routeIs('profile.upload.profile-photo'),
-                [
+        if ($this->routeIs('auth.register')) {
+            return [
+                'name' => ['required', 'string', 'min:' . $minNameLength],
+                'email' => ['required', 'email', 'unique:users'],
+                'username' => $usernameRule,
+                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, 'unique:users'],
+                'gender' => ['required', 'in:Male,Female'],
+                'birth_date' => $birthDateRule,
+                'password' => ['required', $passwordRule],
+                'password_confirmation' => ['required', 'same:password'],
+                'method' => ['required', 'in:email,sms'],
+            ];
+        }
+
+        if ($this->routeIs('profile.update')) {
+            return [
+                'name' => ['required', 'string', 'min:' . $minNameLength],
+                'birth_date' => $birthDateRule,
+                'bio' => ['nullable', 'string', 'max:' . $maxBioLength],
+                'image_url' => ['nullable', 'string'],
+            ];
+        }
+
+        if ($this->routeIs('settings.change.email')) {
+            return [
+                'email' => ['required', 'email', 'unique:users'],
+                'password' => ['required', 'current_password'],
+            ];
+        }
+
+        if ($this->routeIs('settings.change.username')) {
+            return [
+                'username' => $usernameRule,
+                'password' => ['required', 'current_password'],
+            ];
+        }
+
+        if ($this->routeIs('settings.change.phone-number')) {
+            return [
+                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, 'unique:users'],
+                'password' => ['required', 'current_password'],
+            ];
+        }
+
+        if ($this->routeIs('settings.change.password')) {
+            return [
+                'current_password' => ['required', 'current_password'],
+                'new_password' => ['required', $passwordRule, new NotCurrentPassword],
+                'new_password_confirmation' => ['required', 'same:new_password'],
+            ];
+        }
+
+        if ($this->routeIs('profile.upload.profile-photo')) {
+            return [
+                'image' => [
                     'required',
                     'image',
                     Rule::dimensions()
                         ->minWidth(config('validation.image.min_res'))
                         ->minHeight(config('validation.image.min_res'))
                         ->maxWidth(config('validation.image.max_res'))
-                        ->maxHeight(config('validation.image.max_res'))
+                        ->maxHeight(config('validation.image.max_res')),
                 ]
-            ),
-            'password' => [
-                Rule::requiredIf($this->routeIs([
-                    'auth.register',
-                    'settings.change.username',
-                    'settings.change.email',
-                    'settings.change.phone-number',
-                ])),
-                Rule::when($this->routeIs('auth.register'), [$passwordRule]),
-                Rule::when(
-                    $this->routeIs([
-                        'settings.change.username',
-                        'settings.change.email',
-                        'settings.change.phone-number',
-                    ]),
-                    ['current_password']
-                ),
-            ],
-            'password_confirmation' => Rule::when(
-                $this->routeIs('auth.register'),
-                ['required', 'same:password']
-            ),
-            'method' => Rule::when(
-                $this->routeIs('auth.register'),
-                ['required', Rule::in(['email', 'sms'])]
-            ),
-            'current_password' => Rule::when(
-                $this->routeIs('settings.change.password'),
-                ['required', 'current_password']
-            ),
-            'new_password' => Rule::when(
-                $this->routeIs('settings.change.password'),
-                ['required', $passwordRule, new NotCurrentPassword]
-            ),
-            'new_password_confirmation' => Rule::when(
-                $this->routeIs('settings.change.password'),
-                ['required', 'same:new_password']
-            )
-        ];
+            ];
+        }
+
+        return [];
     }
 
     /**

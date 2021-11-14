@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use App\Rules\{
     ExistsInEmailOrUsername,
@@ -30,55 +29,50 @@ class AuthRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'username' => [
-                Rule::when(
-                    $this->routeIs(['auth.login', 'auth.verify.resend']),
-                    ['required']
-                ),
-                Rule::when(
-                    $this->routeIs('auth.verify.resend'),
-                    [new ExistsInEmailOrUsername]
-                ),
-            ],
-            'email' => [
-                Rule::when(
-                    $this->routeIs(['auth.forgot-password', 'auth.reset-password']),
-                    ['required', 'email']
-                ),
-                Rule::when($this->routeIs('auth.forgot-password'), [Rule::exists('users')]),
-                Rule::when(
-                    $this->routeIs('auth.reset-password'),
-                    [new PasswordResetEmailAddress($this->input('token'))]
-                ),
-                Rule::when(
-                    $this->routeIs(['auth.forgot-password', 'auth.reset-password']),
-                    [new VerifiedEmailAddress]
-                ),
-            ],
-            'password' => [
-                Rule::when(
-                    $this->routeIs(['auth.login', 'auth.reset-password']),
-                    ['required']
-                ),
-                Rule::when(
-                    $this->routeIs('auth.reset-password'),
-                    [Password::min(config('validation.min_lengths.password'))->mixedCase()->numbers()->symbols()]
-                ),
-            ],
-            'password_confirmation' => Rule::when(
-                $this->routeIs('auth.reset-password'),
-                ['required', 'same:password']
-            ),
-            'code' => Rule::when(
-                $this->routeIs('auth.verify'),
-                ['required', Rule::exists('verifications')]
-            ),
-            'token' => Rule::when(
-                $this->routeIs('auth.reset-password'),
-                ['required', 'string']
-            )
-        ];
+        $passwordRule = Password::min(config('validation.min_lengths.password'))->mixedCase()->numbers()->symbols();
+
+        if ($this->routeIs('auth.login')) {
+            return [
+                'username' => ['required'],
+                'password' => ['required'],
+            ];
+        }
+
+        if ($this->routeIs('auth.verify')) {
+            return [
+                'code' => ['required', 'exists:verifications']
+            ];
+        }
+
+        if ($this->routeIs('auth.verify.resend')) {
+            return [
+                'username' => ['required', new ExistsInEmailOrUsername],
+                'method' => ['required', 'in:email,sms'],
+            ];
+        }
+
+        if ($this->routeIs('auth.forgot-password')) {
+            return [
+                'email' => ['required', 'email', 'exists:users', new VerifiedEmailAddress],
+                'method' => ['required', 'in:email,sms'],
+            ];
+        }
+
+        if ($this->routeIs('auth.reset-password')) {
+            return [
+                'email' => [
+                    'required',
+                    'email',
+                    new PasswordResetEmailAddress($this->input('token')),
+                    new VerifiedEmailAddress,
+                ],
+                'password' => ['required', $passwordRule],
+                'password_confirmation' => ['required', 'same:password'],
+                'token' => ['required', 'string'],
+            ];
+        }
+
+        return [];
     }
 
     /**
