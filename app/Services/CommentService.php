@@ -33,13 +33,18 @@ class CommentService
     private function getMentionedUsers(string $body): Collection
     {
         $mentions = Str::of($body)->matchAll('/@[a-zA-Z0-9_]+/');
-        $usernames = $mentions->unique()->reduce(function($list, $mention) {
-                        if ($mention !== '@' . auth()->user()->username) {
-                            array_push($list, Str::replace('@', '', $mention));
-                        }
 
-                        return $list;
-                    }, []);
+        if (!$mentions->count()) {
+            return collect([]);
+        }
+
+        $usernames = $mentions->unique()->reduce(function($list, $mention) {
+            if ($mention !== '@' . auth()->user()->username) {
+                array_push($list, Str::replace('@', '', $mention));
+            }
+
+            return $list;
+        }, []);
         
         return User::whereIn('username', $usernames)->get();
     }
@@ -53,35 +58,37 @@ class CommentService
      */
     public function createComment(Request $request): array
     {
+        $post = Post::firstWhere('slug', $request->input('pid'));
+        $mentionedUsers = $this->getMentionedUsers($request->input('body'));
+        $user = $request->user();
+
         try {
-            $comment = DB::transaction(function() use ($request) {
-                $postId = $request->input('pid');
-                $body = $request->input('body');
-                $post = Post::firstWhere('slug', $postId);
-                $mentionedUsers = $this->getMentionedUsers($body);
-                $comment = $request->user()
-                                ->comments()
-                                ->create(['post_id' => $post->id, 'body' => $body])
-                                ->first();
+            $comment = DB::transaction(function() use ($request, $user, $post, $mentionedUsers) {
+                $comment = $user->comments()->create([
+                                'post_id' => $post->id,
+                                'body' => $request->input('body')
+                            ]);
     
-                if (!$mentionedUsers->contains('username', $post->user->username)) {
+                if (!$mentionedUsers->count() || !$mentionedUsers->contains('username', $post->user->username)) {
                     $post->user->notify($this->notifyOnComment(
-                        $request->user(),
+                        $user,
                         NotificationModel::COMMENTED_ON_POST,
-                        $postId
+                        $request->input('pid')
                     ));
                 }
-    
-                Notification::send(
-                    $mentionedUsers,
-                    $this->notifyOnComment(
-                        $request->user(),
-                        NotificationModel::MENTIONED_ON_COMMENT,
-                        $postId
-                    )
-                );
 
-                return $comment;
+                if ($mentionedUsers->count()) {
+                    Notification::send(
+                        $mentionedUsers,
+                        $this->notifyOnComment(
+                            $user,
+                            NotificationModel::MENTIONED_ON_COMMENT,
+                            $request->input('pid')
+                        )
+                    );
+                }
+
+                return Comment::find($comment->id);
             });
 
             return [
@@ -101,15 +108,12 @@ class CommentService
      * Update a comment.
      * 
      * @param \Illuminate\Http\Request  $request
-     * @param string  $commentId
+     * @param \App\Models\Comment  $comment
      * @return array
      */
-    public function updateComment(Request $request, string $commentId): array
+    public function updateComment(Request $request, Comment $comment): array
     {
-        $request->user()
-            ->comments()
-            ->find($commentId)
-            ->update($request->only('body'));
+        $comment->update($request->only('body'));
 
         return ['status' => 200];
     }
@@ -117,13 +121,12 @@ class CommentService
     /**
      * Delete a comment.
      * 
-     * @param \App\Models\User  $user
-     * @param string  $commentId
+     * @param \App\Models\Comment  $comment
      * @return array
      */
-    public function deleteComment(User $user, string $commentId): array
+    public function deleteComment(Comment $comment): array
     {
-        $user->comments()->find($commentId)->delete();
+        $comment->delete();
 
         return ['status' => 200];
     }
@@ -140,13 +143,11 @@ class CommentService
     {
         try {
             DB::transaction(function() use ($liker, $comment) {
-                $liker->likedComments()->attach($comment->id);
+                $actionType = NotificationModel::LIKED_COMMENT;
+
+                $liker->likedComments()->attach($comment);
                 
-                $comment->user->notify(new NotifyUponAction(
-                    $liker,
-                    NotificationModel::LIKED_COMMENT,
-                    "/posts/{$comment->post->slug}"
-                ));
+                $comment->user->notify(new NotifyUponAction($liker, $actionType, "/posts/{$comment->post->slug}"));
             });
 
             return ['status' => 200];
