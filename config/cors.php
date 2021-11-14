@@ -20,6 +20,7 @@ return [
         'login',
         'register',
         'verify',
+        'verify/resend',
         'forgot-password',
         'reset-password',
         'sanctum/csrf-cookie'
