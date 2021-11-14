@@ -49,7 +49,9 @@ class SettingService
                     'type' => $column,
                 ]);
         
-                $request->user()->update([$column => $request->input($column)]);
+                $request->user()->update([
+                    $column => $request->input($column)
+                ]);
             });
     
             return ['status' => 200];
@@ -86,26 +88,22 @@ class SettingService
 
         try {
             DB::transaction(function() use ($request, $newPassword) {
-                $pr = DB::table('password_resets')
-                        ->where('email', $request->user()->email)
-                        ->whereNull('completed_at');
-                        
                 $request->user()->update([
                     'password' => Hash::make($newPassword)
                 ]);
-                
-                if ($pr->exists()) {
-                    $pr->update(['completed_at' => now()]);
-                }
-                else {
-                    DB::table('password_resets')->insert([
+
+                DB::table('password_resets')->updateOrInsert(
+                    [
                         'email' => $request->user()->email,
-                        'completed_at' => now(),
-                    ]);
-                }
-        
-                event(new PasswordReset($request->user()));
+                        'completed_at' => null
+                    ],
+                    [
+                        'completed_at' => now()
+                    ]
+                );
             });
+
+            event(new PasswordReset($request->user()));
 
             return ['status' => 200];
         }
