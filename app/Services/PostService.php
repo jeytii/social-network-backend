@@ -44,19 +44,17 @@ class PostService
      */
     public function createPost(Request $request): array
     {
+        $mentionedUsers = $this->getMentionedUsers($request->input('body'));
+
         try {
-            $data = DB::transaction(function() use ($request) {
+            $data = DB::transaction(function() use ($request, $mentionedUsers) {
                 $post = $request->user()->posts()->create($request->only('body'));
-                $mentionedUsers = $this->getMentionedUsers($request->input('body'));
+                $actionType = NotificationModel::MENTIONED_ON_POST;
 
                 if ($mentionedUsers->count()) {
                     Notification::send(
                         $mentionedUsers,
-                        new NotifyUponAction(
-                            $request->user(),
-                            NotificationModel::MENTIONED_ON_POST,
-                            "/posts/{$request->input('pid')}"
-                        )
+                        new NotifyUponAction($request->user(), $actionType, "/posts/{$request->input('pid')}")
                     );
                 }
 
@@ -77,7 +75,7 @@ class PostService
     }
 
     /**
-     * Update a post.
+     * Update an existing post.
      * 
      * @param \Illuminate\Http\Request  $request
      * @param \App\Models\Post  $post
@@ -85,29 +83,26 @@ class PostService
      */
     public function updatePost(Request $request, Post $post): array
     {
-        $request->user()->posts()
-            ->find($post->id)
-            ->update($request->only('body'));
+        $post->update($request->only('body'));
 
         return ['status' => 200];
     }
 
     /**
-     * Delete a post.
+     * Delete an existing post.
      * 
-     * @param \App\Models\User  $user
-     * @param string  $postId
+     * @param \App\Models\Post  $post
      * @return array
      */
-    public function deletePost(User $user, string $postId): array
+    public function deletePost(Post $post): array
     {
-        $user->posts()->find($postId)->delete();
+        $post->delete();
 
         return ['status' => 200];
     }
 
     /**
-     * Like a post.
+     * Add the post to the list of likes.
      * 
      * @param \App\Models\User  $liker
      * @param \App\Models\Post  $post
@@ -118,13 +113,11 @@ class PostService
     {
         try {
             DB::transaction(function() use ($liker, $post) {
-                $liker->likedPosts()->attach($post->id);
+                $actionType = NotificationModel::LIKED_POST;
+
+                $liker->likedPosts()->attach($post);
                 
-                $post->user->notify(new NotifyUponAction(
-                    $liker,
-                    NotificationModel::LIKED_POST,
-                    "/posts/{$post->slug}"
-                ));
+                $post->user->notify(new NotifyUponAction($liker, $actionType, "/posts/{$post->slug}"));
             });
 
             return [
@@ -141,7 +134,7 @@ class PostService
     }
 
     /**
-     * Dislike a post.
+     * Remove the post from the list of likes.
      * 
      * @param \App\Models\User  $user
      * @param \App\Models\Post  $post
@@ -158,29 +151,29 @@ class PostService
     }
 
     /**
-     * Bookmark a post.
+     * Add the post to the list of bookmarks.
      * 
      * @param \App\Models\User  $user
-     * @param string  $postId
+     * @param \App\Models\Post  $post
      * @return array
      */
-    public function bookmarkPost(User $user, string $postId): array
+    public function bookmarkPost(User $user, Post $post): array
     {
-        $user->bookmarks()->attach($postId);
+        $user->bookmarks()->attach($post);
 
         return ['status' => 200];
     }
 
     /**
-     * Unbookmark a post.
+     * Remove the post from the list of bookmarks.
      * 
      * @param \App\Models\User  $user
-     * @param string  $postId
+     * @param \App\Models\Post  $post
      * @return array
      */
-    public function unbookmarkPost(User $user, string $postId): array
+    public function unbookmarkPost(User $user, Post $post): array
     {
-        $user->bookmarks()->detach($postId);
+        $user->bookmarks()->detach($post);
 
         return ['status' => 200];
     }
