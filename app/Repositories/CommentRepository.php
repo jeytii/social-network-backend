@@ -18,7 +18,7 @@ class CommentRepository
     public function get(Request $request): array
     {
         try {
-            $post = Post::where('slug', $request->query('pid'))->firstOrFail();
+            $post = Post::where('slug', $request->query('post'))->firstOrFail();
             $sortBy = $request->query('sort', 'created_at');
             $type = $sortBy === 'likes' ? 'likes_count' : 'created_at';
 

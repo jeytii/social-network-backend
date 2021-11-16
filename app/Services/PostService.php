@@ -54,7 +54,7 @@ class PostService
                 if ($mentionedUsers->count()) {
                     Notification::send(
                         $mentionedUsers,
-                        new NotifyUponAction($request->user(), $actionType, "/posts/{$request->input('pid')}")
+                        new NotifyUponAction($request->user(), $actionType, "/posts/{$request->input('post')}")
                     );
                 }
 

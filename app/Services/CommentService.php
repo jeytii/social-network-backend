@@ -58,7 +58,7 @@ class CommentService
      */
     public function createComment(Request $request): array
     {
-        $post = Post::firstWhere('slug', $request->input('pid'));
+        $post = Post::firstWhere('slug', $request->input('post'));
         $mentionedUsers = $this->getMentionedUsers($request->input('body'));
         $user = $request->user();
 
@@ -73,7 +73,7 @@ class CommentService
                     $post->user->notify($this->notifyOnComment(
                         $user,
                         NotificationModel::COMMENTED_ON_POST,
-                        $request->input('pid')
+                        $request->input('post')
                     ));
                 }
 
@@ -83,7 +83,7 @@ class CommentService
                         $this->notifyOnComment(
                             $user,
                             NotificationModel::MENTIONED_ON_COMMENT,
-                            $request->input('pid')
+                            $request->input('post')
                         )
                     );
                 }

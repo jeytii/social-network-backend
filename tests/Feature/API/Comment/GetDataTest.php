@@ -24,7 +24,7 @@ test('Should return a paginated list of comments under a specific post', functio
     $slug = Post::first()->slug;
     
     $this->response
-        ->getJson(route('comments.index', ['pid' => $slug, 'page' => 1]))
+        ->getJson(route('comments.index', ['post' => $slug, 'page' => 1]))
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
@@ -57,7 +57,7 @@ test('Should return a paginated list of comments ordered by number of likes', fu
     
     $this->response
         ->getJson(route('comments.index', [
-            'pid' => $post->slug,
+            'post' => $post->slug,
             'page' => 1,
             'sort' => 'likes',
         ]))
@@ -84,7 +84,7 @@ test('Should successfully retrieve more comments upon clicking "show more commen
     $slug = Post::first()->slug;
 
     $this->response
-        ->getJson(route('comments.index', ['pid' => $slug, 'page' => 2]))
+        ->getJson(route('comments.index', ['post' => $slug, 'page' => 2]))
         ->assertOk()
         ->assertJsonCount(15, 'items')
         ->assertJsonPath('has_more', false)

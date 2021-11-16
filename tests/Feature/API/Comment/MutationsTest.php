@@ -40,11 +40,11 @@ test('Should throw an error if the body length is greater than maximum', functio
 test('Should throw an error if post doesn\'t exist', function() {
     $this->response
         ->postJson(route('comments.store'), [
-            'pid' => 123456,
+            'post' => 123456,
             'body' => 'Hello World',
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.pid', ['Post does not exist.']);
+        ->assertJsonPath('errors.post', ['Post does not exist.']);
 });
 
 test('Should successfully create a comment', function() {
@@ -55,7 +55,7 @@ test('Should successfully create a comment', function() {
     
     $this->response
         ->postJson(route('comments.store'), [
-            'pid' => $slug,
+            'post' => $slug,
             'body' => 'Hello World',
         ])
         ->assertCreated()
@@ -96,7 +96,7 @@ test('Should notify the mentioned users along with OP upon commenting', function
     
     $this->response
         ->postJson(route('comments.store'), [
-            'pid' => $slug,
+            'post' => $slug,
             'body' => $body,
         ])
         ->assertCreated();

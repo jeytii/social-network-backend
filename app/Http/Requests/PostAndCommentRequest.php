@@ -26,7 +26,7 @@ class PostAndCommentRequest extends FormRequest
     public function rules()
     {   
         return [
-            'pid' => [
+            'post' => [
                 Rule::requiredIf($this->routeIs('comments.store')),
                 Rule::exists('posts', 'slug'),
             ],
@@ -46,8 +46,8 @@ class PostAndCommentRequest extends FormRequest
     public function messages()
     {
         return [
-            'pid.required' => 'Please choose a post to comment on.',
-            'pid.exists' => 'Post does not exist.',
+            'exists' => ':Attribute does not exist.',
+            'post.required' => 'Please choose a post to comment on.',
             'body.required' => 'Should not be blank.',
             'body.max' => 'The number of characters exceeds the maximum length.',
         ];
