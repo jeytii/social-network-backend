@@ -47,7 +47,7 @@ Route::prefix('profile')->name('profile.')->group(function() {
     Route::put('update', [ProfileController::class, 'update'])->name('update');
 });
 
-Route::apiResource('posts', PostController::class)->except('show');
+Route::apiResource('posts', PostController::class);
 Route::prefix('posts')->name('posts.')->group(function() {
     Route::get('/sort', [PostController::class, 'sort'])->name('sort');
     Route::post('{post}/like', [PostController::class, 'like'])->name('like');

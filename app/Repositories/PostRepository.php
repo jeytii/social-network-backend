@@ -27,4 +27,18 @@ class PostRepository
             'status' => 200,
         ]);
     }
+
+    /**
+     * Get a specific post.
+     * 
+     * @param \App\Models\Post  $post
+     * @return array
+     */
+    public function getOne(Post $post): array
+    {
+        return [
+            'status' => 200,
+            'post' => $post,
+        ];
+    }
 }

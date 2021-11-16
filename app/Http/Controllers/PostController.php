@@ -41,6 +41,19 @@ class PostController extends Controller
     }
 
     /**
+     * Get a specific post.
+     * 
+     * @param \App\Models\Post  $post
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show(Post $post)
+    {
+        $response = $this->postRepository->getOne($post);
+
+        return response()->json($response, $response['status']);
+    }
+
+    /**
      * Create a new post.
      * 
      * @param \App\Http\Requests\PostAndCommentRequest  $request
