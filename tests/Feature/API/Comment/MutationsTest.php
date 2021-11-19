@@ -63,6 +63,7 @@ test('Should successfully create a comment', function() {
             'status',
             'data' => [
                 'slug',
+                'post_slug',
                 'body',
                 'timestamp',
                 'is_own_comment',

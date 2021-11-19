@@ -33,6 +33,7 @@ test('Should return a paginated list of comments under a specific post', functio
             'items' => [
                 '*' => [
                     'slug',
+                    'post_slug',
                     'body',
                     'is_own_comment',
                     'is_liked',

@@ -55,6 +55,7 @@ class Comment extends Model
      * @var array
      */
     protected $appends = [
+        'post_slug',
         'is_own_comment',
         'is_liked',
         'is_edited',
@@ -98,6 +99,16 @@ class Comment extends Model
     // =============================
 
     /**
+     * Get the parent post model's slug.
+     *
+     * @return string
+     */
+    public function getPostSlugAttribute(): string
+    {
+        return $this->post->slug;
+    }
+
+    /**
      * Check if the comment is owned by the auth user.
      *
      * @return bool
@@ -114,7 +125,7 @@ class Comment extends Model
      */
     public function getIsEditedAttribute(): bool
     {
-        return $this->isDirty('body');
+        return $this->created_at < $this->updated_at;
     }
 
     /**
