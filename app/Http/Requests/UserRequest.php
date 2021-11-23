@@ -143,8 +143,8 @@ class UserRequest extends FormRequest
             'between' => ':Attribute must be between :min and :max characters long.',
             'same' => 'Does not match with the password above.',
             'date' => 'Invalid :attribute.',
-            'before_or_equal' => 'Invalid :attribute.',
-            'after_or_equal' => 'Invalid :attribute.',
+            'before_or_equal' => 'You must be 18 to 100 years old.',
+            'after_or_equal' => 'You must be 18 to 100 years old.',
             'password_confirmation.required' => 'Confirmation is required.',
             'new_password_confirmation.required' => 'Confirmation is required.',
         ];
