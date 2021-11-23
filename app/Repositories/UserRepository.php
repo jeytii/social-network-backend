@@ -17,11 +17,18 @@ class UserRepository
     public function get(Request $request): array
     {
         $hasQuery = $request->has('query') || $request->filled('query');
+        $hasMonth = $request->has('month') || $request->filled('month');
+        $hasYear = $request->has('year') || $request->filled('year');
+        $hasGender = $request->has('gender') || $request->filled('gender');
+
         $data = User::when(!$hasQuery, fn($q) => (
                     $q->where('id', '!=', auth()->id())
                         ->whereDoesntHave('followers', fn($q) => $q->where('id', auth()->id()))
                 ))
                 ->when($hasQuery, fn($q) => $q->searchUser($request->query('query')))
+                ->when($hasMonth, fn($q) => $q->whereMonth('birth_date', $request->query('month')))
+                ->when($hasYear, fn($q) => $q->whereYear('birth_date', $request->query('year')))
+                ->when($hasGender, fn($q) => $q->where('gender', $request->query('gender')))
                 ->withPaginated(20, config('api.response.user.basic'));
 
         return array_merge($data, [
