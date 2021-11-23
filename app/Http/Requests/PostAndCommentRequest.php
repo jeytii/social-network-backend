@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\CurrentValue;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Route;
 
 class PostAndCommentRequest extends FormRequest
 {
@@ -24,7 +24,7 @@ class PostAndCommentRequest extends FormRequest
      * @return array
      */
     public function rules()
-    {   
+    {
         return [
             'post' => [
                 Rule::requiredIf($this->routeIs('comments.store')),
@@ -33,7 +33,15 @@ class PostAndCommentRequest extends FormRequest
             'body' => [
                 'required',
                 'string',
-                'max:' . config('validation.max_lengths.long_text')
+                'max:' . config('validation.max_lengths.long_text'),
+                Rule::when(
+                    $this->routeIs('posts.update'),
+                    [new CurrentValue('posts', $this->query('post'))]
+                ),
+                Rule::when(
+                    $this->routeIs('comments.update'),
+                    [new CurrentValue('comments', $this->query('comment'))]
+                )
             ],
         ];
     }
