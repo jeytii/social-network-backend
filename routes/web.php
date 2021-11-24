@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ViewController;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +16,12 @@ use App\Http\Controllers\ViewController;
 |
 */
 
-Route::get('/private', fn() => response()->json(['status' => 200]))->middleware('auth:sanctum');
+Route::get('/private', function(Request $request) {
+    return response()->json([
+        'status' => 200,
+        'user' => $request->user()->only(array_merge(config('api.response.user.basic'), ['email', 'phone_number']))
+    ]);
+})->middleware('auth:sanctum');
 
 Route::get('/post/{post}', [ViewController::class, 'authenticatePost']);
 Route::get('/reset-password/{token}', [ViewController::class, 'authenticateResetPasswordToken']);
