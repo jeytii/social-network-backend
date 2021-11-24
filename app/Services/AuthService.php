@@ -22,13 +22,9 @@ class AuthService
     private function authenticateUser(User $user, string $message): array
     {
         $token = $user->createToken($user->username)->plainTextToken;
+        $status = 200;
 
-        return [
-            'status' => 200,
-            'message' => $message,
-            'token' => $token,
-            'user' => $user->setHidden(['id']),
-        ];
+        return compact('token', 'message', 'status');
     }
 
     /**
@@ -85,7 +81,7 @@ class AuthService
 
         event(new Login('api', $user->firstWithBasicOnly(), true));
 
-        return $this->authenticateUser($user->firstWithBasicOnly(), 'Login successful');
+        return $this->authenticateUser($user->first(), 'Login successful');
     }
 
     /**
@@ -157,10 +153,7 @@ class AuthService
 
                 event(new Login('api', $user->firstWithBasicOnly(), true));
 
-                return $this->authenticateUser(
-                    $user->firstWithBasicOnly(),
-                    'You have successfully verified your account.'
-                );
+                return $this->authenticateUser($user->first(), 'You have successfully verified your account.');
             });
 
             return $response;
@@ -279,10 +272,7 @@ class AuthService
 
                 event(new Login('api', $user->firstWithBasicOnly(), true));
 
-                return $this->authenticateUser(
-                    $user->firstWithBasicOnly(),
-                    'You have successfully reset your password.'
-                );
+                return $this->authenticateUser($user->first(), 'You have successfully reset your password.');
             });
     
             return $response;
