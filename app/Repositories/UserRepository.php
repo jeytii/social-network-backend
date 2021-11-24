@@ -37,6 +37,20 @@ class UserRepository
     }
 
     /**
+     * Get the currently logged-in user.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function getAuthUser(Request $request): array
+    {
+        return [
+            'status' => 200,
+            'data' => $request->user()->firstWithBasicOnly(),
+        ];
+    }
+
+    /**
      * Get 3 random users.
      * 
      * @param \Illuminate\Http\Request  $request
