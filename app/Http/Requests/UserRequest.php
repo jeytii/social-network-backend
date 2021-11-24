@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\{ValidDate, NotCurrentPassword, NotCurrentPhoneNumber, UniquePhoneNumber};
 use Illuminate\Validation\Rule;
-use App\Rules\NotCurrentPassword;
-use App\Rules\ValidDate;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -56,7 +55,7 @@ class UserRequest extends FormRequest
                 'name' => ['required', 'string', 'min:' . $minNameLength],
                 'email' => ['required', 'email', 'unique:users'],
                 'username' => $usernameRule,
-                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, 'unique:users'],
+                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, new UniquePhoneNumber],
                 'gender' => ['required', 'in:Male,Female'],
                 'birth_date' => $birthDateRule,
                 'password' => ['required', $passwordRule],
@@ -90,7 +89,7 @@ class UserRequest extends FormRequest
 
         if ($this->routeIs('settings.change.phone-number')) {
             return [
-                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, 'unique:users'],
+                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, new NotCurrentPhoneNumber, new UniquePhoneNumber],
                 'password' => ['required', 'current_password'],
             ];
         }
