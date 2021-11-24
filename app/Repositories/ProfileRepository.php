@@ -14,7 +14,7 @@ class ProfileRepository
      */
     public function get(User $user): array
     {
-        $data = $user->loadCount(['followers', 'following'])->append('birth_date');
+        $data = $user->loadCount(['followers', 'following'])->makeVisible('birth_date');
 
         return [
             'status' => 200,
