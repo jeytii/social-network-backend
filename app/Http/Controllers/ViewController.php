@@ -3,11 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ViewController extends Controller
 {
+    protected $user;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param \App\Repositories\UserRepository  $user
+     * @return void
+     */
+    public function __construct(UserRepository $user)
+    {
+        $this->user = $user;
+    }
+
+    /**
+     * Check user is logged in.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function authenticateUser(Request $request)
+    {
+        $response = $this->user->getAuthUser($request);
+
+        return response()->json($response, $response['status']);
+    }
+
     /**
      * Check if a specific post exists.
      * 

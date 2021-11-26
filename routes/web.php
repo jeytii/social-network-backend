@@ -16,12 +16,7 @@ use Illuminate\Http\Request;
 |
 */
 
-Route::get('/private', function(Request $request) {
-    return response()->json([
-        'status' => 200,
-        'user' => $request->user()->only(array_merge(config('api.response.user.basic'), ['email', 'phone_number']))
-    ]);
-})->middleware('auth:sanctum');
+Route::get('/private', [ViewController::class, 'authenticateuser'])->middleware('auth:sanctum');
 
 Route::get('/post/{post}', [ViewController::class, 'authenticatePost']);
 Route::get('/reset-password/{token}', [ViewController::class, 'authenticateResetPasswordToken']);
