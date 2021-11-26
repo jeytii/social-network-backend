@@ -46,7 +46,7 @@ class UserRepository
     {
         return [
             'status' => 200,
-            'data' => $request->user()->firstWithBasicOnly(),
+            'data' => $request->user()->only(array_merge(config('api.response.user.basic'), ['email', 'phone_number'])),
         ];
     }
 
