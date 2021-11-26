@@ -113,6 +113,13 @@ class CommentService
      */
     public function updateComment(Request $request, Comment $comment): array
     {
+        if ($comment->body === $request->only('body')) {
+            return [
+                'status' => 401,
+                'message' => 'No changes made.',
+            ];
+        }
+
         $comment->update($request->only('body'));
 
         return ['status' => 200];

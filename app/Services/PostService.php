@@ -83,6 +83,13 @@ class PostService
      */
     public function updatePost(Request $request, Post $post): array
     {
+        if ($post->body === $request->only('body')) {
+            return [
+                'status' => 401,
+                'message' => 'No changes made.',
+            ];
+        }
+
         $post->update($request->only('body'));
 
         return ['status' => 200];
