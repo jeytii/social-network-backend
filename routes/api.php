@@ -33,19 +33,20 @@ Route::prefix('users')->name('users.')->group(function() {
 });
 
 Route::prefix('profile')->name('profile.')->group(function() {
+    Route::get('likes/posts', [ProfileController::class, 'getLikedPosts'])->name('likes.posts');
+    Route::get('likes/comments', [ProfileController::class, 'getLikedComments'])->name('likes.comments');
+    Route::get('bookmarks', [ProfileController::class, 'getBookmarks'])->name('bookmarks');
+    
+    Route::post('upload/profile-photo', [ProfileController::class, 'uploadProfilePhoto'])->name('upload.profile-photo');
+    Route::put('update', [ProfileController::class, 'update'])->name('update');
+    
     Route::prefix('{user:username}')->name('get.')->group(function() {
         Route::get('/', [ProfileController::class, 'getInfo'])->name('info');
         Route::get('posts', [ProfileController::class, 'getPosts'])->name('posts');
         Route::get('comments', [ProfileController::class, 'getComments'])->name('comments');
-        Route::get('likes/posts', [ProfileController::class, 'getLikedPosts'])->name('likes.posts');
-        Route::get('likes/comments', [ProfileController::class, 'getLikedComments'])->name('likes.comments');
-        Route::get('bookmarks', [ProfileController::class, 'getBookmarks'])->name('bookmarks');
         Route::get('followers', [ProfileController::class, 'getFollowers'])->name('followers');
         Route::get('following', [ProfileController::class, 'getFollowedUsers'])->name('following');
     });
-    
-    Route::post('upload/profile-photo', [ProfileController::class, 'uploadProfilePhoto'])->name('upload.profile-photo');
-    Route::put('update', [ProfileController::class, 'update'])->name('update');
 });
 
 Route::apiResource('posts', PostController::class);
