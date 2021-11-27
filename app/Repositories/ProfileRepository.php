@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\{User, Post};
+use Illuminate\Http\Request;
 
 class ProfileRepository
 {
@@ -23,23 +24,34 @@ class ProfileRepository
     }
 
     /**
-     * Get paginated posts according to the type.
+     * Get paginated posts or commments.
      * 
      * @param \App\Models\User  $user
      * @param string  $type
      * @return array
      */
-    public function getPosts(User $user, string $type): array
+    public function getPostsOrComments(User $user, string $type): array
     {
-        if (in_array($type, ['likedPosts', 'likedComments', 'bookmarks'])) {
-            $query = $user->{$type}()->orderByPivot('created_at', 'desc');
-        }
+        $data = $user->{$type}()->orderByDesc('created_at')->withPaginated();
 
-        if ($type === 'posts') {
-            $query = $user->posts()->orderByDesc('created_at');
-        }
+        return array_merge($data, [
+            'status' => 200,
+        ]);
+    }
 
-        $data = $query->withPaginated();
+    /**
+     * Get paginated posts and comments that the user liked, commented on, or bookmarked.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @param string  $type
+     * @return array
+     */
+    public function getInteractedPosts(Request $request, string $type): array
+    {
+        $data = $request->user()
+                    ->{$type}()
+                    ->orderByPivot('created_at', 'desc')
+                    ->withPaginated();
 
         return array_merge($data, [
             'status' => 200,

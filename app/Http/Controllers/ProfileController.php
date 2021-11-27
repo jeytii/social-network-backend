@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Services\ProfileService;
+use Illuminate\Http\Request;
 use App\Http\Requests\UserRequest;
+use App\Services\ProfileService;
 use App\Repositories\ProfileRepository;
 
 class ProfileController extends Controller
@@ -47,7 +48,7 @@ class ProfileController extends Controller
      */
     public function getPosts(User $user)
     {
-        $response = $this->profileRepository->getPosts($user, 'posts');
+        $response = $this->profileRepository->getPostsOrComments($user, 'posts');
 
         return response()->json($response);
     }
@@ -60,7 +61,7 @@ class ProfileController extends Controller
      */
     public function getComments(User $user)
     {
-        $response = $this->profileRepository->getComments($user);
+        $response = $this->profileRepository->getPostsOrComments($user, 'comments');
 
         return response()->json($response);
     }
@@ -68,12 +69,12 @@ class ProfileController extends Controller
     /**
      * Get posts liked by user.
      *
-     * @param \App\Models\User  $user
+     * @param \Illuminate\Http\Request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getLikedPosts(User $user)
+    public function getLikedPosts(Request $request)
     {
-        $response = $this->profileRepository->getPosts($user, 'likedPosts');
+        $response = $this->profileRepository->getInteractedPosts($request, 'likedPosts');
 
         return response()->json($response);
     }
@@ -81,12 +82,12 @@ class ProfileController extends Controller
     /**
      * Get comments liked by user.
      *
-     * @param \App\Models\User  $user
+     * @param \Illuminate\Http\Request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getLikedComments(User $user)
+    public function getLikedComments(Request $request)
     {
-        $response = $this->profileRepository->getPosts($user, 'likedComments');
+        $response = $this->profileRepository->getInteractedPosts($request, 'likedComments');
 
         return response()->json($response);
     }
@@ -94,12 +95,12 @@ class ProfileController extends Controller
     /**
      * Get posts bookmarked by user.
      *
-     * @param \App\Models\User  $user
+     * @param \Illuminate\Http\Request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getBookmarks(User $user)
+    public function getBookmarks(Request $request)
     {
-        $response = $this->profileRepository->getPosts($user, 'bookmarks');
+        $response = $this->profileRepository->getInteractedPosts($request, 'bookmarks');
 
         return response()->json($response);
     }
