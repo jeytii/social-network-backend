@@ -15,12 +15,10 @@ class PostRepository
      */
     public function get(Request $request): array
     {
-        $sortBy = $request->query('sort', 'created_at');
-        $sortType = $sortBy === 'likes' ? 'likes_count' : 'created_at';
         $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
-
         $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
-                    ->orderByDesc($sortType)
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('likes_count')
                     ->withPaginated();
 
         return array_merge($data, [
