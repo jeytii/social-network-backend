@@ -51,7 +51,6 @@ Route::prefix('profile')->name('profile.')->group(function() {
 
 Route::apiResource('posts', PostController::class);
 Route::prefix('posts')->name('posts.')->group(function() {
-    Route::get('/sort', [PostController::class, 'sort'])->name('sort');
     Route::post('{post}/like', [PostController::class, 'like'])->name('like');
     Route::delete('{post}/dislike', [PostController::class, 'dislike'])->name('dislike');
     Route::post('{post}/bookmark', [PostController::class, 'bookmark'])->name('bookmark');
