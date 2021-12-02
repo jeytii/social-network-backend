@@ -25,25 +25,43 @@ class PostAndCommentRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'post' => [
-                Rule::requiredIf($this->routeIs('comments.store')),
-                Rule::exists('posts', 'slug'),
-            ],
-            'body' => [
-                'required',
-                'string',
-                'max:' . config('validation.max_lengths.long_text'),
-                Rule::when(
-                    $this->routeIs('posts.update'),
-                    [new CurrentValue('posts', $this->query('post'))]
-                ),
-                Rule::when(
-                    $this->routeIs('comments.update'),
-                    [new CurrentValue('comments', $this->query('comment'))]
-                )
-            ],
+        $body = [
+            'required',
+            'string',
+            'max:' . config('validation.max_lengths.long_text'),
         ];
+
+        if ($this->routeIs('posts.store')) {
+            return compact('body');
+        }
+
+        if ($this->routeIs('posts.update')) {
+            return [
+                'body' => array_merge($body, [
+                    new CurrentValue('posts', $this->query('post'))
+                ])
+            ];
+        }
+
+        if ($this->routeIs('comments.store')) {
+            return [
+                'post' => [
+                    'required',
+                    Rule::exists('posts', 'slug'),
+                ],
+                'body' => $body,
+            ];
+        }
+
+        if ($this->routeIs('comments.update')) {
+            return [
+                'body' => array_merge($body, [
+                    new CurrentValue('comments', $this->query('comment'))
+                ])
+            ];
+        }
+
+        return [];
     }
 
     /**
