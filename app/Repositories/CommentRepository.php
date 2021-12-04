@@ -19,10 +19,10 @@ class CommentRepository
     {
         try {
             $post = Post::where('slug', $request->query('post'))->firstOrFail();
-            $sortBy = $request->query('sort', 'created_at');
-            $type = $sortBy === 'likes' ? 'likes_count' : 'created_at';
-
-            $data = $post->comments()->orderByDesc($type)->withPaginated();
+            $data = $post->comments()
+                        ->orderByDesc('created_at')
+                        ->orderByDesc('likes_count')
+                        ->withPaginated();
 
             return array_merge($data, [
                 'status' => 200,
