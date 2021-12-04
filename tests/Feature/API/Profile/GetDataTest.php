@@ -110,7 +110,7 @@ test('Should return the paginated list of liked posts', function() use ($postBod
     $this->user->likedPosts()->sync($likedIds);
 
     $this->response
-        ->getJson(route('profile.get.likes.posts', [
+        ->getJson(route('profile.likes.posts', [
             'user' => $this->user->username,
             'page' => 1,
         ]))
@@ -123,7 +123,7 @@ test('Should return the paginated list of liked posts', function() use ($postBod
         ]));
 
     $this->response
-        ->getJson(route('profile.get.likes.posts', [
+        ->getJson(route('profile.likes.posts', [
             'user' => $this->user->username,
             'page' => 2,
         ]))
@@ -143,7 +143,7 @@ test('Should return the paginated list of liked comments', function() use ($comm
     $this->user->likedComments()->sync($likedIds);
 
     $this->response
-        ->getJson(route('profile.get.likes.comments', [
+        ->getJson(route('profile.likes.comments', [
             'user' => $this->user->username,
             'page' => 1,
         ]))
@@ -156,7 +156,7 @@ test('Should return the paginated list of liked comments', function() use ($comm
         ]));
 
     $this->response
-        ->getJson(route('profile.get.likes.comments', [
+        ->getJson(route('profile.likes.comments', [
             'user' => $this->user->username,
             'page' => 2,
         ]))
@@ -178,14 +178,9 @@ test('Should return the paginated list of comments', function() use ($userBody, 
             'page' => 1,
         ]))
         ->assertOk()
-        ->assertJsonCount(1, 'items')
+        ->assertJsonCount(7, 'items')
         ->assertJsonStructure([
-            'items' => [
-                '*' => array_merge($postBody, [
-                    'user' => $userBody,
-                    'comments' => ['*' => $commentBody],
-                ])
-            ],
+            'items' => ['*' => $commentBody],
             'has_more',
             'next_offset'
         ]);
@@ -197,7 +192,7 @@ test('Should return the paginated list of bookmarked posts', function() use ($po
     $this->user->bookmarks()->sync($bookmarkedIds);
 
     $this->response
-        ->getJson(route('profile.get.bookmarks', [
+        ->getJson(route('profile.bookmarks', [
             'user' => $this->user->username,
             'page' => 1,
         ]))
@@ -210,7 +205,7 @@ test('Should return the paginated list of bookmarked posts', function() use ($po
         ]));
 
     $this->response
-        ->getJson(route('profile.get.bookmarks', [
+        ->getJson(route('profile.bookmarks', [
             'user' => $this->user->username,
             'page' => 2,
         ]))

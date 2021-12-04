@@ -73,18 +73,7 @@ test('Should return an auth token if successful', function() {
         'password' => 'P@ssword123'
     ])
         ->assertOk()
-        ->assertJsonStructure([
-            'user' => [
-                'slug',
-                'name',
-                'username',
-                'gender',
-                'image_url'
-            ],
-            'token',
-            'message',
-            'status',
-        ]);
+        ->assertJsonStructure(['token', 'message', 'status']);
 
     Event::assertDispatched(fn(Login $event) => $event->user->slug === $user->slug);
 });

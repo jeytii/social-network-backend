@@ -41,7 +41,10 @@ test('Should throw an error for entering the current phone number', function() {
             'password' => 'P@ssword123',
         ])
         ->assertStatus(422)
-        ->assertJsonPath('errors.phone_number', ['Phone number already taken.']);
+        ->assertJsonPath('errors.phone_number', [
+            'Please enter a phone number other than your current one.',
+            'Phone number is already owned by someone else.',
+        ]);
 
     $this->assertDatabaseMissing('settings_updates', [
         'user_id' => $this->user->id,
