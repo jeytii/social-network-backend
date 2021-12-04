@@ -26,7 +26,6 @@ class UserRequest extends FormRequest
      */
     public function rules()
     {
-        $passwordRule = Password::min(8)->mixedCase()->numbers()->symbols();
         $minDate = now()->subCentury()->format('Y-m-d');
         $maxDate = now()->subYears(18)->format('Y-m-d');
         $minNameLength = config('validation.min_lengths.name');
@@ -58,7 +57,7 @@ class UserRequest extends FormRequest
                 'phone_number' => ['required', 'regex:' . $phoneNumberFormat, new UniquePhoneNumber],
                 'gender' => ['required', 'in:Male,Female'],
                 'birth_date' => $birthDateRule,
-                'password' => ['required', $passwordRule],
+                'password' => ['required', Password::defaults()],
                 'password_confirmation' => ['required', 'same:password'],
                 'method' => ['required', 'in:email,sms'],
             ];
@@ -97,7 +96,7 @@ class UserRequest extends FormRequest
         if ($this->routeIs('settings.change.password')) {
             return [
                 'current_password' => ['required', 'current_password'],
-                'new_password' => ['required', $passwordRule, new NotCurrentPassword],
+                'new_password' => ['required', Password::defaults(), new NotCurrentPassword],
                 'new_password_confirmation' => ['required', 'same:new_password'],
             ];
         }

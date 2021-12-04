@@ -29,8 +29,6 @@ class AuthRequest extends FormRequest
      */
     public function rules()
     {
-        $passwordRule = Password::min(config('validation.min_lengths.password'))->mixedCase()->numbers()->symbols();
-
         if ($this->routeIs('auth.login')) {
             return [
                 'username' => ['required'],
@@ -66,7 +64,7 @@ class AuthRequest extends FormRequest
                     new PasswordResetEmailAddress($this->input('token')),
                     new VerifiedEmailAddress,
                 ],
-                'password' => ['required', $passwordRule],
+                'password' => ['required', Password::defaults()],
                 'password_confirmation' => ['required', 'same:password'],
                 'token' => ['required', 'string'],
             ];
