@@ -37,7 +37,7 @@ class PostAndCommentRequest extends FormRequest
         if ($this->routeIs('posts.update')) {
             return [
                 'body' => array_merge($body, [
-                    new CurrentValue('posts', $this->query('post'))
+                    new CurrentValue($this->route('post'))
                 ])
             ];
         }
@@ -52,7 +52,7 @@ class PostAndCommentRequest extends FormRequest
         if ($this->routeIs('comments.update')) {
             return [
                 'body' => array_merge($body, [
-                    new CurrentValue('comments', $this->query('comment'))
+                    new CurrentValue($this->route('comment'))
                 ])
             ];
         }

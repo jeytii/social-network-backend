@@ -2,6 +2,7 @@
 
 namespace App\Rules;
 
+use App\Models\{Post, Comment};
 use Illuminate\Contracts\Validation\Rule;
 
 class CurrentValue implements Rule
@@ -9,14 +10,12 @@ class CurrentValue implements Rule
     /**
      * Create a new rule instance.
      *
-     * @param string  $relationship
-     * @param string  $slug
+     * @param Post|Comment  $model
      * @return void
      */
-    public function __construct(string $relationship, string $slug)
+    public function __construct(Post|Comment $model)
     {
-        $this->relationship = $relationship;
-        $this->slug = $slug;
+        $this->model = $model;
     }
 
     /**
@@ -28,9 +27,7 @@ class CurrentValue implements Rule
      */
     public function passes($attribute, $value)
     {
-        $data = auth()->user()->{$this->relationship}()->firstWhere('slug', $this->slug);
-
-        return $data->body === $value;
+        return $this->model->body !== $value;
     }
 
     /**
