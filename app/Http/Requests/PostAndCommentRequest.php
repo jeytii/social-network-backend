@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use App\Rules\CurrentValue;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class PostAndCommentRequest extends FormRequest
 {
@@ -45,10 +44,7 @@ class PostAndCommentRequest extends FormRequest
 
         if ($this->routeIs('comments.store')) {
             return [
-                'post' => [
-                    'required',
-                    Rule::exists('posts', 'slug'),
-                ],
+                'post' => ['required', 'exists:posts,slug'],
                 'body' => $body,
             ];
         }
