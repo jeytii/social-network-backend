@@ -116,7 +116,7 @@ class CommentController extends Controller
     {
         $this->authorize('dislike', $comment);
 
-        $response = $this->commentService->dislikeComment($request->user(), $comment->id);
+        $response = $this->commentService->dislikeComment($request->user(), $comment);
 
         return response()->json($response, $response['status']);
     }
