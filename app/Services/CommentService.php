@@ -157,7 +157,10 @@ class CommentService
                 $comment->user->notify(new NotifyUponAction($liker, $actionType, "/posts/{$comment->post->slug}"));
             });
 
-            return ['status' => 200];
+            return [
+                'status' => 200,
+                'data' => $comment->likers()->count(),
+            ];
         }
         catch (Exception $exception) {
             return [
@@ -171,13 +174,16 @@ class CommentService
      * Dislike a comment.
      * 
      * @param \App\Models\User  $user
-     * @param string  $commentId
+     * @param \App\Models\Comment  $comment
      * @return array
      */
-    public function dislikeComment(User $user, string $commentId): array
+    public function dislikeComment(User $user, Comment $comment): array
     {
-        $user->likedComments()->detach($commentId);
+        $user->likedComments()->detach($comment);
 
-        return ['status' => 200];
+        return [
+            'status' => 200,
+            'data' => $comment->likers()->count(),
+        ];
     }
 }
