@@ -52,21 +52,6 @@ test('Should successfully create a post', function() {
         ]);
 });
 
-test('Should notify the mentioned users upon successfully creating a post', function() {
-    Notification::fake();
-
-    $usernames = User::where('id', '!=', $this->user->id)->limit(3)->pluck('username');
-    $body = $usernames->map(fn($username) => '@' . $username)
-                    ->merge('@' . $this->user->username)
-                    ->join(', ');
-    
-    $this->response
-        ->postJson(route('posts.store'), compact('body'))
-        ->assertCreated();
-
-    Notification::assertTimesSent(3, NotifyUponAction::class);
-});
-
 test('Should successfully update a post', function() {
     $slug = $this->user->posts()->first()->slug;
 

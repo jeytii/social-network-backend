@@ -12,9 +12,7 @@ class Notification extends DatabaseNotification
     const FOLLOWED = 1;
     const LIKED_POST = 2;
     const LIKED_COMMENT = 3;
-    const MENTIONED_ON_POST = 4;
-    const MENTIONED_ON_COMMENT = 5;
-    const COMMENTED_ON_POST = 6;
+    const COMMENTED_ON_POST = 4;
 
     /**
      * The "type" of the primary key ID.

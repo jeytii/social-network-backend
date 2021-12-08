@@ -81,30 +81,6 @@ test('Should successfully create a comment', function() {
     );
 });
 
-test('Should notify the mentioned users along with OP upon commenting', function() {
-    Notification::fake();
-
-    $user = User::has('posts')->firstWhere('id', '!=', $this->user->id);
-    $slug = $user->posts()->first()->slug;
-    $exceptionIds = [$this->user->id, $user->id];
-    $usernames = User::whereNotIn('id', $exceptionIds)->limit(3)->pluck('username');
-    $body = $usernames->map(fn($username) => '@' . $username)
-                    ->merge([
-                        '@' . $this->user->username,
-                        '@' . $user->username,
-                    ])
-                    ->join(', ');
-    
-    $this->response
-        ->postJson(route('comments.store'), [
-            'post' => $slug,
-            'body' => $body,
-        ])
-        ->assertCreated();
-
-    Notification::assertTimesSent(4, NotifyUponAction::class);
-});
-
 test('Should successfully update a comment', function() {
     $comment = $this->user->comments()->first();
 

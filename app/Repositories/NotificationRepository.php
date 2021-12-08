@@ -28,16 +28,6 @@ class NotificationRepository
             $message = "{$data->user['name']} liked your comment.";
         }
 
-        if ($data->action === Notification::MENTIONED_ON_POST) {
-            $pronoun = $data->user['gender'] === 'Male' ? 'his' : 'her';
-            $message = "{$data->user['name']} mentioned you on {$pronoun} post.";
-        }
-
-        if ($data->action === Notification::MENTIONED_ON_COMMENT) {
-            $pronoun = $data->user['gender'] === 'Male' ? 'his' : 'her';
-            $message = "{$data->user['name']} mentioned you on {$pronoun} comment.";
-        }
-
         if ($data->action === Notification::COMMENTED_ON_POST) {
             $message = "{$data->user['name']} commented on your post.";
         }

@@ -4,8 +4,7 @@ namespace App\Services;
 
 use App\Models\{User, Post, Comment, Notification as NotificationModel};
 use Illuminate\Http\Request;
-use Illuminate\Support\{Collection, Str};
-use Illuminate\Support\Facades\{DB, Notification};
+use Illuminate\Support\Facades\DB;
 use App\Notifications\NotifyUponAction;
 use Exception;
 
@@ -25,31 +24,6 @@ class CommentService
     }
 
     /**
-     * Get all mentioned users in the comment body.
-     * 
-     * @param string  $body
-     * @return \Illuminate\Support\Collection
-     */
-    private function getMentionedUsers(string $body): Collection
-    {
-        $mentions = Str::of($body)->matchAll('/@[a-zA-Z0-9_]+/');
-
-        if (!$mentions->count()) {
-            return collect([]);
-        }
-
-        $usernames = $mentions->unique()->reduce(function($list, $mention) {
-            if ($mention !== '@' . auth()->user()->username) {
-                array_push($list, Str::replace('@', '', $mention));
-            }
-
-            return $list;
-        }, []);
-        
-        return User::whereIn('username', $usernames)->get();
-    }
-
-    /**
      * Create a comment.
      * 
      * @param \Illuminate\Http\Request  $request
@@ -59,34 +33,16 @@ class CommentService
     public function createComment(Request $request): array
     {
         $post = Post::firstWhere('slug', $request->input('post'));
-        $mentionedUsers = $this->getMentionedUsers($request->input('body'));
         $user = $request->user();
 
         try {
-            $comment = DB::transaction(function() use ($request, $user, $post, $mentionedUsers) {
+            $comment = DB::transaction(function() use ($request, $user, $post) {
                 $comment = $user->comments()->create([
                                 'post_id' => $post->id,
                                 'body' => $request->input('body')
                             ]);
-    
-                if (!$mentionedUsers->count() || !$mentionedUsers->contains('username', $post->user->username)) {
-                    $post->user->notify($this->notifyOnComment(
-                        $user,
-                        NotificationModel::COMMENTED_ON_POST,
-                        $request->input('post')
-                    ));
-                }
 
-                if ($mentionedUsers->count()) {
-                    Notification::send(
-                        $mentionedUsers,
-                        $this->notifyOnComment(
-                            $user,
-                            NotificationModel::MENTIONED_ON_COMMENT,
-                            $request->input('post')
-                        )
-                    );
-                }
+                new NotifyUponAction($user, NotificationModel::COMMENTED_ON_POST, "/posts/{$post->slug}");
 
                 return Comment::find($comment->id);
             });
