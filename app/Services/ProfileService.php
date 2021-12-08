@@ -37,13 +37,14 @@ class ProfileService
                     'height' => 200,
                     'crop' => 'fill',
                     'aspect_ratio' => 1.0,
+                    'radius' => 'max',
                 ]
             ]
         );
 
         return [
             'status' => 200,
-            'data' => $image['eager'][0]['secure_url'],
+            'data' => $image['public_id'],
         ];
     }
 
