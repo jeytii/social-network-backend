@@ -44,9 +44,14 @@ class UserRepository
      */
     public function getAuthUser(Request $request): array
     {
+        $user = $request->user()->only(array_merge(config('api.response.user.basic'), ['email', 'phone_number', 'bio']));
+        $birthdate = $request->user()->birth_date->format('Y-m-d');
+
         return [
             'status' => 200,
-            'data' => $request->user()->only(array_merge(config('api.response.user.basic'), ['email', 'phone_number'])),
+            'data' => array_merge($user, [
+                'birth_date' => $birthdate,
+            ]),
         ];
     }
 
