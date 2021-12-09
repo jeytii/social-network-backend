@@ -40,6 +40,7 @@ test('Should return a paginated list of notifications', function() {
         ->assertJsonStructure([
             'items' => [
                 '*' => [
+                    'slug',
                     'user' => ['name', 'gender', 'image_url'],
                     'message',
                     'action',
