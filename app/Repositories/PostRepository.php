@@ -18,7 +18,6 @@ class PostRepository
         $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
         $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
                     ->orderByDesc('created_at')
-                    ->orderByDesc('likes_count')
                     ->withPaginated();
 
         return array_merge($data, [

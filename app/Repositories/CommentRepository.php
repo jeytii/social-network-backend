@@ -20,7 +20,6 @@ class CommentRepository
         try {
             $post = Post::where('slug', $request->query('post'))->firstOrFail();
             $data = $post->comments()
-                        ->orderByDesc('created_at')
                         ->orderByDesc('likes_count')
                         ->withPaginated();
 
