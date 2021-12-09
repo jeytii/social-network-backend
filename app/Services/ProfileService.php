@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Carbon\Carbon;
 use Cloudinary\Cloudinary;
 
 class ProfileService
@@ -57,12 +57,15 @@ class ProfileService
     public function update(Request $request): array
     {
         if (empty($request->input('image_url')) && !is_null($request->user()->image_url)) {
-            $id = (string) Str::of($request->user()->image_url)->match('/social\/\w+/');
-
-            $this->cloudinary->uploadApi()->destroy($id);
+            $this->cloudinary->uploadApi()->destroy($request->user()->image_url);
         }
 
-        $request->user()->update($request->only(['name', 'birth_date', 'bio', 'image_url']));
+        $body = $request->only(['name', 'bio', 'image_url']);
+        $birthDate = Carbon::parse($request->input('birth_date'));
+
+        $request->user()->update(array_merge($body, [
+            'birth_date' => $birthDate
+        ]));
 
         return ['status' => 200];
     }
