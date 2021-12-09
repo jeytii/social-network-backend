@@ -3,8 +3,9 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\{DB, Hash};
+use Illuminate\Auth\Events\PasswordReset;
 use Exception;
 
 class SettingService
@@ -48,10 +49,15 @@ class SettingService
                     'user_id' => auth()->id(),
                     'type' => $column,
                 ]);
-        
-                $request->user()->update([
-                    $column => $request->input($column)
-                ]);
+
+                if ($column === 'username') {
+                    $request->user()->update([$column => $request->input($column)]);
+                }
+
+                if ($column === 'phone_number') {
+                    $phoneNumber = (string) Str::of($request->input($column))->replaceMatches('/^0?9/', '639');
+                    $request->user()->update([$column => $phoneNumber]);
+                }
             });
     
             return ['status' => 200];
