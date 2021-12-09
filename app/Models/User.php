@@ -104,13 +104,6 @@ class User extends Authenticatable implements MustVerifyEmail
             $user->setAttribute('birth_date', Carbon::parse($user->birth_date));
             $user->phone_number = $formattedPhoneNumber;
         });
-        
-        static::updating(function ($user) {
-            $formattedPhoneNumber = (string) Str::of($user->phone_number)->replaceMatches('/^0?9/', '639');
-            
-            $user->setAttribute('birth_date', Carbon::parse($user->birth_date));
-            $user->phone_number = $formattedPhoneNumber;
-        });
     }
 
     // =============================
@@ -137,8 +130,12 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeFirstWithBasicOnly(Builder $query)
     {
-        return $query->first(array_merge(config('api.response.user.basic'), ['id', 'email', 'phone_number']))
-                    ->setHidden(['id', 'is_followed', 'is_self']);
+        return $query->first(
+                    array_merge(
+                        config('api.response.user.basic'),
+                        ['id', 'email', 'phone_number']
+                    )
+                )->setHidden(['id', 'is_followed', 'is_self']);
     }
 
     // =============================
@@ -280,6 +277,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function notifications(): MorphMany
     {
-        return $this->morphMany(Notification::class, 'notifiable')->orderBy('created_at', 'desc');
+        return $this->morphMany(Notification::class, 'notifiable')->orderByDesc('created_at');
     }
 }
