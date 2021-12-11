@@ -173,9 +173,11 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getIsFollowedAttribute(): bool|null
     {
-        return $this->is_self ?
-                null :
-                (bool) $this->following()->find($this->id);
+        if ($this->is_self) {
+            return null;
+        }
+
+        return (bool) $this->followers()->find(auth()->id());
     }
 
     // =============================
