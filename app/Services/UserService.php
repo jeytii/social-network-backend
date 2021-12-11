@@ -3,8 +3,9 @@
 namespace App\Services;
 
 use App\Models\{User, Notification};
-use Illuminate\Support\Facades\DB;
 use App\Notifications\NotifyUponAction;
+use App\Events\NotifyUser;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class UserService
@@ -27,6 +28,8 @@ class UserService
 
                 $followedUser->notify(new NotifyUponAction($follower, $actionType, "/{$followedUser->username}"));
             });
+
+            broadcast(new NotifyUser($followedUser));
 
             return ['status' => 200];
         }
