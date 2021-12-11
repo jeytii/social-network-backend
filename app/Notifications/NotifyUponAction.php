@@ -5,18 +5,12 @@ namespace App\Notifications;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\DatabaseMessage;
 
 class NotifyUponAction extends Notification
 {
     use Queueable;
-
-    public $user;
-
-    public $action;
-
-    public $path;
 
     /**
      * Create a new notification instance.
@@ -41,7 +35,7 @@ class NotifyUponAction extends Notification
      */
     public function via($notifiable)
     {
-        return ['database', 'broadcast'];
+        return ['database'];
     }
 
     /**
@@ -52,33 +46,10 @@ class NotifyUponAction extends Notification
      */
     public function toDatabase($notifiable)
     {
-        return [
+        return new DatabaseMessage([
             'user' => $this->user->only(['name', 'gender', 'image_url']),
             'action' => $this->action,
             'path' => $this->path,
-        ];
-    }
-
-    /**
-     * Get the broadcastable representation of the notification.
-     *
-     * @param  mixed  $notifiable
-     * @return BroadcastMessage
-     */
-    public function toBroadcast($notifiable)
-    {
-        return new BroadcastMessage([
-            'count' => $notifiable->notifications()->whereNull('peeked_at')->count()
         ]);
-    }
-
-    /**
-     * Get the type of the notification being broadcast.
-     *
-     * @return string
-     */
-    public function broadcastType()
-    {
-        return 'action.notification';
     }
 }
