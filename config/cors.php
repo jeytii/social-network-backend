@@ -23,7 +23,8 @@ return [
         'verify/resend',
         'forgot-password',
         'reset-password',
-        'sanctum/csrf-cookie'
+        'sanctum/csrf-cookie',
+        'broadcasting/auth',
     ],
 
     'allowed_methods' => ['*'],
