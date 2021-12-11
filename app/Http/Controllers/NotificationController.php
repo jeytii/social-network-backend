@@ -42,6 +42,19 @@ class NotificationController extends Controller
         return response()->json($response, $response['status']);
     }
 
+     /**
+     * Get the number of new notifications.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCount(Request $request)
+    {
+        $response = $this->notificationRepository->getCount($request->user());
+
+        return response()->json($response, $response['status']);
+    }
+
     /**
      * Peek at newly received notifications.
      * 

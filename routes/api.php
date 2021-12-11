@@ -74,6 +74,7 @@ Route::prefix('settings')->name('settings.')->group(function() {
 
 Route::prefix('notifications')->name('notifications.')->group(function() {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::get('/count', [NotificationController::class, 'getCount'])->name('count');
     Route::put('/peek', [NotificationController::class, 'peek'])->name('peek');
     Route::put('/{notification}/read', [NotificationController::class, 'read'])->name('read');
     Route::put('/read/all', [NotificationController::class, 'readAll'])->name('read.all');
