@@ -15,7 +15,7 @@
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
         "nexmo/laravel": "^2.4",
-        "pusher/pusher-php-server": "^7.0"
+        "pusher/pusher-php-server": "^7.0.2"
     },
     "require-dev": {
         "facade/ignition": "^2.5",
