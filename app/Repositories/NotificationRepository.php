@@ -2,42 +2,10 @@
 
 namespace App\Repositories;
 
-use App\Models\{User, Notification};
+use App\Models\User;
 
 class NotificationRepository
 {
-    /**
-     * Format a notification
-     * 
-     * @param mixed  $data
-     * @return \App\Models\Notification
-     */
-    private function formatNotification($data): Notification
-    {
-        $message = null;
-
-        if ($data->action === Notification::FOLLOWED) {
-            $message = "{$data->user['name']} followed you.";
-        }
-        
-        if ($data->action === Notification::LIKED_POST) {
-            $message = "{$data->user['name']} liked your post.";
-        }
-
-        if ($data->action === Notification::LIKED_COMMENT) {
-            $message = "{$data->user['name']} liked your comment.";
-        }
-
-        if ($data->action === Notification::COMMENTED_ON_POST) {
-            $message = "{$data->user['name']} commented on your post.";
-        }
-
-        $data->message = $message;
-        $data->path = config('app.client_url') . $data->path;
-
-        return $data;
-    }
-
     /**
      * Get the paginated notifications.
      * 
@@ -46,14 +14,26 @@ class NotificationRepository
      */
     public function get(User $user): array
     {
-        $notifications = $user->notifications()->withPaginated();
-        $items = array_map([$this, 'formatNotification'], $notifications['items']);
+        $data = $user->notifications()->withPaginated();
+
+        return array_merge($data, [
+            'status' => 200,
+        ]);
+    }
+
+    /**
+     * Get the number of new notifications.
+     * 
+     * @param \App\Models\User  $user
+     * @return array
+     */
+    public function getCount(User $user): array
+    {
+        $data = $user->notifications()->whereNull('peeked_at')->count();
 
         return [
-            'items' => $items,
-            'has_more' => $notifications['has_more'],
-            'next_offset' => $notifications['next_offset'],
             'status' => 200,
+            'data' => $data,
         ];
     }
 }
