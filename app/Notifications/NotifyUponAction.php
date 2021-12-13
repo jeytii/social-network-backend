@@ -3,12 +3,13 @@
 namespace App\Notifications;
 
 use App\Models\User;
-use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Notifications\Messages\{DatabaseMessage, BroadcastMessage};
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\DatabaseMessage;
+use Illuminate\Bus\Queueable;
 
-class NotifyUponAction extends Notification
+class NotifyUponAction extends Notification implements ShouldBroadcast
 {
     use Queueable;
 
@@ -17,14 +18,14 @@ class NotifyUponAction extends Notification
      *
      * @param \App\Models\User  $user
      * @param int  $action
-     * @param string  $path
+     * @param string  $url
      * @return void
      */
-    public function __construct(User $user, int $action, string $path)
+    public function __construct(User $user, int $action, string $url)
     {
         $this->user = $user;
         $this->action = $action;
-        $this->path = $path;
+        $this->url = $url;
     }
 
     /**
@@ -35,7 +36,7 @@ class NotifyUponAction extends Notification
      */
     public function via($notifiable)
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     /**
@@ -49,7 +50,23 @@ class NotifyUponAction extends Notification
         return new DatabaseMessage([
             'user' => $this->user->only(['name', 'gender', 'image_url']),
             'action' => $this->action,
-            'path' => $this->path,
+            'url' => $this->url,
+        ]);
+    }
+
+    /**
+     * Get the broadcastable representation of the notification.
+     *
+     * @param  mixed  $notifiable
+     * @return BroadcastMessage
+     */
+    public function toBroadcast($notifiable)
+    {
+        $notifications = $notifiable->notifications();
+
+        return new BroadcastMessage([
+            'count' => $notifications->whereNull('peeked_at')->count(),
+            'data' => $notifications->first(),
         ]);
     }
 }
