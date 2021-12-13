@@ -38,11 +38,15 @@ class CommentService
         try {
             $comment = DB::transaction(function() use ($request, $user, $post) {
                 $comment = $user->comments()->create([
-                                'post_id' => $post->id,
-                                'body' => $request->input('body')
-                            ]);
+                    'post_id' => $post->id,
+                    'body' => $request->input('body')
+                ]);
 
-                new NotifyUponAction($user, NotificationModel::COMMENTED_ON_POST, "/posts/{$post->slug}");
+                $post->user->notify(new NotifyUponAction(
+                    $user,
+                    NotificationModel::COMMENTED_ON_POST,
+                    "/posts/{$post->slug}"
+                ));
 
                 return Comment::find($comment->id);
             });
@@ -106,11 +110,13 @@ class CommentService
     {
         try {
             DB::transaction(function() use ($liker, $comment) {
-                $actionType = NotificationModel::LIKED_COMMENT;
-
                 $liker->likedComments()->attach($comment);
-                
-                $comment->user->notify(new NotifyUponAction($liker, $actionType, "/posts/{$comment->post->slug}"));
+
+                $comment->user->notify(new NotifyUponAction(
+                    $liker,
+                    NotificationModel::LIKED_COMMENT,
+                    "/posts/{$comment->post->slug}"
+                ));
             });
 
             return [

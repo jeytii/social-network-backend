@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\{User, Notification};
 use App\Notifications\NotifyUponAction;
-use App\Events\NotifyUser;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -22,14 +21,14 @@ class UserService
     {
         try {
             DB::transaction(function() use ($follower, $followedUser) {
-                $actionType = Notification::FOLLOWED;
-
                 $follower->following()->sync([$followedUser->id]);
 
-                $followedUser->notify(new NotifyUponAction($follower, $actionType, "/{$followedUser->username}"));
+                $followedUser->notify(new NotifyUponAction(
+                    $follower,
+                    Notification::FOLLOWED,
+                    "/{$follower->username}"
+                ));
             });
-
-            broadcast(new NotifyUser($followedUser));
 
             return ['status' => 200];
         }

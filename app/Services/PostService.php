@@ -73,11 +73,13 @@ class PostService
     {
         try {
             DB::transaction(function() use ($liker, $post) {
-                $actionType = NotificationModel::LIKED_POST;
-
                 $liker->likedPosts()->attach($post);
                 
-                $post->user->notify(new NotifyUponAction($liker, $actionType, "/posts/{$post->slug}"));
+                $post->user->notify(new NotifyUponAction(
+                    $liker,
+                    NotificationModel::LIKED_POST,
+                    "/posts/{$post->slug}"
+                ));
             });
 
             return [
