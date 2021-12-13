@@ -53,7 +53,7 @@ class Notification extends DatabaseNotification
     protected $appends = [
         'user',
         'message',
-        'path',
+        'url',
         'is_read',
     ];
 
@@ -85,19 +85,19 @@ class Notification extends DatabaseNotification
         $message = null;
 
         if ($this->data['action'] === self::FOLLOWED) {
-            $message = "{$this->data['user']['name']} followed you.";
+            $message = "followed you.";
         }
         
         if ($this->data['action'] === self::LIKED_POST) {
-            $message = "{$this->data['user']['name']} liked your post.";
+            $message = "liked your post.";
         }
 
         if ($this->data['action'] === self::LIKED_COMMENT) {
-            $message = "{$this->data['user']['name']} liked your comment.";
+            $message = "liked your comment.";
         }
 
         if ($this->data['action'] === self::COMMENTED_ON_POST) {
-            $message = "{$this->data['user']['name']} commented on your post.";
+            $message = "commented on your post.";
         }
 
         return $message;
@@ -128,8 +128,8 @@ class Notification extends DatabaseNotification
      *
      * @return string
      */
-    public function getPathAttribute()
+    public function getUrlAttribute()
     {
-        return config('app.client_url') . $this->data['path'];
+        return config('app.client_url') . $this->data['url'];
     }
 }
