@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\{Route, Broadcast};
 use App\Http\Controllers\{
     AuthController,
     UserController,
@@ -21,6 +21,8 @@ use App\Http\Controllers\{
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Broadcast::routes();
 
 Route::prefix('users')->name('users.')->group(function() {
     Route::get('/', [UserController::class, 'index'])->name('index');
@@ -81,3 +83,4 @@ Route::prefix('notifications')->name('notifications.')->group(function() {
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
+
