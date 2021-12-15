@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Notifications\DatabaseNotification;
 use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Notifications\DatabaseNotification;
 
 class Notification extends DatabaseNotification
 {
@@ -13,20 +14,6 @@ class Notification extends DatabaseNotification
     const LIKED_POST = 2;
     const LIKED_COMMENT = 3;
     const COMMENTED_ON_POST = 4;
-
-    /**
-     * The "type" of the primary key ID.
-     *
-     * @var string
-     */
-    protected $keyType = 'string';
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     *
-     * @var bool
-     */
-    public $incrementing = false;
     
     /**
      * The attributes that should be hidden for arrays.
@@ -82,25 +69,29 @@ class Notification extends DatabaseNotification
      */
     public function getMessageAttribute(): string|null
     {
-        $message = null;
+        $data = $this->data;
 
-        if ($this->data['action'] === self::FOLLOWED) {
-            $message = "followed you.";
+        if (is_string($data)) {
+            $data = json_decode($data, true);
+        }
+
+        if ($data['action'] === self::FOLLOWED) {
+            return "followed you.";
         }
         
-        if ($this->data['action'] === self::LIKED_POST) {
-            $message = "liked your post.";
+        if ($data['action'] === self::LIKED_POST) {
+            return "liked your post.";
         }
 
-        if ($this->data['action'] === self::LIKED_COMMENT) {
-            $message = "liked your comment.";
+        if ($data['action'] === self::LIKED_COMMENT) {
+            return "liked your comment.";
         }
 
-        if ($this->data['action'] === self::COMMENTED_ON_POST) {
-            $message = "commented on your post.";
+        if ($data['action'] === self::COMMENTED_ON_POST) {
+            return "commented on your post.";
         }
 
-        return $message;
+        return null;
     }
 
     /**
@@ -110,6 +101,12 @@ class Notification extends DatabaseNotification
      */
     public function getUserAttribute(): array
     {
+        if (is_string($this->data)) {
+            $data = json_decode($this->data, true);
+
+            return $data['user'];
+        }
+
         return $this->data['user'];
     }
 
@@ -130,6 +127,14 @@ class Notification extends DatabaseNotification
      */
     public function getUrlAttribute()
     {
-        return config('app.client_url') . $this->data['url'];
+        $url = config('app.client_url');
+
+        if (is_string($this->data)) {
+            $data = json_decode($this->data, true);
+
+            return $url . $data['url'];
+        }
+
+        return $url . $this->data['url'];
     }
 }
