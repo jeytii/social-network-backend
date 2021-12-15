@@ -11,19 +11,6 @@ use Exception;
 class CommentService
 {
     /**
-     * Make a notification upon commenting.
-     * 
-     * @param \App\Models\User  $notifier
-     * @param int  $notificationType
-     * @param string  $postSlug
-     * @return mixed
-     */
-    private function notifyOnComment(User $notifier, int $notificationType, string $postSlug)
-    {
-        return new NotifyUponAction($notifier, $notificationType, "/posts/{$postSlug}");
-    }
-
-    /**
      * Create a comment.
      * 
      * @param \Illuminate\Http\Request  $request

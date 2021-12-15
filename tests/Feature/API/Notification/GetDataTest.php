@@ -18,7 +18,7 @@ beforeAll(function() {
         'data' => json_encode([
             'user' => $user->only(['name', 'gender', 'image_url']),
             'action' => $action,
-            'path' => '/sample/path',
+            'url' => '/sample/path',
         ]),
     ])->toArray();
 
@@ -43,8 +43,7 @@ test('Should return a paginated list of notifications', function() {
                     'slug',
                     'user' => ['name', 'gender', 'image_url'],
                     'message',
-                    'action',
-                    'path',
+                    'url',
                     'is_read',
                 ]
             ],

@@ -4,9 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\{DB, Hash};
-use Illuminate\Auth\Events\{Login, Registered};
 use App\Notifications\{ResetPassword, SendVerificationCode};
 use Exception;
 
@@ -79,8 +77,6 @@ class AuthService
             ];
         }
 
-        event(new Login('api', $user->firstWithBasicOnly(), true));
-
         return $this->authenticateUser($user->first(), 'Login successful');
     }
 
@@ -92,23 +88,19 @@ class AuthService
      */
     public function register(Request $request): array
     {
+        $body = $request->except('password', 'password_confirmation', 'method');
+        $password = Hash::make($request->input('password'));
+        $token = uniqid();
+        
         try {
-            $url = DB::transaction(function() use ($request) {
-                $body = $request->except('password', 'password_confirmation', 'method');
-                $password = Hash::make($request->input('password'));
+            DB::transaction(function() use ($request, $body, $password, $token) {
                 $user = User::create(array_merge($body, compact('password')));
-                $token = uniqid();
-    
-                event(new Registered($user));
-                
                 $this->sendVerificationCode($user, $request->input('method'), $token);
-
-                return "/verify/{$token}";
             });
     
             return [
                 'status' => 201,
-                'url' => $url,
+                'url' => "/verify/{$token}",
             ];
         }
         catch (Exception $exception) {
@@ -151,9 +143,7 @@ class AuthService
             $response = DB::transaction(function() use ($user) {
                 $user->markEmailAsVerified();
 
-                event(new Login('api', $user->firstWithBasicOnly(), true));
-
-                return $this->authenticateUser($user->first(), 'You have successfully verified your account.');
+                return $this->authenticateUser($user, 'You have successfully verified your account.');
             });
 
             return $response;
@@ -267,10 +257,6 @@ class AuthService
                 DB::table('password_resets')
                     ->where('token', $request->input('token'))
                     ->update(['completed_at' => now()]);
-        
-                event(new PasswordReset($user));
-
-                event(new Login('api', $user->firstWithBasicOnly(), true));
 
                 return $this->authenticateUser($user->first(), 'You have successfully reset your password.');
             });
