@@ -5,12 +5,15 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Messages\NexmoMessage;
+use Illuminate\Notifications\Messages\{MailMessage, NexmoMessage};
 
-class ResetPassword extends Notification
+class ResetPassword extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public $url;
+
+    public $prefersSMS;
 
     /**
      * Create a new notification instance.
@@ -48,7 +51,7 @@ class ResetPassword extends Notification
                     ->from(config('app.email'))
                     ->subject('Request to reset password')
                     ->markdown('password.reset', [
-                        'name' => $notifiable->username,
+                        'name' => $notifiable->name,
                         'url' => $this->url,
                     ]);
     }
@@ -65,7 +68,7 @@ class ResetPassword extends Notification
         $minutesLeft = config('validation.expiration.password_reset');
 
         return (new NexmoMessage)
-            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. Your password-reset link is {$this->url}. You only have {$minutesLeft} minutes to reset your password. Otherwise, do another request.")
+            ->content("Hi {$notifiable->name}! Thank you for using {$appName}. Your password-reset link is {$this->url}. You only have {$minutesLeft} minutes to reset your password.")
             ->from($appName);
     }
 }

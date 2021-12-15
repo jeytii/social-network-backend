@@ -9,7 +9,7 @@ You just recently registered a {{ config('app.name') }} account and chose to ver
 Verify my account
 @endcomponent
 
-You only have <b>{{ config('validation.expiration.verification') }} minutes</b> to verify your account. Otherwise, request for another verification code.
+You only have <b>{{ config('validation.expiration.verification') }} minutes</b> to verify your account.
 
 Regards,<br>
 {{ config('app.name') }}

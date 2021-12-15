@@ -7,7 +7,7 @@ You have requested to reset your forgotten password. Please click the button bel
 Reset my password
 @endcomponent
 
-You only have <b>{{ config('validation.expiration.password_reset') }} minutes</b> to reset your password. Otherwise, do another request.
+You only have <b>{{ config('validation.expiration.password_reset') }} minutes</b> to reset your password.
 
 Regards,<br>
 {{ config('app.name') }}

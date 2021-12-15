@@ -7,9 +7,15 @@ use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\{MailMessage, NexmoMessage};
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class SendVerificationCode extends Notification
+class SendVerificationCode extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    public $code;
+
+    public $method;
+
+    public $url;
 
     /**
      * Create a new notification instance.
@@ -49,7 +55,7 @@ class SendVerificationCode extends Notification
                     ->from(config('app.email'))
                     ->subject('Account verification')
                     ->markdown('email.verification', [
-                        'name' => $notifiable->username,
+                        'name' => $notifiable->name,
                         'code' => $this->code,
                         'url' => $this->url,
                     ]);
@@ -67,7 +73,7 @@ class SendVerificationCode extends Notification
         $minutesLeft = config('validation.expiration.verification');
 
         return (new NexmoMessage)
-            ->content("Hi {$notifiable->username}! Thank you for using {$appName}. Redirect to the link {$this->url}, then enter the verification code {$this->code}. You only have {$minutesLeft} minutes to verify your account. Otherwise, request for another verification code.")
+            ->content("Hi {$notifiable->name}! Thank you for using {$appName}. Redirect to the link {$this->url}, then enter the verification code {$this->code}. You only have {$minutesLeft} minutes to verify your account.")
             ->from($appName);
     }
 }
