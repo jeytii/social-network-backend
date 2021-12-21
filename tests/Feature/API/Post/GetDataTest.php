@@ -9,11 +9,13 @@ beforeAll(function() {
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
+    
     DB::table('users')->truncate();
+    DB::table('posts')->truncate();
 });
 
-test('Should return the paginated list of posts from followed users', function() {
-    $followingIds = User::where('id', '!=', $this->user->id)->inRandomOrder()->limit(5)->pluck('id');
+test('Should return the paginated list of own posts and posts from followed users', function() {
+    $followingIds = DB::table('users')->where('id', '!=', $this->user->id)->inRandomOrder()->limit(5)->pluck('id');
 
     $this->user->following()->sync($followingIds);
     

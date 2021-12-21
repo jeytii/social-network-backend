@@ -14,6 +14,7 @@ beforeAll(function() {
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
+    
     DB::table('users')->truncate();
 });
 

@@ -12,19 +12,17 @@ afterAll(function() {
     (new self(function() {}, '', []))->setUp();
     
     DB::table('users')->truncate();
+    DB::table('notifications')->truncate();
 });
 
 test('Should successfully follow a user', function() {
-    Notification::fake();
-
     $userToFollow = User::firstWhere('id', '!=', $this->user->id);
+
+    Notification::fake();
     
     $this->response
         ->postJson(route('users.follow', ['user' => $userToFollow->slug]))
         ->assertOk();
-
-    $this->assertTrue((bool) $this->user->following()->find($userToFollow->id));
-    $this->assertTrue((bool) $userToFollow->followers()->find($this->user->id));
 
     Notification::assertSentTo(
         $userToFollow,
@@ -33,22 +31,25 @@ test('Should successfully follow a user', function() {
             $notification->action === NotificationModel::FOLLOWED
         )
     );
+
+    $this->assertTrue($this->user->following()->whereKey($userToFollow->id)->exists());
+    $this->assertTrue($userToFollow->followers()->whereKey($this->user->id)->exists());
 });
 
 test('Should throw an error for following a user that has been already followed', function() {
-    Notification::fake();
-
     // Suppose the auth user already follows another user with the ID of 2 based on the test above.
     $userToFollow = User::firstWhere('id', '!=', $this->user->id);
+
+    Notification::fake();
 
     $this->response
         ->postJson(route('users.follow', ['user' => $userToFollow->slug]))
         ->assertForbidden();
 
-    $this->assertTrue($this->user->following()->where('id', $userToFollow->id)->count() === 1);
-    $this->assertTrue($userToFollow->followers()->where('id', $this->user->id)->count() === 1);
-
     Notification::assertNothingSent();
+    
+    $this->assertTrue($this->user->following()->whereKey($userToFollow->id)->count() === 1);
+    $this->assertTrue($userToFollow->followers()->whereKey($this->user->id)->count() === 1);
 });
 
 test('Should successfully unfollow a user', function() {
@@ -59,8 +60,8 @@ test('Should successfully unfollow a user', function() {
         ->deleteJson(route('users.unfollow', ['user' => $userToUnfollow->slug]))
         ->assertOk();
 
-    $this->assertFalse((bool) $this->user->following()->find($userToUnfollow->id));
-    $this->assertFalse((bool) $userToUnfollow->followers()->find($this->user->id));
+    $this->assertTrue($this->user->following()->whereKey($userToUnfollow->id)->doesntExist());
+    $this->assertTrue($userToUnfollow->followers()->whereKey($this->user->id)->doesntExist());
 });
 
 test('Should throw an error for unfollowing a user that is not followed', function() {
@@ -70,6 +71,6 @@ test('Should throw an error for unfollowing a user that is not followed', functi
         ->deleteJson(route('users.unfollow', ['user' => $userToUnfollow->slug]))
         ->assertForbidden();
 
-    $this->assertFalse((bool) $this->user->following()->find($userToUnfollow->id));
-    $this->assertFalse((bool) $userToUnfollow->followers()->find($this->user->id));
+    $this->assertTrue($this->user->following()->whereKey($userToUnfollow->id)->doesntExist());
+    $this->assertTrue($userToUnfollow->followers()->whereKey($this->user->id)->doesntExist());
 });

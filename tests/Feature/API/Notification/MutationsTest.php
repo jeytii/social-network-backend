@@ -1,28 +1,10 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\NotifyUponAction;
 
 beforeAll(function() {
-    User::factory(3)->create();
-
-    $user = User::firstWhere('id', '!=', User::first()->id);
-    $inserts = collect(range(1, 4))->map(fn($action) => [
-        'id' => Str::uuid(),
-        'slug' => uniqid(),
-        'type' => get_class(new NotifyUponAction($user, $action, '/sample/path')),
-        'notifiable_type' => get_class(new User),
-        'notifiable_id' => User::first()->id,
-        'data' => json_encode([
-            'user' => $user->only(['name', 'gender', 'image_url']),
-            'action' => $action,
-            'path' => '/sample/path',
-        ]),
-    ])->toArray();
-
-    DB::table('notifications')->insert($inserts);
+    User::factory(3)->hasNotifications(3)->create();
 });
 
 afterAll(function() {
@@ -37,10 +19,10 @@ test('Should successfully peek at new notifications', function() {
         ->putJson(route('notifications.peek'))
         ->assertOk();
 
-    $this->assertTrue($this->user->notifications()->where('peeked_at')->count() === 0);
+    $this->assertTrue($this->user->notifications()->whereNull('peeked_at')->count() === 0);
 });
 
-test('Should successfully marked a specific notification as read', function() {
+test('Should successfully mark a specific notification as read', function() {
     $notification = $this->user->notifications()->first()->slug;
 
     $this->response

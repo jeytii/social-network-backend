@@ -2,26 +2,26 @@
 
 use App\Models\{User, Post, Comment};
 use Illuminate\Support\Facades\DB;
-use Illuminate\Foundation\Testing\WithFaker;
-
-uses(WithFaker::class);
 
 beforeAll(function() {
     User::factory(3)->hasPosts(3)->create();
+    
+    Comment::factory(35)
+        ->for(User::first())
+        ->for(Post::first())
+        ->create();
 });
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
+
     DB::table('users')->truncate();
+    DB::table('posts')->truncate();
+    DB::table('comments')->truncate();
 });
 
 test('Should return a paginated list of comments under a specific post', function() {
-    Comment::factory(35)
-        ->for($this->user)
-        ->for(Post::first())
-        ->create();
-
-    $slug = Post::first()->slug;
+    $slug = DB::table('posts')->first()->slug;
     
     $this->response
         ->getJson(route('comments.index', ['post' => $slug, 'page' => 1]))
@@ -46,16 +46,18 @@ test('Should return a paginated list of comments under a specific post', functio
             'next_offset',
             'status',
         ]);
-});
-
-test('Should successfully retrieve more comments upon clicking "show more comments"', function() {
-    // Suppose there's only 15 comments left to be retrieved after the first call based on the test above.
-    $slug = Post::first()->slug;
 
     $this->response
         ->getJson(route('comments.index', ['post' => $slug, 'page' => 2]))
         ->assertOk()
         ->assertJsonCount(15, 'items')
+        ->assertJsonPath('has_more', false)
+        ->assertJsonPath('next_offset', null);
+
+    $this->response
+        ->getJson(route('comments.index', ['post' => $slug, 'page' => 3]))
+        ->assertOk()
+        ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 });
