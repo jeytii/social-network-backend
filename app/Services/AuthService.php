@@ -90,7 +90,7 @@ class AuthService
     {
         $body = $request->except('password', 'password_confirmation', 'method');
         $password = Hash::make($request->input('password'));
-        $token = uniqid();
+        $token = bin2hex(random_bytes(16));
         
         try {
             DB::transaction(function() use ($request, $body, $password, $token) {
@@ -173,7 +173,7 @@ class AuthService
             ];
         }
         
-        $this->sendVerificationCode($user, $request->input('method'), uniqid());
+        $this->sendVerificationCode($user, $request->input('method'), bin2hex(random_bytes(16)));
 
         return [
             'status' => 200,
@@ -205,7 +205,7 @@ class AuthService
         try {
             $type = DB::transaction(function() use ($request, $user, $emailAddress) {
                 $prefersSMS = $request->input('method') === 'sms';
-                $token = uniqid();
+                $token = bin2hex(random_bytes(16));
         
                 DB::table('password_resets')->updateOrInsert(
                     [
