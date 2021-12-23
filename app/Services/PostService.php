@@ -18,8 +18,7 @@ class PostService
      */
     public function createPost(Request $request): array
     {
-        $post = $request->user()->posts()->create($request->only('body'));
-        $data = $request->user()->posts()->find($post->id);
+        $data = $request->user()->posts()->create($request->only('body'))->first();
         
         return [
             'status' => 201,
@@ -36,7 +35,7 @@ class PostService
      */
     public function updatePost(Request $request, Post $post): array
     {
-        if ($post->body === $request->only('body')) {
+        if ($post->body === $request->input('body')) {
             return [
                 'status' => 401,
                 'message' => 'No changes made.',

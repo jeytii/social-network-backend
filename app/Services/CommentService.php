@@ -27,7 +27,7 @@ class CommentService
                 $comment = $user->comments()->create([
                     'post_id' => $post->id,
                     'body' => $request->input('body')
-                ]);
+                ])->first();
 
                 $post->user->notify(new NotifyUponAction(
                     $user,
@@ -35,7 +35,7 @@ class CommentService
                     "/posts/{$post->slug}"
                 ));
 
-                return Comment::find($comment->id);
+                return $comment;
             });
 
             return [
@@ -60,7 +60,7 @@ class CommentService
      */
     public function updateComment(Request $request, Comment $comment): array
     {
-        if ($comment->body === $request->only('body')) {
+        if ($comment->body === $request->input('body')) {
             return [
                 'status' => 401,
                 'message' => 'No changes made.',
