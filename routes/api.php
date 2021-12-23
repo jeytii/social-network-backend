@@ -69,7 +69,6 @@ Route::prefix('settings')->name('settings.')->group(function() {
     Route::prefix('change')->name('change.')->group(function() {
         Route::put('username', [SettingController::class, 'changeUsername'])->name('username');
         Route::put('email', [SettingController::class, 'changeEmailAddress'])->name('email');
-        Route::put('phone', [SettingController::class, 'changePhoneNumber'])->name('phone-number');
         Route::put('password', [SettingController::class, 'changePassword'])->name('password');
     });
 });

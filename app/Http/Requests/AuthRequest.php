@@ -45,14 +45,12 @@ class AuthRequest extends FormRequest
         if ($this->routeIs('auth.verify.resend')) {
             return [
                 'username' => ['required', new ExistsInEmailOrUsername],
-                'method' => ['required', 'in:email,sms'],
             ];
         }
 
         if ($this->routeIs('auth.forgot-password')) {
             return [
                 'email' => ['required', 'email', 'exists:users', new VerifiedEmailAddress],
-                'method' => ['required', 'in:email,sms'],
             ];
         }
 

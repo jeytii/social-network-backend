@@ -29,11 +29,10 @@ class AuthService
      * Generate a verification code for newly created user.
      * 
      * @param \App\Models\User  $user
-     * @param string  $method
      * @param string  $token
      * @return void
      */
-    private function sendVerificationCode(User $user, string $method, string $token)
+    private function sendVerificationCode(User $user, string $token)
     {
         $code = random_int(100000, 999999);
 
@@ -46,7 +45,7 @@ class AuthService
             ]
         );
 
-        $user->notify(new SendVerificationCode($code, $token, $method));
+        $user->notify(new SendVerificationCode($code, $token));
     }
 
     /**
@@ -88,14 +87,14 @@ class AuthService
      */
     public function register(Request $request): array
     {
-        $body = $request->except('password', 'password_confirmation', 'method');
+        $body = $request->except('password', 'password_confirmation');
         $password = Hash::make($request->input('password'));
         $token = bin2hex(random_bytes(16));
         
         try {
             DB::transaction(function() use ($request, $body, $password, $token) {
                 $user = User::create(array_merge($body, compact('password')));
-                $this->sendVerificationCode($user, $request->input('method'), $token);
+                $this->sendVerificationCode($user, $token);
             });
     
             return [
@@ -173,7 +172,7 @@ class AuthService
             ];
         }
         
-        $this->sendVerificationCode($user, $request->input('method'), bin2hex(random_bytes(16)));
+        $this->sendVerificationCode($user, bin2hex(random_bytes(16)));
 
         return [
             'status' => 200,
@@ -203,8 +202,7 @@ class AuthService
         }
 
         try {
-            $type = DB::transaction(function() use ($request, $user, $emailAddress) {
-                $prefersSMS = $request->input('method') === 'sms';
+            DB::transaction(function() use ($request, $user, $emailAddress) {
                 $token = bin2hex(random_bytes(16));
         
                 DB::table('password_resets')->updateOrInsert(
@@ -218,17 +216,12 @@ class AuthService
                     ]
                 );
                 
-                $user->notify(new ResetPassword(
-                    config('app.client_url') . "/reset-password/{$token}",
-                    $prefersSMS
-                ));
-    
-                return $prefersSMS ? 'phone number' : 'email address';
+                $user->notify(new ResetPassword(config('app.client_url') . "/reset-password/{$token}"));
             });
     
             return [
                 'status' => 200,
-                'message' => "Please check for the link that has been sent to your {$type}.",
+                'message' => "Please check for the link that has been sent to your email address.",
             ];
         }
         catch (Exception $exception) {

@@ -45,7 +45,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'name',
         'email',
         'username',
-        'phone_number',
         'gender',
         'birth_date',
         'location',
@@ -97,12 +96,9 @@ class User extends Authenticatable implements MustVerifyEmail
     protected static function booted()
     {
         static::creating(function ($user) {
-            $formattedPhoneNumber = (string) Str::of($user->phone_number)->replaceMatches('/^0?9/', '639');
-
             $user->setAttribute('id', (string) Str::uuid());
             $user->setAttribute('slug', uniqid());
             $user->setAttribute('birth_date', Carbon::parse($user->birth_date));
-            $user->phone_number = $formattedPhoneNumber;
         });
     }
 
@@ -131,10 +127,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeFirstWithBasicOnly(Builder $query)
     {
         return $query->first(
-                    array_merge(
-                        config('api.response.user.basic'),
-                        ['id', 'email', 'phone_number']
-                    )
+                    array_merge(config('api.response.user.basic'), ['id', 'email'])
                 )->setHidden(['id', 'is_followed', 'is_self']);
     }
 
@@ -188,21 +181,6 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return (bool) $this->followers()->find(auth()->id());
-    }
-
-    // =============================
-    // OVERRIDE DEFAULTS
-    // =============================
-
-    /**
-     * Route notifications for the Nexmo channel.
-     *
-     * @param  \Illuminate\Notifications\Notification  $notification
-     * @return string
-     */
-    public function routeNotificationForNexmo($notification)
-    {
-        return $this->phone_number;
     }
 
     // =============================

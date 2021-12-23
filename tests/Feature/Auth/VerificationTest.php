@@ -11,7 +11,7 @@ beforeAll(function() {
 
     DB::table('verifications')->insert([
         'user_id' => $user->id,
-        'token' => uniqid(),
+        'token' => bin2hex(random_bytes(16)),
         'code' => random_int(100000, 999999),
         'expiration' => now()->addMinutes(config('validation.expiration.verification')),
     ]);
@@ -33,47 +33,21 @@ test('Should throw an error if the user is already verified.', function() {
 
     $user = User::factory()->create();
 
-    $this->postJson(route('auth.verify.resend'), [
-        'username' => $user->username,
-        'method' => 'email',
-    ])->assertStatus(409);
+    $this->postJson(route('auth.verify.resend'), $user->only('username'))
+        ->assertStatus(409);
 
     Notification::assertNothingSent();
 });
 
-test('Can enter email address and resend SMS notification', function() {
+test('Can request for another verification code', function() {
+    $user = User::first();
+    
     Notification::fake();
 
-    $user = User::first();
+    $this->postJson(route('auth.verify.resend'), $user->only('username'))
+        ->assertOk();
 
-    $this->postJson(route('auth.verify.resend'), [
-        'username' => $user->username,
-        'method' => 'sms',
-    ])
-    ->assertOk();
-
-    Notification::assertSentTo(
-        $user,
-        SendVerificationCode::class,
-        fn($notification) => $notification->method === 'sms'
-    );
-});
-
-test('Can enter username and resend email notification', function() {
-    Notification::fake();
-
-    $user = User::first();
-
-    $this->postJson(route('auth.verify.resend'), [
-        'username' => $user->username,
-        'method' => 'email',
-    ])->assertOk();
-
-    Notification::assertSentTo(
-        $user,
-        SendVerificationCode::class,
-        fn($notification) => $notification->method === 'email'
-    );
+    Notification::assertSentTo($user, SendVerificationCode::class);
 });
 
 test('Should throw an error for verifying account with invalid verification username or invalid code', function() {
@@ -81,7 +55,8 @@ test('Should throw an error for verifying account with invalid verification user
         'code' => $this->verification->code
     ])->assertOk();
     
-    $this->putJson(route('auth.verify'), ['code' => 123456])->assertStatus(422);
+    $this->putJson(route('auth.verify'), ['code' => 123456])
+        ->assertStatus(422);
 });
 
 test('Should successfully verify account', function() {

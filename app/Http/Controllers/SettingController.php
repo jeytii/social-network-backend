@@ -47,19 +47,6 @@ class SettingController extends Controller
     }
 
     /**
-     * Update the user's phone number.
-     * 
-     * @param \App\Http\Requests\UserRequest  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function changePhoneNumber(UserRequest $request)
-    {
-        $response = $this->settings->changeColumn($request, 'phone_number');
-
-        return response()->json($response, $response['status']);
-    }
-
-    /**
      * Update the user's password.
      * 
      * @param \App\Http\Requests\UserRequest  $request

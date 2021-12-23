@@ -2,8 +2,7 @@
 
 use App\Models\User;
 use App\Notifications\SendVerificationCode;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\{DB, Event, Notification};
+use Illuminate\Support\Facades\{DB, Notification};
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
@@ -11,7 +10,6 @@ afterAll(function() {
 });
 
 test('Should throw an error if passwords don\'t match', function() {
-    Event::fake([Registered::class]);
     Notification::fake();
     
     $this->postJson(route('auth.register'), [
@@ -21,12 +19,10 @@ test('Should throw an error if passwords don\'t match', function() {
         ->assertStatus(422)
         ->assertJsonPath('errors.password_confirmation', ['Does not match with the password above.']);
     
-    Event::assertNothingDispatched();
     Notification::assertNothingSent();
 });
 
 test('Should throw an error if the character length is less than minimum', function() {
-    Event::fake([Registered::class]);
     Notification::fake();
     
     $this->postJson(route('auth.register'), [
@@ -40,12 +36,10 @@ test('Should throw an error if the character length is less than minimum', funct
             'errors' => ['name', 'username', 'password']
         ]);
 
-    Event::assertNothingDispatched();
     Notification::assertNothingSent();
 });
 
 test('Should throw an error if the character length is out of range', function() {
-    Event::fake([Registered::class]);
     Notification::fake();
     
     $this->postJson(route('auth.register'), [
@@ -54,12 +48,10 @@ test('Should throw an error if the character length is out of range', function()
         ->assertStatus(422)
         ->assertJsonPath('errors.username', ['Username must be between 6 and 30 characters long.']);
 
-    Event::assertNothingDispatched();
     Notification::assertNothingSent();
 });
 
 test('Should throw an error is user already exists', function() {
-    Event::fake([Registered::class]);
     Notification::fake();
     
     $user = User::factory()->create([
@@ -72,12 +64,10 @@ test('Should throw an error is user already exists', function() {
         ->assertJsonPath('errors.email', ['Email address already taken.'])
         ->assertJsonPath('errors.username', ['Username already taken.']);
 
-    Event::assertNothingDispatched();
     Notification::assertNothingSent();
 });
 
 test('Should throw an error if the input has invalid format/regex', function() {
-    Event::fake([Registered::class]);
     Notification::fake();
     
     $this->postJson(route('auth.register'), ['username' => 'u$ername@123'])
@@ -86,19 +76,6 @@ test('Should throw an error if the input has invalid format/regex', function() {
             'username' => ['Invalid username.']
         ]);
         
-    Event::assertNothingDispatched();
-    Notification::assertNothingSent();
-});
-
-test('Should throw an error if phone number is invalid', function() {
-    Event::fake([Registered::class]);
-    Notification::fake();
-    
-    $this->postJson(route('auth.register'), ['phone_number' => '12345678900'])
-        ->assertStatus(422)
-        ->assertJsonPath('errors.phone_number', ['Invalid phone number.']);
-        
-    Event::assertNothingDispatched();
     Notification::assertNothingSent();
 });
 
@@ -140,12 +117,9 @@ test('Should successfully register an account', function() {
     $user = User::factory()->make([
         'birth_date' => '1998-05-05'
     ]);
-    $body = $user->only([
-        'name', 'email', 'username',
-        'phone_number', 'gender', 'birth_date'
-    ]);
+    
+    $body = $user->only(['name', 'email', 'username', 'gender', 'birth_date']);
 
-    Event::fake([Registered::class]);
     Notification::fake();
     
     $this->postJson(
@@ -153,7 +127,6 @@ test('Should successfully register an account', function() {
         array_merge($body, [
             'password' => 'P@ssword123',
             'password_confirmation' => 'P@ssword123',
-            'method' => 'email',
         ])
     )->assertCreated();
 
@@ -162,6 +135,5 @@ test('Should successfully register an account', function() {
         'email' => $user->email,
     ]);
 
-    Event::assertDispatched(fn(Registered $event) => $event->user->username === $user->username);
     Notification::assertSentTo(User::firstWhere('username', $user->username), SendVerificationCode::class);
 });

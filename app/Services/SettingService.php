@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\{DB, Hash};
 use Illuminate\Auth\Events\PasswordReset;
 use Exception;
@@ -31,11 +30,6 @@ class SettingService
             $interval = config('validation.attempts.change_username.interval');
         }
 
-        if ($column === 'phone_number') {
-            $maxAttempts = config('validation.attempts.change_phone_number.max');
-            $interval = config('validation.attempts.change_phone_number.interval');
-        }
-
         if ($request->user()->rateLimitReached($query, $maxAttempts, $interval)) {
             return [
                 'status' => 429,
@@ -52,11 +46,6 @@ class SettingService
 
                 if ($column === 'username') {
                     $request->user()->update([$column => $request->input($column)]);
-                }
-
-                if ($column === 'phone_number') {
-                    $phoneNumber = (string) Str::of($request->input($column))->replaceMatches('/^0?9/', '639');
-                    $request->user()->update([$column => $phoneNumber]);
                 }
             });
     

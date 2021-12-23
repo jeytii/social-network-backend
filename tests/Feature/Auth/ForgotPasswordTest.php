@@ -16,7 +16,6 @@ test('Should throw an error if the entered email address doesn\'t exist', functi
 
     $this->postJson(route('auth.forgot-password'), [
         'email' => 'dummy@email.com',
-        'method' => 'email',
     ])
     ->assertStatus(422)
     ->assertJsonPath('errors.email', ['Email address does not exist.']);
@@ -38,10 +37,8 @@ test('Should throw an error if user has reached the rate limit', function() {
 
     Notification::fake();
 
-    $this->postJson(route('auth.forgot-password'), [
-        'email' => $user->email,
-        'method' => 'email',
-    ])->assertStatus(429);
+    $this->postJson(route('auth.forgot-password'), $user->only('email'))
+        ->assertStatus(429);
     
     Notification::assertNothingSent();
 });
@@ -51,27 +48,10 @@ test('Should send password reset request successfully', function() {
 
     Notification::fake();
 
-    $this->postJson(route('auth.forgot-password'), [
-        'email' => $user->email,
-        'method' => 'email',
-    ])->assertOk();
+    $this->postJson(route('auth.forgot-password'), $user->only('email'))
+        ->assertOk();
 
-    Notification::assertSentTo(
-        $user,
-        ResetPassword::class,
-        fn($n, $channels) => $channels === ['mail']
-    );
-
-    $this->postJson(route('auth.forgot-password'), [
-        'email' => $user->email,
-        'method' => 'sms',
-    ])->assertOk();
-
-    Notification::assertSentTo(
-        $user,
-        ResetPassword::class,
-        fn($n, $channels) => $channels === ['nexmo']
-    );
+    Notification::assertSentTo($user, ResetPassword::class);
 
     $this->assertDatabaseHas('password_resets', [
         'email' => $user->email,
@@ -84,10 +64,7 @@ test('Should throw an error if account is not yet verified', function() {
         'email_verified_at' => null
     ]);
 
-    $this->postJson(route('auth.forgot-password'), [
-        'email' => $user->email,
-        'method' => 'email',
-    ])
-    ->assertStatus(422)
-    ->assertJsonPath('errors.email', ['Email address not yet verified.']);
+    $this->postJson(route('auth.forgot-password'), $user->only('email'))
+        ->assertStatus(422)
+        ->assertJsonPath('errors.email', ['Email address not yet verified.']);
 });

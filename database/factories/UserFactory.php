@@ -29,13 +29,11 @@ class UserFactory extends Factory
         $gender = $this->faker->randomElement(['Male', 'Female']);
         $name = $this->faker->name(strtolower($gender));
         $username = join('', $this->faker->words());
-        $phoneNumber = (string) random_int(100000000, 999999999);
 
         return [
             'name' => $name,
             'email' => $this->faker->safeEmail(),
             'username' => $username,
-            'phone_number' => "9{$phoneNumber}",
             'gender' => $gender,
             'birth_date' => $this->faker->date(),
             'email_verified_at' => now(),

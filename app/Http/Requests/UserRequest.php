@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\{ValidDate, NotCurrentPassword, NotCurrentPhoneNumber, UniquePhoneNumber};
+use App\Rules\{ValidDate, NotCurrentPassword};
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Foundation\Http\FormRequest;
@@ -33,7 +33,6 @@ class UserRequest extends FormRequest
         $maxUsernameLength = config('validation.max_lengths.username');
         $maxBioLength = config('validation.max_lengths.bio');
         $usernameFormat = config('validation.formats.username');
-        $phoneNumberFormat = config('validation.formats.phone_number');
         $usernameRule = [
             'required',
             'string',
@@ -54,12 +53,10 @@ class UserRequest extends FormRequest
                 'name' => ['required', 'string', 'min:' . $minNameLength],
                 'email' => ['required', 'email', 'unique:users'],
                 'username' => $usernameRule,
-                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, new UniquePhoneNumber],
                 'gender' => ['required', 'in:Male,Female'],
                 'birth_date' => $birthDateRule,
                 'password' => ['required', Password::defaults()],
                 'password_confirmation' => ['required', 'same:password'],
-                'method' => ['required', 'in:email,sms'],
             ];
         }
 
@@ -82,13 +79,6 @@ class UserRequest extends FormRequest
         if ($this->routeIs('settings.change.username')) {
             return [
                 'username' => $usernameRule,
-                'password' => ['required', 'current_password'],
-            ];
-        }
-
-        if ($this->routeIs('settings.change.phone-number')) {
-            return [
-                'phone_number' => ['required', 'regex:' . $phoneNumberFormat, new NotCurrentPhoneNumber, new UniquePhoneNumber],
                 'password' => ['required', 'current_password'],
             ];
         }
@@ -157,7 +147,6 @@ class UserRequest extends FormRequest
     {
         return [
             'email' => 'email address',
-            'method' => 'verification method',
         ];
     }
 }

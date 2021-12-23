@@ -15,7 +15,7 @@ class CreateSettingsUpdatesTable extends Migration
     {
         Schema::create('settings_updates', function (Blueprint $table) {
             $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
-            $table->enum('type', ['username', 'email', 'phone_number']);
+            $table->enum('type', ['username', 'email']);
             $table->timestamp('created_at')->useCurrent();
         });
     }
