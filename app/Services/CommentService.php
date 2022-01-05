@@ -29,11 +29,13 @@ class CommentService
                     'body' => $request->input('body')
                 ])->first();
 
-                $post->user->notify(new NotifyUponAction(
-                    $user,
-                    NotificationModel::COMMENTED_ON_POST,
-                    "/posts/{$post->slug}"
-                ));
+                if ($post->user->id !== auth()->id()) { 
+                    $post->user->notify(new NotifyUponAction(
+                        $user,
+                        NotificationModel::COMMENTED_ON_POST,
+                        "/posts/{$post->slug}"
+                    ));
+                }
 
                 return $comment;
             });
@@ -99,11 +101,13 @@ class CommentService
             DB::transaction(function() use ($liker, $comment) {
                 $liker->likedComments()->attach($comment);
 
-                $comment->user->notify(new NotifyUponAction(
-                    $liker,
-                    NotificationModel::LIKED_COMMENT,
-                    "/posts/{$comment->post->slug}"
-                ));
+                if ($comment->user->id !== auth()->id()) {
+                    $comment->user->notify(new NotifyUponAction(
+                        $liker,
+                        NotificationModel::LIKED_COMMENT,
+                        "/posts/{$comment->post->slug}"
+                    ));
+                }
             });
 
             return [
