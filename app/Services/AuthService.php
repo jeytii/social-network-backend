@@ -202,7 +202,7 @@ class AuthService
         }
 
         try {
-            DB::transaction(function() use ($request, $user, $emailAddress) {
+            DB::transaction(function() use ($user, $emailAddress) {
                 $token = bin2hex(random_bytes(16));
         
                 DB::table('password_resets')->updateOrInsert(
@@ -251,7 +251,7 @@ class AuthService
                     ->where('token', $request->input('token'))
                     ->update(['completed_at' => now()]);
 
-                return $this->authenticateUser($user->first(), 'You have successfully reset your password.');
+                return $this->authenticateUser($user, 'You have successfully reset your password.');
             });
     
             return $response;

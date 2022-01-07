@@ -67,14 +67,15 @@ class SettingService
      */
     public function changePassword(Request $request): array
     {
+        $user = $request->user();
         $newPassword = $request->input('new_password');
         $maxAttempts = config('validation.attempts.change_password.max');
         $interval = config('validation.attempts.change_password.interval');
         $query = DB::table('password_resets')
-                    ->where('email', $request->user()->email)
+                    ->where('email', $user->email)
                     ->whereNotNull('completed_at');
         
-        if ($request->user()->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
+        if ($user->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
             return [
                 'status' => 429,
                 'message' => "You're doing too much. Try again later.",
@@ -82,14 +83,12 @@ class SettingService
         }
 
         try {
-            DB::transaction(function() use ($request, $newPassword) {
-                $request->user()->update([
-                    'password' => Hash::make($newPassword)
-                ]);
+            DB::transaction(function() use ($user, $newPassword) {
+                $user->update(['password' => Hash::make($newPassword)]);
 
                 DB::table('password_resets')->updateOrInsert(
                     [
-                        'email' => $request->user()->email,
+                        'email' => $user->email,
                         'completed_at' => null
                     ],
                     [
@@ -98,7 +97,7 @@ class SettingService
                 );
             });
 
-            event(new PasswordReset($request->user()));
+            event(new PasswordReset($user));
 
             return ['status' => 200];
         }

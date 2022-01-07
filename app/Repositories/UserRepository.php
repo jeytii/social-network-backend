@@ -16,14 +16,14 @@ class UserRepository
      */
     public function get(Request $request): array
     {
+        $id = auth()->id();
         $hasQuery = $request->has('query') || $request->filled('query');
         $hasMonth = $request->has('month') || $request->filled('month');
         $hasYear = $request->has('year') || $request->filled('year');
         $hasGender = $request->has('gender') || $request->filled('gender');
 
         $data = User::when(!$hasQuery, fn($q) => (
-                    $q->where('id', '!=', auth()->id())
-                        ->whereDoesntHave('followers', fn($q) => $q->where('id', auth()->id()))
+                    $q->whereKeyNot($id)->whereDoesntHave('followers', fn($q) => $q->whereKey($id))
                 ))
                 ->when($hasQuery, fn($q) => $q->searchUser($request->query('query')))
                 ->when($hasMonth, fn($q) => $q->whereMonth('birth_date', $request->query('month')))
@@ -44,7 +44,7 @@ class UserRepository
      */
     public function getAuthUser(Request $request): array
     {
-        $user = $request->user()->only(array_merge(config('api.response.user.basic'), ['email', 'bio']));
+        $user = $request->user()->only(array_merge(config('api.response.user.basic'), ['email', 'bio', 'dark_mode']));
         $birthdate = $request->user()->birth_date->format('Y-m-d');
 
         return [
