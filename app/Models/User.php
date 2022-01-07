@@ -50,6 +50,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'location',
         'bio',
         'image_url',
+        'dark_mode',
         'password',
     ];
 
@@ -61,6 +62,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $hidden = [
         'id',
         'birth_date',
+        'dark_mode',
         'password',
         'email_verified_at',
         'updated_at',
