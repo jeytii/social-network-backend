@@ -45,6 +45,21 @@ class Notification extends DatabaseNotification
     ];
 
     // =============================
+    // SCOPES
+    // =============================
+
+    /**
+     * Scope a query to only include read notifications.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeUnpeeked(Builder $query)
+    {
+        return $query->whereNotNull('peeked_at');
+    }
+
+    // =============================
     // OVERRIDE DEFAULTS
     // =============================
 

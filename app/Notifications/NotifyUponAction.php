@@ -65,7 +65,7 @@ class NotifyUponAction extends Notification implements ShouldBroadcast
         $notifications = $notifiable->notifications();
 
         return new BroadcastMessage([
-            'count' => $notifications->whereNull('peeked_at')->count(),
+            'count' => $notifications->unpeeked()->count(),
             'data' => $notifications->first(),
         ]);
     }

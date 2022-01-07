@@ -29,7 +29,7 @@ class NotificationRepository
      */
     public function getCount(User $user): array
     {
-        $data = $user->notifications()->whereNull('peeked_at')->count();
+        $data = $user->notifications()->unpeeked()->count();
 
         return [
             'status' => 200,

@@ -14,9 +14,7 @@ class NotificationService
      */
     public function peek(User $user): array
     {
-        $user->notifications()
-            ->where('peeked_at', null)
-            ->update(['peeked_at' => now()]);
+        $user->notifications()->unpeeked()->update(['peeked_at' => now()]);
 
         return ['status' => 200];
     }
@@ -29,7 +27,7 @@ class NotificationService
      */
     public function readOne(Notification $notification): array
     {
-        if ($notification->notifiable->id !== auth()->id()) {
+        if ($notification->notifiable->isNot(auth()->user())) {
             return [
                 'status' => 401,
                 'message' => 'Unauthorized.',
