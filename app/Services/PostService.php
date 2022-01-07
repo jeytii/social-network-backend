@@ -74,7 +74,7 @@ class PostService
             DB::transaction(function() use ($liker, $post) {
                 $liker->likedPosts()->attach($post);
                 
-                if ($post->user->id !== auth()->id()) {
+                if ($post->user->isNot(auth()->user())) {
                     $post->user->notify(new NotifyUponAction(
                         $liker,
                         NotificationModel::LIKED_POST,

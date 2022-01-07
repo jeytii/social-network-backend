@@ -29,7 +29,7 @@ class CommentService
                     'body' => $request->input('body')
                 ])->first();
 
-                if ($post->user->id !== auth()->id()) { 
+                if ($post->user->isNot($user)) { 
                     $post->user->notify(new NotifyUponAction(
                         $user,
                         NotificationModel::COMMENTED_ON_POST,
@@ -65,7 +65,7 @@ class CommentService
         if ($comment->body === $request->input('body')) {
             return [
                 'status' => 401,
-                'message' => 'No changes made.',
+                'message' => 'No change was made.',
             ];
         }
 
@@ -101,7 +101,7 @@ class CommentService
             DB::transaction(function() use ($liker, $comment) {
                 $liker->likedComments()->attach($comment);
 
-                if ($comment->user->id !== auth()->id()) {
+                if ($comment->user->isNot(auth()->user())) {
                     $comment->user->notify(new NotifyUponAction(
                         $liker,
                         NotificationModel::LIKED_COMMENT,
