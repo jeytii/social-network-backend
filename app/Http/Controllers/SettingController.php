@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\UserRequest;
+use Illuminate\Http\Request;
 use App\Services\SettingService;
+use App\Http\Requests\UserRequest;
 
 class SettingController extends Controller
 {
@@ -55,6 +56,32 @@ class SettingController extends Controller
     public function changePassword(UserRequest $request)
     {
         $response = $this->settings->changePassword($request);
+
+        return response()->json($response, $response['status']);
+    }
+
+    /**
+     * Change the accent color.
+     * 
+     * @param \App\Http\Requests\UserRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function changeColor(UserRequest $request)
+    {
+        $response = $this->settings->changeColor($request);
+
+        return response()->json($response, $response['status']);
+    }
+
+    /**
+     * Toggle dark mode.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function toggleDarkMode(Request $request)
+    {
+        $response = $this->settings->toggleDarkMode($request);
 
         return response()->json($response, $response['status']);
     }

@@ -26,7 +26,6 @@ Broadcast::routes();
 
 Route::prefix('users')->name('users.')->group(function() {
     Route::get('/', [UserController::class, 'index'])->name('index');
-    Route::get('/auth', [UserController::class, 'getAuthUser'])->name('auth');
     Route::get('/params/{column}', [UserController::class, 'getParams'])->name('get.params');
     Route::get('/random', [UserController::class, 'getRandom'])->name('get.random');
     Route::get('/search', [UserController::class, 'search'])->name('search');
@@ -70,7 +69,10 @@ Route::prefix('settings')->name('settings.')->group(function() {
         Route::put('username', [SettingController::class, 'changeUsername'])->name('username');
         Route::put('email', [SettingController::class, 'changeEmailAddress'])->name('email');
         Route::put('password', [SettingController::class, 'changePassword'])->name('password');
+        Route::put('color', [SettingController::class, 'changeColor'])->name('color');
     });
+
+    Route::put('dark-mode', [SettingController::class, 'toggleDarkMode'])->name('dark-mode.toggle');
 });
 
 Route::prefix('notifications')->name('notifications.')->group(function() {

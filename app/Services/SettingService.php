@@ -108,4 +108,32 @@ class SettingService
             ];
         }
     }
+
+    /**
+     * Change the accent color.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function changeColor(Request $request)
+    {
+        $request->user()->update($request->only('color'));
+
+        return ['status' => 200];
+    }
+
+    /**
+     * Toggle dark mode.
+     * 
+     * @param \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function toggleDarkMode(Request $request)
+    {
+        $request->user()->update([
+            'dark_mode' => $request->boolean('dark_mode')
+        ]);
+
+        return ['status' => 200];
+    }
 }
