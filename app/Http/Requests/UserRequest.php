@@ -91,6 +91,12 @@ class UserRequest extends FormRequest
             ];
         }
 
+        if ($this->routeIs('settings.change.color')) {
+            return [
+                'color' => ['required', 'string', 'regex:/^#([0-9a-f]{6})$/'],
+            ];
+        }
+
         if ($this->routeIs('profile.upload.profile-photo')) {
             return [
                 'image' => [
