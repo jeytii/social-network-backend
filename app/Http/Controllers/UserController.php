@@ -40,19 +40,6 @@ class UserController extends Controller
     }
 
     /**
-     * Get the currently logged-in user.
-     * 
-     * @param \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function getAuthUser(Request $request)
-    {
-        $response = $this->userRepository->getAuthUser($request);
-
-        return response()->json($response, $response['status']);
-    }
-
-    /**
      * Get the column values that will be used as route parameters on the client.
      * 
      * @param string  $column
