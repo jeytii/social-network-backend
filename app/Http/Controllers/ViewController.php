@@ -55,11 +55,9 @@ class ViewController extends Controller
     public function authenticateVerificationToken(string $token)
     {
         $status = 200;
-        $verification = DB::table('verifications')
-                            ->where('token', $token)
-                            ->where('expiration', '>', now());
+        $verification = cache("verification.{$token}");
 
-        if ($verification->doesntExist()) {
+        if (!$verification) {
             $status = 404;
         }
 

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{DB, Hash};
+use Illuminate\Support\Facades\{DB, Hash, Cache};
 use App\Notifications\{ResetPassword, SendVerificationCode};
 use Exception;
 
@@ -36,13 +36,13 @@ class AuthService
     {
         $code = random_int(100000, 999999);
 
-        DB::table('verifications')->updateOrInsert(
-            ['user_id' => $user->id],
+        Cache::put(
+            "verification.{$token}",
             [
-                'token' => $token,
-                'code' => $code,
-                'expiration' => now()->addMinutes(config('validation.expiration.verification')),
-            ]
+                'id' => $user->id,
+                'code' => (string) $code,
+            ],
+            60 * config('validation.expiration.verification')
         );
 
         $user->notify(new SendVerificationCode($code, $token));
@@ -118,32 +118,32 @@ class AuthService
      */
     public function verify(Request $request): array
     {
+        $verification = Cache::get("verification.{$request->input('token')}");
+
+        if (!$verification || $request->input('code') !== $verification['code']) {
+            return [
+                'status' => 401,
+                'message' => 'Invalid verification code.',
+            ];
+        }
+
+        $user = User::find($verification['id']);
+
+        if ($user->hasVerifiedEmail()) {
+            return [
+                'status' => 409,
+                'message' => 'You have already verified your account.',
+            ];
+        }
+        
         try {
-            $verification = DB::table('verifications')
-                                ->where('code', $request->input('code'))
-                                ->where('expiration', '>', now());
-
-            if ($verification->doesntExist()) {
-                return [
-                    'status' => 401,
-                    'message' => 'Invalid verification code.',
-                ];
-            }
-
-            $user = User::find($verification->first()->user_id);
-
-            if ($user->hasVerifiedEmail()) {
-                return [
-                    'status' => 409,
-                    'message' => 'You have already verified your account.',
-                ];
-            }
-            
             $response = DB::transaction(function() use ($user) {
                 $user->markEmailAsVerified();
 
                 return $this->authenticateUser($user, 'You have successfully verified your account.');
             });
+
+            Cache::forget("verification.{$request->input('token')}");
 
             return $response;
         }
