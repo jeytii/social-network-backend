@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use App\Notifications\SendVerificationCode;
-use Illuminate\Support\Facades\{DB, Notification};
+use Illuminate\Support\Facades\{DB, Notification, Cache};
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
@@ -121,6 +121,7 @@ test('Should successfully register an account', function() {
     $body = $user->only(['name', 'email', 'username', 'gender', 'birth_date']);
 
     Notification::fake();
+    Cache::spy();
     
     $this->postJson(
         route('auth.register'),
@@ -135,5 +136,6 @@ test('Should successfully register an account', function() {
         'email' => $user->email,
     ]);
 
+    Cache::shouldHaveReceived('put')->once();
     Notification::assertSentTo(User::firstWhere('username', $user->username), SendVerificationCode::class);
 });
