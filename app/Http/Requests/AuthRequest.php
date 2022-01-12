@@ -38,7 +38,8 @@ class AuthRequest extends FormRequest
 
         if ($this->routeIs('auth.verify')) {
             return [
-                'code' => ['required', 'exists:verifications']
+                'token' => ['required', 'string'],
+                'code' => ['required']
             ];
         }
 
