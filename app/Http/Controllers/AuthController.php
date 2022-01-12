@@ -76,7 +76,7 @@ class AuthController extends Controller
     /**
      * Send a password-reset request link to the user.
      * 
-     * @param \\App\Http\Requests\AuthRequest  $request
+     * @param \App\Http\Requests\AuthRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function requestPasswordReset(AuthRequest $request)
