@@ -2,7 +2,7 @@
 
 use App\Models\User;
 use App\Notifications\ResetPassword;
-use Illuminate\Support\Facades\{DB, Hash, Notification};
+use Illuminate\Support\Facades\{DB, Cache, Notification};
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
@@ -28,8 +28,6 @@ test('Should throw an error if user has reached the rate limit', function() {
 
     $resets = collect(range(1, 7))->map(fn($reset) => [
         'email' => $user->email,
-        'token' => Hash::make($user->email),
-        'expiration' => now()->subHours($reset * 1),
         'completed_at' => now()->subHours($reset * 1),
     ])->toArray();
 
@@ -47,16 +45,13 @@ test('Should send password reset request successfully', function() {
     $user = User::factory()->create();
 
     Notification::fake();
+    Cache::spy();
 
     $this->postJson(route('auth.forgot-password'), $user->only('email'))
         ->assertOk();
 
     Notification::assertSentTo($user, ResetPassword::class);
-
-    $this->assertDatabaseHas('password_resets', [
-        'email' => $user->email,
-        'completed_at' => null,
-    ]);
+    Cache::shouldHaveReceived('put')->once();
 });
 
 test('Should throw an error if account is not yet verified', function() {
