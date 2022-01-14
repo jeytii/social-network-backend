@@ -18,11 +18,11 @@ class SendVerificationCode extends Notification implements ShouldQueue
     /**
      * Create a new notification instance.
      *
-     * @param int  $code
+     * @param string  $code
      * @param string  $token
      * @return void
      */
-    public function __construct(int $code, string $token)
+    public function __construct(string $code, string $token)
     {
         $this->code = $code;
         $this->url = config('app.client_url') . "/verify/{$token}";

@@ -30,15 +30,15 @@ return [
     'attempts' => [
         'change_username' => [
             'max' => 3,
-            'interval' => 72,
+            'interval' => 72, // in hours
         ],
         'change_email_address' => [
             'max' => 3,
-            'interval' => 72,
+            'interval' => 72, // in hours
         ],
         'change_password' => [
             'max' => 3,
-            'interval' => 24,
+            'interval' => 24, // in hours
         ],
     ]
 ];
