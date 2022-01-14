@@ -6,8 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 use App\Rules\{
     ExistsInEmailOrUsername,
-    PasswordResetEmailAddress,
-    VerifiedEmailAddress
+    VerifiedEmailAddress,
+    PasswordResetToken
 };
 
 class AuthRequest extends FormRequest
@@ -57,15 +57,9 @@ class AuthRequest extends FormRequest
 
         if ($this->routeIs('auth.reset-password')) {
             return [
-                'email' => [
-                    'required',
-                    'email',
-                    new PasswordResetEmailAddress($this->input('token')),
-                    new VerifiedEmailAddress,
-                ],
                 'password' => ['required', Password::defaults()],
                 'password_confirmation' => ['required', 'same:password'],
-                'token' => ['required', 'string'],
+                'token' => ['required', 'string', new PasswordResetToken],
             ];
         }
 
