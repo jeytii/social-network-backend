@@ -20,12 +20,10 @@ trait HasRateLimit
     {
         if ($query->count() >= $maxAttempts) {
             $resets = $query->orderByDesc($column)->limit($maxAttempts)->get();
-            $earliest = Carbon::parse($resets->last()->{$column});
-            $hoursDiff = $earliest->diffInHours(now());
-            
-            if ($hoursDiff <= $interval) {
-                return true;
-            }
+            $lastTimestamp = Carbon::parse($resets->last()->{$column});
+            $diffInHours = $lastTimestamp->diffInHours(now());
+
+            return $diffInHours <= $interval;
         }
 
         return false;
