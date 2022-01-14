@@ -73,13 +73,8 @@ class ViewController extends Controller
     public function authenticateResetPasswordToken(string $token)
     {
         $status = 200;
-        $invalidToken = DB::table('password_resets')
-                            ->where('token', $token)
-                            ->where('expiration', '>', now())
-                            ->whereNull('completed_at')
-                            ->doesntExist();
 
-        if ($invalidToken) {
+        if (!cache("password-reset.{$token}")) {
             $status = 404;
         }
 
