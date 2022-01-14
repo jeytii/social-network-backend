@@ -68,11 +68,14 @@ class UserRepository
      */
     public function getRandom(Request $request, int $count = 3): array
     {
-        $exceptIds = $request->user()->following()->pluck('id')->toArray();
-        $data = User::whereNotIn('id', [auth()->id(), ...$exceptIds])
-                    ->inRandomOrder()
-                    ->limit($count)
-                    ->get(config('api.response.user.basic'));
+        $data = cache()->remember('user-suggestions', 60, function() use ($request, $count) {
+            $exceptIds = $request->user()->following()->pluck('id')->toArray();
+
+            return User::whereNotIn('id', [auth()->id(), ...$exceptIds])
+                        ->inRandomOrder()
+                        ->limit($count)
+                        ->get(config('api.response.user.basic'));
+        });
 
         return [
             'status' => 200,
