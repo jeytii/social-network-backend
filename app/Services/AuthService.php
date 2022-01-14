@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\{DB, Hash, Cache};
+use Illuminate\Support\Facades\{DB, Hash};
 use App\Notifications\{ResetPassword, SendVerificationCode};
 use Exception;
 
@@ -29,19 +29,18 @@ class AuthService
      * Generate a verification code for newly created user.
      * 
      * @param \App\Models\User  $user
-     * @param string  $token
      * @return void
      */
-    private function sendVerificationCode(User $user, string $token)
+    private function sendVerificationCode(User $user)
     {
-        $code = random_int(100000, 999999);
+        $code = (string) random_int(100000, 999999);
+        $token = bin2hex(random_bytes(16));
 
-        Cache::put(
-            "verification.{$token}",
-            [
+        cache(
+            ["verification.{$token}" => [
                 'id' => $user->id,
-                'code' => (string) $code,
-            ],
+                'code' => $code,
+            ]],
             60 * config('validation.expiration.verification')
         );
 
@@ -89,17 +88,15 @@ class AuthService
     {
         $body = $request->except('password', 'password_confirmation');
         $password = Hash::make($request->input('password'));
-        $token = bin2hex(random_bytes(16));
         
         try {
-            DB::transaction(function() use ($request, $body, $password, $token) {
+            DB::transaction(function() use ($request, $body, $password) {
                 $user = User::create(array_merge($body, compact('password')));
-                $this->sendVerificationCode($user, $token);
+                $this->sendVerificationCode($user);
             });
     
             return [
                 'status' => 201,
-                'url' => "/verify/{$token}",
             ];
         }
         catch (Exception $exception) {
@@ -118,7 +115,8 @@ class AuthService
      */
     public function verify(Request $request): array
     {
-        $verification = Cache::get("verification.{$request->input('token')}");
+        $cacheKey = "verification.{$request->input('token')}";
+        $verification = cache($cacheKey);
 
         if (!$verification || $request->input('code') !== $verification['code']) {
             return [
@@ -143,7 +141,7 @@ class AuthService
                 return $this->authenticateUser($user, 'You have successfully verified your account.');
             });
 
-            Cache::forget("verification.{$request->input('token')}");
+            cache()->forget($cacheKey);
 
             return $response;
         }
@@ -172,7 +170,7 @@ class AuthService
             ];
         }
         
-        $this->sendVerificationCode($user, bin2hex(random_bytes(16)));
+        $this->sendVerificationCode($user);
 
         return [
             'status' => 200,
@@ -190,34 +188,42 @@ class AuthService
     {
         $emailAddress = $request->input('email');
         $user = User::firstWhere('email', $emailAddress);
-        $query = DB::table('password_resets')->where('email', $emailAddress)->whereNotNull('completed_at');
-        $maxAttempts = config('validation.attempts.change_password.max');
         $interval = config('validation.attempts.change_password.interval');
+        $rateLimitReached = $user->rateLimitReached(
+            DB::table('password_resets')->where('email', $emailAddress)->whereNotNull('completed_at'),
+            config('validation.attempts.change_password.max'),
+            $interval,
+            'completed_at'
+        );
         
-        if ($user->rateLimitReached($query, $maxAttempts, $interval, 'completed_at')) {
+        if ($rateLimitReached) {
             return [
                 'status' => 429,
-                'message' => "You're doing too much. Try again later.",
+                'message' => "You're doing too much. Try again in {$interval} hours.",
             ];
         }
 
+        $token = bin2hex(random_bytes(16));
+
         try {
-            DB::transaction(function() use ($user, $emailAddress) {
-                $token = bin2hex(random_bytes(16));
-        
+            DB::transaction(function() use ($user, $token) {
                 DB::table('password_resets')->updateOrInsert(
                     [
-                        'email' => $emailAddress,
-                        'completed_at' => null,
+                        'email' => $user->email,
+                        'completed_at' => null
                     ],
                     [
-                        'token' => $token,
-                        'expiration' => now()->addMinutes(config('validation.expiration.password_reset')),
+                        'token' => $token
                     ]
                 );
-                
+
                 $user->notify(new ResetPassword(config('app.client_url') . "/reset-password/{$token}"));
             });
+
+            cache(
+                ["password-reset.{$token}" => $emailAddress],
+                60 * config('validation.expiration.password_reset')
+            );
     
             return [
                 'status' => 200,
@@ -241,18 +247,20 @@ class AuthService
      */
     public function resetPassword(Request $request): array
     {
-        try {
-            $response = DB::transaction(function() use ($request) {
-                $user = User::firstWhere('email', $request->input('email'));
+        $token = $request->input('token');
+        $query = DB::table('password_resets')->where('token', $token);
+        $user = User::firstWhere('email', $query->first()->email);
 
+        try {
+            $response = DB::transaction(function() use ($request, $user, $query) {
                 $user->update(['password' => Hash::make($request->input('password'))]);
-    
-                DB::table('password_resets')
-                    ->where('token', $request->input('token'))
-                    ->update(['completed_at' => now()]);
+
+                $query->update(['completed_at' => now()]);
 
                 return $this->authenticateUser($user, 'You have successfully reset your password.');
             });
+
+            cache()->forget("password-reset.{$token}");
     
             return $response;
         }
