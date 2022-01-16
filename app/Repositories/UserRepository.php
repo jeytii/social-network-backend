@@ -17,18 +17,14 @@ class UserRepository
     public function get(Request $request): array
     {
         $id = auth()->id();
-        $hasQuery = $request->has('query') || $request->filled('query');
-        $hasMonth = $request->has('month') || $request->filled('month');
-        $hasYear = $request->has('year') || $request->filled('year');
-        $hasGender = $request->has('gender') || $request->filled('gender');
 
-        $data = User::when(!$hasQuery, fn($q) => (
-                    $q->whereKeyNot($id)->whereDoesntHave('followers', fn($q) => $q->whereKey($id))
+        $data = User::when(!$request->isPresent('query'), fn($query) => (
+                    $query->whereKeyNot($id)->whereDoesntHave('followers', fn($q) => $q->whereKey($id))
                 ))
-                ->when($hasQuery, fn($q) => $q->searchUser($request->query('query')))
-                ->when($hasMonth, fn($q) => $q->whereMonth('birth_date', $request->query('month')))
-                ->when($hasYear, fn($q) => $q->whereYear('birth_date', $request->query('year')))
-                ->when($hasGender, fn($q) => $q->where('gender', $request->query('gender')))
+                ->when($request->isPresent('query'), fn($q) => $q->searchUser($request->query('query')))
+                ->when($request->isPresent('month'), fn($q) => $q->whereMonth('birth_date', $request->query('month')))
+                ->when($request->isPresent('year'), fn($q) => $q->whereYear('birth_date', $request->query('year')))
+                ->when($request->isPresent('gender'), fn($q) => $q->where('gender', $request->query('gender')))
                 ->withPaginated(20, config('api.response.user.basic'));
 
         return array_merge($data, [
@@ -48,14 +44,12 @@ class UserRepository
             config('api.response.user.basic'),
             ['email', 'bio', 'color', 'dark_mode']
         ));
-        
-        $birthdate = $request->user()->birth_date->format('Y-m-d');
+
+        $user['birth_date'] = $request->user()->birth_date->format('Y-m-d');
 
         return [
             'status' => 200,
-            'data' => array_merge($user, [
-                'birth_date' => $birthdate,
-            ]),
+            'data' => $user,
         ];
     }
 
@@ -84,22 +78,6 @@ class UserRepository
     }
 
     /**
-     * Get the column values that will be used as route parameters on the client.
-     * 
-     * @param string  $column
-     * @return array
-     */
-    public function getParams(string $column): array
-    {
-        $data = User::pluck($column);
-
-        return [
-            'status' => 200,
-            'data' => $data,
-        ];
-    }
-
-    /**
      * Get search results according to the provided query.
      * 
      * @param \Illuminate\Http\Request  $string
@@ -108,17 +86,14 @@ class UserRepository
      */
     public function search(Request $request, int $count = 5): array
     {
-        if (!$request->has('query') || $request->isNotFilled('query')) {
-            return [
-                'status' => 200,
-                'data' => [],
-            ];
-        }
+        $data = [];
 
-        $data = DB::table('users')
-                    ->searchUser($request->query('query'))
-                    ->limit($count)
-                    ->get(config('api.response.user.basic'));
+        if ($request->isPresent('query')) {
+            $data = DB::table('users')
+                        ->searchUser($request->query('query'))
+                        ->limit($count)
+                        ->get(config('api.response.user.basic'));
+        }
 
         return [
             'status' => 200,
