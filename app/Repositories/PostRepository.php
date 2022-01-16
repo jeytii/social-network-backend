@@ -16,9 +16,7 @@ class PostRepository
     public function get(Request $request): array
     {
         $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
-        $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
-                    ->orderByDesc('created_at')
-                    ->withPaginated();
+        $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))->latest()->withPaginated();
 
         return array_merge($data, [
             'status' => 200,

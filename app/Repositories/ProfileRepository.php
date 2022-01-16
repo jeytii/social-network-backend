@@ -33,7 +33,7 @@ class ProfileRepository
      */
     public function getPostsOrComments(User $user, string $type): array
     {
-        $data = $user->{$type}()->orderByDesc('created_at')->withPaginated();
+        $data = $user->{$type}()->latest()->withPaginated();
 
         return array_merge($data, [
             'status' => 200,
@@ -49,10 +49,9 @@ class ProfileRepository
      */
     public function getInteractedPosts(Request $request, string $type): array
     {
-        $data = $request->user()
-                    ->{$type}()
-                    ->orderByPivot('created_at', 'desc')
-                    ->withPaginated();
+        $data = $request->user()->{$type}()
+                        ->orderByPivot('created_at', 'desc')
+                        ->withPaginated();
 
         return array_merge($data, [
             'status' => 200,

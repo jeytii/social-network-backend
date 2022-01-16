@@ -270,6 +270,6 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function notifications(): MorphMany
     {
-        return $this->morphMany(Notification::class, 'notifiable')->orderByDesc('created_at');
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
     }
 }
