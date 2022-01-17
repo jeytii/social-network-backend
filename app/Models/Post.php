@@ -56,6 +56,7 @@ class Post extends Model
      * @var array
      */
     protected $appends = [
+        'key',
         'is_own_post',
         'is_liked',
         'is_edited',
@@ -99,6 +100,16 @@ class Post extends Model
     // =============================
     // CUSTOM ATTRIBUTES
     // =============================
+
+    /**
+     * Generate a unique key.
+     *
+     * @return string
+     */
+    public function getKeyAttribute(): string
+    {
+        return uniqid("{$this->slug}-");
+    }
 
     /**
      * Check if the post is owned by the auth user.

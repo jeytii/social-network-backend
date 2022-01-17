@@ -55,6 +55,7 @@ class Comment extends Model
      * @var array
      */
     protected $appends = [
+        'key',
         'post_slug',
         'is_own_comment',
         'is_liked',
@@ -97,6 +98,16 @@ class Comment extends Model
     // =============================
     // CUSTOM ATTRIBUTES
     // =============================
+
+    /**
+     * Generate a unique key.
+     *
+     * @return string
+     */
+    public function getKeyAttribute(): string
+    {
+        return uniqid("{$this->slug}-");
+    }
 
     /**
      * Get the parent post model's slug.

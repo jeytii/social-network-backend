@@ -25,6 +25,7 @@ class UserRepository
                 ->when($request->isPresent('month'), fn($q) => $q->whereMonth('birth_date', $request->query('month')))
                 ->when($request->isPresent('year'), fn($q) => $q->whereYear('birth_date', $request->query('year')))
                 ->when($request->isPresent('gender'), fn($q) => $q->where('gender', $request->query('gender')))
+                ->orderBy('name')
                 ->withPaginated(20, config('api.response.user.basic'));
 
         return array_merge($data, [
