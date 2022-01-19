@@ -56,7 +56,7 @@ class Notification extends DatabaseNotification
      */
     public function scopeUnpeeked(Builder $query)
     {
-        return $query->whereNotNull('peeked_at');
+        return $query->whereNull('peeked_at');
     }
 
     // =============================
