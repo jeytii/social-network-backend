@@ -14,13 +14,6 @@ class NotifyUponAction extends Notification implements ShouldBroadcast
     use Queueable;
 
     /**
-     * Indicates whether the job should be dispatched after all database transactions have committed.
-     *
-     * @var bool|null
-     */
-    public $afterCommit = true;
-
-    /**
      * Create a new notification instance.
      *
      * @param \App\Models\User  $user

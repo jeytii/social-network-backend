@@ -14,13 +14,6 @@ class ResetPassword extends Notification implements ShouldQueue
     protected $url;
 
     /**
-     * Indicates whether the job should be dispatched after all database transactions have committed.
-     *
-     * @var bool|null
-     */
-    public $afterCommit = true;
-
-    /**
      * Create a new notification instance.
      *
      * @param string  $url
