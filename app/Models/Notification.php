@@ -142,7 +142,7 @@ class Notification extends DatabaseNotification
      */
     public function getUrlAttribute()
     {
-        $url = config('app.client_url');
+        $url = config('app.frontend_url');
 
         if (is_string($this->data)) {
             $data = json_decode($this->data, true);

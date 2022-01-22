@@ -25,7 +25,7 @@ class SendVerificationCode extends Notification implements ShouldQueue
     public function __construct(string $code, string $token)
     {
         $this->code = $code;
-        $this->url = config('app.client_url') . "/verify/{$token}";
+        $this->url = config('app.frontend_url') . "/verify/{$token}";
     }
 
     /**
@@ -48,7 +48,7 @@ class SendVerificationCode extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         return (new MailMessage) 
-                    ->from(config('app.email'))
+                    ->from(config('mail.from.address'))
                     ->subject('Account verification')
                     ->markdown('email.verification', [
                         'name' => $notifiable->name,

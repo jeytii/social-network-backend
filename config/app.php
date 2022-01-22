@@ -15,9 +15,7 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
-    'email' => env('APP_EMAIL', 'sample@email.com'),
-
-    'client_url' => env('CLIENT_URL', 'http://localhost:3000'),
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
     /*
     |--------------------------------------------------------------------------

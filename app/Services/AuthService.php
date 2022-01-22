@@ -217,7 +217,7 @@ class AuthService
                     ]
                 );
 
-                $user->notify(new ResetPassword(config('app.client_url') . "/reset-password/{$token}"));
+                $user->notify(new ResetPassword(config('app.frontend_url') . "/reset-password/{$token}"));
             });
 
             cache(
