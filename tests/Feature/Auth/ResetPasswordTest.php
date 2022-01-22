@@ -16,6 +16,7 @@ afterAll(function() {
     
     DB::table('users')->truncate();
     DB::table('password_resets')->truncate();
+    DB::table('jobs')->truncate();
     Cache::flush();
 });
 

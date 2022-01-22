@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\{User, Notification as NotificationModel};
-use Illuminate\Support\Facades\{DB, Notification};
+use Illuminate\Support\Facades\{DB, Notification, Cache};
 use App\Notifications\NotifyUponAction;
 
 beforeAll(function() {
@@ -13,6 +13,8 @@ afterAll(function() {
     
     DB::table('users')->truncate();
     DB::table('notifications')->truncate();
+    DB::table('jobs')->truncate();
+    Cache::flush();
 });
 
 test('Should successfully follow a user', function() {

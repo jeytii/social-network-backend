@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Cache};
 
 beforeAll(function() {
     User::factory()->create();
@@ -12,6 +12,8 @@ afterAll(function() {
     
     DB::table('users')->truncate();
     DB::table('posts')->truncate();
+    DB::table('jobs')->truncate();
+    Cache::flush();
 });
 
 test('Should throw an error if body\'s length is greater than maximum length', function () {

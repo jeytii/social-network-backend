@@ -3,7 +3,7 @@
 namespace Tests\Feature\API\User;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Cache};
 
 beforeAll(function() {
     User::factory(50)->create();
@@ -20,6 +20,7 @@ afterAll(function() {
     (new self(function() {}, '', []))->setUp();
     
     DB::table('users')->truncate();
+    Cache::flush();
 });
 
 test('Should return paginated list of users', function() {

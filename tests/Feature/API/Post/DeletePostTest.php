@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\{DB, Cache};
 
 beforeAll(function() {
     User::factory(2)->hasPosts(3)->create();
@@ -12,6 +12,8 @@ afterAll(function() {
     
     DB::table('users')->truncate();
     DB::table('posts')->truncate();
+    DB::table('jobs')->truncate();
+    Cache::flush();
 });
 
 test('Should successfully delete a post', function() {

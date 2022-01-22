@@ -2,7 +2,7 @@
 
 use App\Models\{User, Comment, Notification as NotificationModel};
 use App\Notifications\NotifyUponAction;
-use Illuminate\Support\Facades\{DB, Notification};
+use Illuminate\Support\Facades\{DB, Notification, Cache};
 
 beforeAll(function() {
     User::factory(2)->hasPosts(2)->hasComments(2)->create();
@@ -14,6 +14,8 @@ afterAll(function() {
     DB::table('users')->truncate();
     DB::table('posts')->truncate();
     DB::table('comments')->truncate();
+    DB::table('jobs')->truncate();
+    Cache::flush();
 });
 
 test('Should be able to like a comment', function() {
