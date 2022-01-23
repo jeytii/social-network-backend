@@ -3,12 +3,12 @@
 namespace App\Models;
 
 use App\Models\Notification;
-use App\Traits\HasRateLimit;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\{Str, Carbon};
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\{
@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\{
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable, HasRateLimit;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The "type" of the primary key ID.
@@ -103,6 +103,33 @@ class User extends Authenticatable implements MustVerifyEmail
             $user->setAttribute('slug', uniqid());
             $user->setAttribute('birth_date', Carbon::parse($user->birth_date));
         });
+    }
+
+    /**
+     * Check if user has reached the rate limit.
+     * 
+     * @param \Illuminate\Database\Query\Builder  $query
+     * @param int  $maxAttempts
+     * @param int  $interval
+     * @param string  $column
+     * @return bool
+     */
+    public function rateLimitReached(
+        QueryBuilder $query,
+        int $maxAttempts,
+        int $interval,
+        string $column = 'created_at'
+    ): bool
+    {
+        if ($query->count() >= $maxAttempts) {
+            $resets = $query->orderByDesc($column)->limit($maxAttempts)->get();
+            $lastTimestamp = Carbon::parse($resets->last()->{$column});
+            $diffInHours = $lastTimestamp->diffInHours(now());
+
+            return $diffInHours <= $interval;
+        }
+
+        return false;
     }
 
     // =============================
