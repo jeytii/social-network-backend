@@ -24,62 +24,62 @@ use App\Http\Controllers\{
 
 Broadcast::routes();
 
-Route::prefix('users')->name('users.')->group(function() {
-    Route::get('/', [UserController::class, 'index'])->name('index');
-    Route::get('/random', [UserController::class, 'getRandom'])->name('get.random');
-    Route::get('/search', [UserController::class, 'search'])->name('search');
-    Route::post('/{user}/follow', [UserController::class, 'follow'])->name('follow');
-    Route::delete('/{user}/unfollow', [UserController::class, 'unfollow'])->name('unfollow');
+Route::controller(UserController::class)->prefix('users')->name('users.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::get('/random', 'getRandom')->name('get.random');
+    Route::get('/search', 'search')->name('search');
+    Route::post('/{user}/follow', 'follow')->can('follow', 'user')->name('follow');
+    Route::delete('/{user}/unfollow', 'unfollow')->can('unfollow', 'user')->name('unfollow');
 });
 
-Route::prefix('profile')->name('profile.')->group(function() {
-    Route::get('likes/posts', [ProfileController::class, 'getLikedPosts'])->name('likes.posts');
-    Route::get('likes/comments', [ProfileController::class, 'getLikedComments'])->name('likes.comments');
-    Route::get('bookmarks', [ProfileController::class, 'getBookmarks'])->name('bookmarks');
+Route::controller(ProfileController::class)->prefix('profile')->name('profile.')->group(function() {
+    Route::get('likes/posts', 'getLikedPosts')->name('likes.posts');
+    Route::get('likes/comments', 'getLikedComments')->name('likes.comments');
+    Route::get('bookmarks', 'getBookmarks')->name('bookmarks');
     
-    Route::post('upload/profile-photo', [ProfileController::class, 'uploadProfilePhoto'])->name('upload.profile-photo');
-    Route::put('update', [ProfileController::class, 'update'])->name('update');
+    Route::post('upload/profile-photo', 'uploadProfilePhoto')->name('upload.profile-photo');
+    Route::put('update', 'update')->name('update');
     
     Route::prefix('{user:username}')->name('get.')->group(function() {
-        Route::get('/', [ProfileController::class, 'getInfo'])->name('info');
-        Route::get('posts', [ProfileController::class, 'getPosts'])->name('posts');
-        Route::get('comments', [ProfileController::class, 'getComments'])->name('comments');
-        Route::get('followers', [ProfileController::class, 'getFollowers'])->name('followers');
-        Route::get('following', [ProfileController::class, 'getFollowedUsers'])->name('following');
+        Route::get('/', 'getInfo')->name('info');
+        Route::get('posts', 'getPosts')->name('posts');
+        Route::get('comments', 'getComments')->name('comments');
+        Route::get('followers', 'getFollowers')->name('followers');
+        Route::get('following', 'getFollowedUsers')->name('following');
     });
 });
 
 Route::apiResource('posts', PostController::class);
-Route::prefix('posts')->name('posts.')->group(function() {
-    Route::post('{post}/like', [PostController::class, 'like'])->name('like');
-    Route::delete('{post}/dislike', [PostController::class, 'dislike'])->name('dislike');
-    Route::post('{post}/bookmark', [PostController::class, 'bookmark'])->name('bookmark');
-    Route::delete('{post}/unbookmark', [PostController::class, 'unbookmark'])->name('unbookmark');
+Route::controller(PostController::class)->prefix('posts')->name('posts.')->group(function() {
+    Route::post('{post}/like', 'like')->can('like', 'post')->name('like');
+    Route::delete('{post}/dislike', 'dislike')->can('dislike', 'post')->name('dislike');
+    Route::post('{post}/bookmark', 'bookmark')->can('bookmark', 'post')->name('bookmark');
+    Route::delete('{post}/unbookmark', 'unbookmark')->can('unbookmark', 'post')->name('unbookmark');
 });
 
 Route::apiResource('comments', CommentController::class)->except('show');
-Route::prefix('comments')->name('comments.')->group(function() {
-    Route::post('{comment}/like', [CommentController::class, 'like'])->name('like');
-    Route::delete('{comment}/dislike', [CommentController::class, 'dislike'])->name('dislike');
+Route::controller(CommentController::class)->prefix('comments')->name('comments.')->group(function() {
+    Route::post('{comment}/like', 'like')->can('like', 'comment')->name('like');
+    Route::delete('{comment}/dislike', 'dislike')->can('dislike', 'comment')->name('dislike');
 });
 
-Route::prefix('settings')->name('settings.')->group(function() {
+Route::controller(SettingController::class)->prefix('settings')->name('settings.')->group(function() {
     Route::prefix('change')->name('change.')->group(function() {
-        Route::put('username', [SettingController::class, 'changeUsername'])->name('username');
-        Route::put('email', [SettingController::class, 'changeEmailAddress'])->name('email');
-        Route::put('password', [SettingController::class, 'changePassword'])->name('password');
-        Route::put('color', [SettingController::class, 'changeColor'])->name('color');
+        Route::put('username', 'changeUsername')->name('username');
+        Route::put('email', 'changeEmailAddress')->name('email');
+        Route::put('password', 'changePassword')->name('password');
+        Route::put('color', 'changeColor')->name('color');
     });
 
-    Route::put('dark-mode', [SettingController::class, 'toggleDarkMode'])->name('dark-mode.toggle');
+    Route::put('dark-mode', 'toggleDarkMode')->name('dark-mode.toggle');
 });
 
-Route::prefix('notifications')->name('notifications.')->group(function() {
-    Route::get('/', [NotificationController::class, 'index'])->name('index');
-    Route::get('/count', [NotificationController::class, 'getCount'])->name('count');
-    Route::put('/peek', [NotificationController::class, 'peek'])->name('peek');
-    Route::put('/{notification}/read', [NotificationController::class, 'read'])->name('read');
-    Route::put('/read/all', [NotificationController::class, 'readAll'])->name('read.all');
+Route::controller(NotificationController::class)->prefix('notifications')->name('notifications.')->group(function() {
+    Route::get('/', 'index')->name('index');
+    Route::get('/count', 'getCount')->name('count');
+    Route::put('/peek', 'peek')->name('peek');
+    Route::put('/{notification}/read', 'read')->name('read');
+    Route::put('/read/all', 'readAll')->name('read.all');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');

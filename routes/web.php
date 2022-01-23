@@ -14,19 +14,20 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/private', [ViewController::class, 'authenticateuser'])->middleware('auth:sanctum');
+Route::controller(ViewController::class)->group(function() {
+    Route::get('/private', 'authenticateuser')->middleware('auth:sanctum');
+    Route::get('/post/{post}', 'authenticatePost');
+    Route::get('/reset-password/{token}', 'authenticateResetPasswordToken');
+    Route::get('/verify/{token}', 'authenticateVerificationToken');
+});
 
-Route::get('/post/{post}', [ViewController::class, 'authenticatePost']);
-Route::get('/reset-password/{token}', [ViewController::class, 'authenticateResetPasswordToken']);
-Route::get('/verify/{token}', [ViewController::class, 'authenticateVerificationToken']);
+Route::controller(AuthController::class)->middleware('guest')->name('auth.')->group(function() {
+    Route::post('/login', 'login')->name('login');
+    Route::post('/register', 'register')->name('register');
+    Route::put('/verify', 'verify')->name('verify');
 
-Route::middleware('guest')->name('auth.')->group(function() {
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
-    Route::post('/register', [AuthController::class, 'register'])->name('register');
-    Route::put('/verify', [AuthController::class, 'verify'])->name('verify');
-
-    Route::post('/verify/resend', [AuthController::class, 'resendVerificationCode'])->name('verify.resend');
+    Route::post('/verify/resend', 'resendVerificationCode')->name('verify.resend');
     
-    Route::post('/forgot-password', [AuthController::class, 'requestPasswordReset'])->name('forgot-password');
-    Route::put('/reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
+    Route::post('/forgot-password', 'requestPasswordReset')->name('forgot-password');
+    Route::put('/reset-password', 'resetPassword')->name('reset-password');
 });
