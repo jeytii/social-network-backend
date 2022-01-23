@@ -74,9 +74,7 @@ class UserController extends Controller
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
     public function follow(Request $request, User $user)
-    {
-        $this->authorize('follow', $user);
-        
+    {   
         $response = $this->userService->follow($request->user(), $user);
 
         return response()->json($response, $response['status']);
@@ -92,8 +90,6 @@ class UserController extends Controller
      */
     public function unfollow(Request $request, User $user)
     {
-        $this->authorize('unfollow', $user);
-
         $response = $this->userService->unfollow($request->user(), $user);
 
         return response()->json($response, $response['status']);
