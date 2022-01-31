@@ -100,10 +100,7 @@ class UserPolicy
      */
     public function follow(User $user, User $model)
     {
-        return (
-            $user->id !== $model->id &&
-            !$user->following()->find($model->id)
-        );
+        return $user->isNot($model) && $user->following()->whereKey($model->id)->doesntExist();
     }
 
     /**
@@ -115,9 +112,6 @@ class UserPolicy
      */
     public function unfollow(User $user, User $model)
     {
-        return (
-            $user->id !== $model->id &&
-            (bool) $user->following()->find($model->id)
-        );
+        return $user->isNot($model) && $user->following()->whereKey($model->id)->exists();
     }
 }

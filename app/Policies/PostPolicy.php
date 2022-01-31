@@ -2,8 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Post;
-use App\Models\User;
+use App\Models\{User, Post};
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class PostPolicy
@@ -53,7 +52,7 @@ class PostPolicy
      */
     public function update(User $user, Post $post)
     {
-        return $post->user_id === $user->id;
+        return $user->is($post->user);
     }
     
     /**
@@ -65,7 +64,7 @@ class PostPolicy
      */
     public function delete(User $user, Post $post)
     {
-        return (bool) $user->posts()->find($post->id) && $post->user_id === $user->id;
+        return $user->posts()->whereKey($post->id)->exists();
     }
 
     /**
@@ -101,7 +100,7 @@ class PostPolicy
      */
     public function like(User $user, Post $post)
     {
-        return !$user->likedPosts()->find($post->id);
+        return $user->likedPosts()->whereKey($post->id)->doesntExist();
     }
 
     /**
@@ -113,7 +112,7 @@ class PostPolicy
      */
     public function dislike(User $user, Post $post)
     {
-        return (bool) $user->likedPosts()->find($post->id);
+        return $user->likedPosts()->whereKey($post->id)->exists();
     }
 
     /**
@@ -125,7 +124,7 @@ class PostPolicy
      */
     public function bookmark(User $user, Post $post)
     {
-        return !$user->bookmarks()->find($post->id);
+        return $user->bookmarks()->whereKey($post->id)->doesntExist();
     }
 
     /**
@@ -137,6 +136,6 @@ class PostPolicy
      */
     public function unbookmark(User $user, Post $post)
     {
-        return (bool) $user->bookmarks()->find($post->id);
+        return $user->bookmarks()->whereKey($post->id)->exists();
     }
 }

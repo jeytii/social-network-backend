@@ -2,8 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\Comment;
-use App\Models\User;
+use App\Models\{User, Comment};
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class CommentPolicy
@@ -53,7 +52,7 @@ class CommentPolicy
      */
     public function update(User $user, Comment $comment)
     {
-        return $comment->user_id === $user->id;
+        return $user->is($comment->user);
     }
 
     /**
@@ -65,7 +64,7 @@ class CommentPolicy
      */
     public function delete(User $user, Comment $comment)
     {
-        return $comment->user_id === $user->id;
+        return $user->comments()->whereKey($comment->id)->exists();
     }
 
     /**
@@ -101,7 +100,7 @@ class CommentPolicy
      */
     public function like(User $user, Comment $comment)
     {
-        return !$user->likedComments()->find($comment->id);
+        return $user->likedComments()->whereKey($comment->id)->doesntExist();
     }
 
     /**
@@ -113,6 +112,6 @@ class CommentPolicy
      */
     public function dislike(User $user, Comment $comment)
     {
-        return (bool) $user->likedComments()->find($comment->id);
+        return $user->likedComments()->whereKey($comment->id)->exists();
     }
 }
