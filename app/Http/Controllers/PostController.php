@@ -86,12 +86,11 @@ class PostController extends Controller
     /**
      * Delete an existing post.
      * 
-     * @param \Illuminate\Http\Request  $request
      * @param \App\Models\Post  $post
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function destroy(Request $request, Post $post)
+    public function destroy(Post $post)
     {
         $this->authorize('delete', $post);
 
@@ -110,6 +109,8 @@ class PostController extends Controller
      */
     public function like(Request $request, Post $post)
     {
+        $this->authorize('like', $post);
+
         $response = $this->postService->likePost($request->user(), $post);
 
         return response()->json($response, $response['status']);
@@ -125,6 +126,8 @@ class PostController extends Controller
      */
     public function dislike(Request $request, Post $post)
     {
+        $this->authorize('dislike', $post);
+
         $response = $this->postService->dislikePost($request->user(), $post);
 
         return response()->json($response, $response['status']);
@@ -140,6 +143,8 @@ class PostController extends Controller
      */
     public function bookmark(Request $request, Post $post)
     {
+        $this->authorize('bookmark', $post);
+
         $response = $this->postService->bookmarkPost($request->user(), $post);
 
         return response()->json($response, $response['status']);
@@ -155,6 +160,8 @@ class PostController extends Controller
      */
     public function unbookmark(Request $request, Post $post)
     {
+        $this->authorize('unbookmark', $post);
+
         $response = $this->postService->unbookmarkPost($request->user(), $post);
 
         return response()->json($response, $response['status']);

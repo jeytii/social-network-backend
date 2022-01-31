@@ -71,14 +71,13 @@ class CommentController extends Controller
     }
 
     /**
-     * Update an existing comment.
+     * Delete an existing comment.
      * 
-     * @return \Illuminate\Http\Request  $request
      * @param \App\Models\Comment  $comment
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function destroy(Request $request, Comment $comment)
+    public function destroy(Comment $comment)
     {
         $this->authorize('delete', $comment);
 
@@ -97,6 +96,8 @@ class CommentController extends Controller
      */
     public function like(Request $request, Comment $comment)
     {
+        $this->authorize('like', $comment);
+
         $response = $this->commentService->likeComment($request->user(), $comment);
 
         return response()->json($response, $response['status']);
@@ -112,6 +113,8 @@ class CommentController extends Controller
      */
     public function dislike(Request $request, Comment $comment)
     {
+        $this->authorize('dislike', $comment);
+
         $response = $this->commentService->dislikeComment($request->user(), $comment);
 
         return response()->json($response, $response['status']);
