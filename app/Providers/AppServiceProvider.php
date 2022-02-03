@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -44,5 +45,19 @@ class AppServiceProvider extends ServiceProvider
         });
         
         Request::macro('isPresent', fn(string $key) => $this->has($key) && $this->filled($key));
+
+        Response::macro('success', fn(int $statusCode = 200) => (
+            Response::json(['status' => $statusCode], $statusCode)
+        ));
+
+        Response::macro('error', fn(string $message, int $statusCode) => (
+            Response::json(compact('message'), $statusCode)
+        ));
+        
+        Response::macro('somethingWrong', fn() => (
+            Response::json([
+                'message' => 'Something went wrong. Please check your connection then try again.'
+            ], 500)
+        ));
     }
 }
