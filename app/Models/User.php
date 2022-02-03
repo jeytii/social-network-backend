@@ -5,10 +5,10 @@ namespace App\Models;
 use App\Models\Notification;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\{Str, Carbon};
+use Illuminate\Support\Facades\DB;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\{
@@ -106,24 +106,41 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
-     * Check if user has reached the rate limit.
+     * Check if the user has reached the rate limit for changing the password.
      * 
-     * @param \Illuminate\Database\Query\Builder  $query
-     * @param int  $maxAttempts
-     * @param int  $interval
-     * @param string  $column
      * @return bool
      */
-    public function rateLimitReached(
-        QueryBuilder $query,
-        int $maxAttempts,
-        int $interval,
-        string $column = 'created_at'
-    ): bool
+    public function passwordResetLimitReached(): bool
     {
+        $maxAttempts = config('validation.attempts.change_password.max');
+        $query = DB::table('password_resets')->where('email', $this->email)->whereNotNull('completed_at');
+
         if ($query->count() >= $maxAttempts) {
-            $resets = $query->orderByDesc($column)->limit($maxAttempts)->get();
-            $lastTimestamp = Carbon::parse($resets->last()->{$column});
+            $resets = $query->orderByDesc('completed_at')->limit($maxAttempts)->get();
+            $lastTimestamp = Carbon::parse($resets->last()->completed_at);
+            $diffInHours = $lastTimestamp->diffInHours(now());
+
+            return $diffInHours <= config('validation.attempts.change_password.interval');
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user has reached the rate limit for updating some settings.
+     * 
+     * @param string  $column
+     * @param int  $maxAttempts
+     * @param int  $interval
+     * @return bool
+     */
+    public function settingsUpdateLimitReached(string $column, int $maxAttempts, int $interval): bool
+    {
+        $query = DB::table('settings_updates')->where('user_id', auth()->id())->where('type', $column);
+
+        if ($query->count() >= $maxAttempts) {
+            $resets = $query->latest()->limit($maxAttempts)->get();
+            $lastTimestamp = Carbon::parse($resets->last()->completed_at);
             $diffInHours = $lastTimestamp->diffInHours(now());
 
             return $diffInHours <= $interval;
