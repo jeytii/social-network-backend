@@ -14,13 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        User::factory(50)
-            ->has(
-                Post::factory(30)->sequence(fn($sequence) => [
-                    'created_at' => now()->addMinutes($sequence->index),
-                    'updated_at' => now()->addMinutes($sequence->index),
-                ])
-            )
-            ->create();
+        User::factory(50)->hasPosts(30)->create();
     }
 }
