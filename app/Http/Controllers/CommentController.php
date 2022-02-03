@@ -2,31 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Comment;
+use App\Models\{Post, Comment, Notification};
 use Illuminate\Http\Request;
 use App\Http\Requests\PostAndCommentRequest;
-use App\Repositories\CommentRepository;
-use App\Services\CommentService;
+use Illuminate\Support\Facades\DB;
+use App\Notifications\NotifyUponAction;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Exception;
 
 class CommentController extends Controller
 {
-    protected $commentRepository;
-
-    protected $commentService;
-
-    /**
-     * Create a new controller instance.
-     *
-     * @param \App\Repository\CommentRepository  $commentRepository
-     * @param \App\Service\CommentService  $commentService
-     * @return void
-     */
-    public function __construct(CommentRepository $commentRepository, CommentService $commentService)
-    {
-        $this->commentRepository = $commentRepository;
-        $this->commentService = $commentService;
-    }
-
     /**
      * Get comments under a specific post.
      * 
@@ -35,9 +20,15 @@ class CommentController extends Controller
      */
     public function index(Request $request)
     {
-        $response = $this->commentRepository->get($request);
+        try {
+            $post = Post::where('slug', $request->query('post'))->firstOrFail();
+            $data = $post->comments()->orderByDesc('likes_count')->withPaginated();
 
-        return response()->json($response, $response['status']);
+            return response()->json($data);
+        }
+        catch (ModelNotFoundException $exception) {
+            return response()->error($exception->getMessage(), 404);
+        }
     }
 
     /**
@@ -48,9 +39,32 @@ class CommentController extends Controller
      */
     public function store(PostAndCommentRequest $request)
     {
-        $response = $this->commentService->createComment($request);
+        $post = Post::firstWhere('slug', $request->input('post'));
+        $user = $request->user();
 
-        return response()->json($response, $response['status']);
+        try {
+            $data = DB::transaction(function() use ($request, $user, $post) {
+                $comment = $user->comments()->create([
+                    'post_id' => $post->id,
+                    'body' => $request->input('body')
+                ])->first();
+
+                if ($post->user->isNot($user)) { 
+                    $post->user->notify(new NotifyUponAction(
+                        $user,
+                        Notification::COMMENTED_ON_POST,
+                        "/posts/{$post->slug}"
+                    ));
+                }
+
+                return $comment;
+            });
+
+            return response()->json(compact('data'), 201);
+        }
+        catch (Exception $exception) {
+            return response()->somethingWrong();
+        }
     }
 
     /**
@@ -65,9 +79,13 @@ class CommentController extends Controller
     {
         $this->authorize('update', $comment);
         
-        $response = $this->commentService->updateComment($request, $comment);
+        if ($comment->body === $request->input('body')) {
+            return response()->error('No change was made.', 401);
+        }
 
-        return response()->json($response, $response['status']);
+        $comment->update($request->only('body'));
+
+        return response()->success();
     }
 
     /**
@@ -81,9 +99,9 @@ class CommentController extends Controller
     {
         $this->authorize('delete', $comment);
 
-        $response = $this->commentService->deleteComment($comment);
-
-        return response()->json($response, $response['status']);
+        $comment->delete();
+        
+        return response()->success();
     }
 
     /**
@@ -98,9 +116,28 @@ class CommentController extends Controller
     {
         $this->authorize('like', $comment);
 
-        $response = $this->commentService->likeComment($request->user(), $comment);
+        $liker = $request->user();
 
-        return response()->json($response, $response['status']);
+        try {
+            DB::transaction(function() use ($liker, $comment) {
+                $liker->likedComments()->attach($comment);
+
+                if ($comment->user->isNot(auth()->user())) {
+                    $comment->user->notify(new NotifyUponAction(
+                        $liker,
+                        Notification::LIKED_COMMENT,
+                        "/posts/{$comment->post->slug}"
+                    ));
+                }
+            });
+
+            return response()->json([
+                'data' => $comment->likers()->count(),
+            ]);
+        }
+        catch (Exception $exception) {
+            return response()->somethingWrong();
+        }
     }
 
     /**
@@ -115,8 +152,10 @@ class CommentController extends Controller
     {
         $this->authorize('dislike', $comment);
 
-        $response = $this->commentService->dislikeComment($request->user(), $comment);
+        $request->user()->likedComments()->detach($comment);
 
-        return response()->json($response, $response['status']);
+        return response()->json([
+            'data' => $comment->likers()->count(),
+        ]);
     }
 }

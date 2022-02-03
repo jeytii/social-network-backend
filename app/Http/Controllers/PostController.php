@@ -2,31 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
+use App\Models\{Post, Notification};
 use Illuminate\Http\Request;
 use App\Http\Requests\PostAndCommentRequest;
-use App\Repositories\PostRepository;
-use App\Services\PostService;
+use Illuminate\Support\Facades\DB;
+use App\Notifications\NotifyUponAction;
+use Exception;
 
 class PostController extends Controller
 {
-    protected $postRepository;
-
-    protected $postService;
-
-    /**
-     * Create a new controller instance.
-     *
-     * @param \App\Repositories\PostRepository  $postRepository
-     * @param \App\Services\PostService  $postService
-     * @return void
-     */
-    public function __construct(PostRepository $postRepository, PostService $postService)
-    {
-        $this->postRepository = $postRepository;
-        $this->postService = $postService;
-    }
-
     /**
      * Get paginated news feed posts.
      * 
@@ -35,9 +19,10 @@ class PostController extends Controller
      */
     public function index(Request $request)
     {
-        $response = $this->postRepository->get($request);
+        $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
+        $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))->latest()->withPaginated();
 
-        return response()->json($response, $response['status']);
+        return response()->json($data);
     }
 
     /**
@@ -48,9 +33,7 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        $response = $this->postRepository->getOne($post);
-
-        return response()->json($response, $response['status']);
+        return response()->json(compact('post'));
     }
 
     /**
@@ -61,9 +44,9 @@ class PostController extends Controller
      */
     public function store(PostAndCommentRequest $request)
     {
-        $response = $this->postService->createPost($request);
-
-        return response()->json($response, $response['status']);
+        $data = $request->user()->posts()->create($request->only('body'))->first();
+        
+        return response()->json(compact('data'), 201);
     }
 
     /**
@@ -78,9 +61,13 @@ class PostController extends Controller
     {
         $this->authorize('update', $post);
 
-        $response = $this->postService->updatePost($request, $post);
+        if ($post->body === $request->input('body')) {
+            return response()->error('No changes made.', 401);
+        }
 
-        return response()->json($response, $response['status']);
+        $post->update($request->only('body'));
+
+        return response()->success();
     }
 
     /**
@@ -94,9 +81,9 @@ class PostController extends Controller
     {
         $this->authorize('delete', $post);
 
-        $response = $this->postService->deletePost($post);
+        $post->delete();
 
-        return response()->json($response, $response['status']);
+        return response()->success();
     }
 
     /**
@@ -111,9 +98,24 @@ class PostController extends Controller
     {
         $this->authorize('like', $post);
 
-        $response = $this->postService->likePost($request->user(), $post);
+        $liker = $request->user();
 
-        return response()->json($response, $response['status']);
+        try {
+            DB::transaction(function() use ($liker, $post) {
+                $liker->likedPosts()->attach($post);
+                
+                if ($post->user->isNot(auth()->user())) {
+                    $post->user->notify(new NotifyUponAction($liker, Notification::LIKED_POST, "/posts/{$post->slug}"));
+                }
+            });
+
+            return response()->json([
+                'data' => $post->likers()->count(),
+            ]);
+        }
+        catch (Exception $exception) {
+            return response()->somethingWrong();
+        }
     }
 
     /**
@@ -128,9 +130,11 @@ class PostController extends Controller
     {
         $this->authorize('dislike', $post);
 
-        $response = $this->postService->dislikePost($request->user(), $post);
+        $request->user()->likedPosts()->detach($post);
 
-        return response()->json($response, $response['status']);
+        return response()->json([
+            'data' => $post->likers()->count(),
+        ]);
     }
 
     /**
@@ -145,9 +149,9 @@ class PostController extends Controller
     {
         $this->authorize('bookmark', $post);
 
-        $response = $this->postService->bookmarkPost($request->user(), $post);
+        $request->user()->bookmarks()->attach($post);
 
-        return response()->json($response, $response['status']);
+        return response()->success();
     }
 
     /**
@@ -162,8 +166,8 @@ class PostController extends Controller
     {
         $this->authorize('unbookmark', $post);
 
-        $response = $this->postService->unbookmarkPost($request->user(), $post);
+        $request->user()->bookmarks()->detach($post);
 
-        return response()->json($response, $response['status']);
+        return response()->success();
     }
 }

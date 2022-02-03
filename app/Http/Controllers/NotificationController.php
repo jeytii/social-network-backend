@@ -4,31 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Notification;
 use Illuminate\Http\Request;
-use App\Services\NotificationService;
-use App\Repositories\NotificationRepository;
 
 class NotificationController extends Controller
 {
-    protected $notificationRepository;
-
-    protected $notificationService;
-
-    /**
-     * Create a new controller instance.
-     *
-     * @param \App\Repository\NotificationRepository  $notificationRepository
-     * @param \App\Service\NotificationService  $notificationService
-     * @return void
-     */
-    public function __construct(
-        NotificationRepository $notificationRepository,
-        NotificationService $notificationService
-    )
-    {
-        $this->notificationRepository = $notificationRepository;
-        $this->notificationService = $notificationService;
-    }
-
     /**
      * Get the paginated notifications.
      * 
@@ -37,9 +15,9 @@ class NotificationController extends Controller
      */
     public function index(Request $request)
     {
-        $response = $this->notificationRepository->get($request->user());
+        $data = $request->user()->notifications()->withPaginated();
 
-        return response()->json($response, $response['status']);
+        return response()->json($data);
     }
 
      /**
@@ -50,9 +28,9 @@ class NotificationController extends Controller
      */
     public function getCount(Request $request)
     {
-        $response = $this->notificationRepository->getCount($request->user());
+        $data = $request->user()->notifications()->unpeeked()->count();
 
-        return response()->json($response, $response['status']);
+        return response()->json(compact('data'));
     }
 
     /**
@@ -63,9 +41,11 @@ class NotificationController extends Controller
      */
     public function peek(Request $request)
     {
-        $response = $this->notificationService->peek($request->user());
+        $request->user()->notifications()->unpeeked()->update([
+            'peeked_at' => now()
+        ]);
 
-        return response()->json($response, $response['status']);
+        return response()->success();
     }
 
     /**
@@ -76,9 +56,13 @@ class NotificationController extends Controller
      */
     public function read(Notification $notification)
     {
-        $response = $this->notificationService->readOne($notification);
+        if ($notification->notifiable->isNot(auth()->user())) {
+            return response()->error('Unauthorized.', 401);
+        }
 
-        return response()->json($response, $response['status']);
+        $notification->markAsRead();
+
+        return response()->success();
     }
 
     /**
@@ -89,8 +73,8 @@ class NotificationController extends Controller
      */
     public function readAll(Request $request)
     {
-        $response = $this->notificationService->readAll($request->user());
-
-        return response()->json($response, $response['status']);
+        $request->user()->unreadNotifications->markAsRead();
+        
+        return response()->success();
     }
 }

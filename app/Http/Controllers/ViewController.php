@@ -3,25 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
-use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class ViewController extends Controller
 {
-    protected $user;
-
-    /**
-     * Create a new controller instance.
-     *
-     * @param \App\Repositories\UserRepository  $user
-     * @return void
-     */
-    public function __construct(UserRepository $user)
-    {
-        $this->user = $user;
-    }
-
     /**
      * Check user is logged in.
      * 
@@ -30,9 +15,14 @@ class ViewController extends Controller
      */
     public function authenticateUser(Request $request)
     {
-        $response = $this->user->getAuthUser($request);
+        $data = $request->user()->only(array_merge(
+            config('api.response.user.basic'),
+            ['email', 'bio', 'color', 'dark_mode']
+        ));
 
-        return response()->json($response, $response['status']);
+        $data['birth_date'] = $request->user()->birth_date->format('Y-m-d');
+
+        return response()->json(compact('data'));
     }
 
     /**

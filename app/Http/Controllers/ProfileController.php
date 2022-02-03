@@ -5,26 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Requests\UserRequest;
-use App\Services\ProfileService;
 use App\Repositories\ProfileRepository;
+use Carbon\Carbon;
+use Cloudinary\Cloudinary;
 
 class ProfileController extends Controller
 {
-    protected $profileRepository;
+    protected $profile;
 
-    protected $profileService;
+    protected $cloudinary;
 
     /**
      * Create a new notification instance.
      *
-     * @param \App\Repositories\ProfileRepository  $profileRepository
-     * @param \App\Services\ProfileService  $profileService
+     * @param \App\Repositories\ProfileRepository  $profile
      * @return void
      */
-    public function __construct(ProfileRepository $profileRepository, ProfileService $profileService)
+    public function __construct(ProfileRepository $profile)
     {
-        $this->profileRepository = $profileRepository;
-        $this->profileService = $profileService;
+        $this->profile = $profile;
+        $this->cloudinary = new Cloudinary(env('CLOUDINARY_URL'));
     }
 
     /**
@@ -35,9 +35,10 @@ class ProfileController extends Controller
      */
     public function getInfo(User $user)
     {
-        $response = $this->profileRepository->get($user);
+        $data = $user->loadCount(['followers', 'following', 'posts', 'comments'])
+                    ->makeVisible('birth_date');
 
-        return response()->json($response);
+        return response()->json(compact('data'));
     }
 
     /**
@@ -48,7 +49,7 @@ class ProfileController extends Controller
      */
     public function getPosts(User $user)
     {
-        $response = $this->profileRepository->getPostsOrComments($user, 'posts');
+        $response = $this->profile->get($user, 'posts');
 
         return response()->json($response);
     }
@@ -61,7 +62,7 @@ class ProfileController extends Controller
      */
     public function getComments(User $user)
     {
-        $response = $this->profileRepository->getPostsOrComments($user, 'comments');
+        $response = $this->profile->get($user, 'comments');
 
         return response()->json($response);
     }
@@ -74,7 +75,7 @@ class ProfileController extends Controller
      */
     public function getLikedPosts(Request $request)
     {
-        $response = $this->profileRepository->getInteractedPosts($request, 'likedPosts');
+        $response = $this->profile->getPostsOrComments($request, 'likedPosts');
 
         return response()->json($response);
     }
@@ -87,7 +88,7 @@ class ProfileController extends Controller
      */
     public function getLikedComments(Request $request)
     {
-        $response = $this->profileRepository->getInteractedPosts($request, 'likedComments');
+        $response = $this->profile->getPostsOrComments($request, 'likedComments');
 
         return response()->json($response);
     }
@@ -100,7 +101,7 @@ class ProfileController extends Controller
      */
     public function getBookmarks(Request $request)
     {
-        $response = $this->profileRepository->getInteractedPosts($request, 'bookmarks');
+        $response = $this->profile->getPostsOrComments($request, 'bookmarks');
 
         return response()->json($response);
     }
@@ -113,7 +114,7 @@ class ProfileController extends Controller
      */
     public function getFollowers(User $user)
     {
-        $response = $this->profileRepository->getConnections($user, 'followers');
+        $response = $this->profile->getUserConnections($user, 'followers');
 
         return response()->json($response);
     }
@@ -126,7 +127,7 @@ class ProfileController extends Controller
      */
     public function getFollowedUsers(User $user)
     {
-        $response = $this->profileRepository->getConnections($user, 'following');
+        $response = $this->profile->getUserConnections($user, 'following');
 
         return response()->json($response);
     }
@@ -139,9 +140,23 @@ class ProfileController extends Controller
      */
     public function uploadProfilePhoto(UserRequest $request)
     {   
-        $response = $this->profileService->uploadProfilePhoto($request);
+        $image = $this->cloudinary->uploadApi()->upload(
+            $request->file('image')->getRealPath(),
+            [
+                'folder' => 'social',
+                'eager' => [
+                    'width' => 200,
+                    'height' => 200,
+                    'crop' => 'fill',
+                    'aspect_ratio' => 1.0,
+                    'radius' => 'max',
+                ]
+            ]
+        );
 
-        return response()->json($response);
+        return response()->json([
+            'data' => $image['public_id'],
+        ]);
     }
 
     /**
@@ -152,8 +167,17 @@ class ProfileController extends Controller
      */
     public function update(UserRequest $request)
     {   
-        $response = $this->profileService->update($request);
+        if (empty($request->input('image_url')) && !is_null($request->user()->image_url)) {
+            $this->cloudinary->uploadApi()->destroy($request->user()->image_url);
+        }
 
-        return response()->json($response);
+        $body = $request->only(['name', 'bio', 'image_url']);
+        $birthDate = Carbon::parse($request->input('birth_date'));
+
+        $request->user()->update(array_merge($body, [
+            'birth_date' => $birthDate
+        ]));
+
+        return response()->success();
     }
 }

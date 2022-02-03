@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\{DB, Hash};
 use App\Services\SettingService;
 use App\Http\Requests\UserRequest;
+use Exception;
 
 class SettingController extends Controller
 {
@@ -55,9 +57,28 @@ class SettingController extends Controller
      */
     public function changePassword(UserRequest $request)
     {
-        $response = $this->settings->changePassword($request);
+        $user = $request->user();
+        $newPassword = $request->input('new_password');
+        
+        if ($user->passwordResetLimitReached()) {
+            return response()->error("You're doing too much. Try again later.", 429);
+        }
 
-        return response()->json($response, $response['status']);
+        try {
+            DB::transaction(function() use ($user, $newPassword) {
+                $user->update(['password' => Hash::make($newPassword)]);
+
+                DB::table('password_resets')->insert([
+                    'email' => $user->email,
+                    'completed_at' => now(),
+                ]);
+            });
+
+            return response()->success();
+        }
+        catch (Exception $exception) {
+            return response()->somethingWrong();
+        }
     }
 
     /**
@@ -68,9 +89,9 @@ class SettingController extends Controller
      */
     public function changeColor(UserRequest $request)
     {
-        $response = $this->settings->changeColor($request);
+        $request->user()->update($request->only('color'));
 
-        return response()->json($response, $response['status']);
+        return response()->success();
     }
 
     /**
@@ -81,8 +102,10 @@ class SettingController extends Controller
      */
     public function toggleDarkMode(Request $request)
     {
-        $response = $this->settings->toggleDarkMode($request);
+        $request->user()->update([
+            'dark_mode' => $request->boolean('dark_mode')
+        ]);
 
-        return response()->json($response, $response['status']);
+        return response()->success();
     }
 }
