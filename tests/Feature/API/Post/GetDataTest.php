@@ -42,7 +42,6 @@ test('Should return the paginated list of own posts and posts from followed user
             ],
             'has_more',
             'next_offset',
-            'status',
         ]);
 
     $this->response

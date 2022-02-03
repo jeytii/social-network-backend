@@ -54,6 +54,5 @@ test('Should successfully upload a profile photo', function() {
 
     $this->response
         ->postJson(route('profile.upload.profile-photo'), compact('image'))
-        ->assertOk()
-        ->assertJsonStructure(['status', 'data']);
+        ->assertOk();
 });

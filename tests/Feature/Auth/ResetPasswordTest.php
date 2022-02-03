@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\{DB, Hash, Notification, Cache};
+use Illuminate\Support\Facades\{DB, Hash, Cache};
 
 beforeAll(function() {
     User::factory()->create();
@@ -16,11 +16,11 @@ afterAll(function() {
     
     DB::table('users')->truncate();
     DB::table('password_resets')->truncate();
+    DB::table('personal_access_tokens')->truncate();
     DB::table('jobs')->truncate();
-    Cache::flush();
 });
 
-test('Should throw an error if token is missing', function() {
+test('Should throw an error if token is missing from the request body', function() {
     $this->putJson(route('auth.reset-password'), [
         'password' => 'P@ssword12345',
         'password_confirmation' => 'P@ssword12345',
@@ -34,26 +34,27 @@ test('Should throw an error if token is invalid', function() {
         'password' => 'P@ssword12345',
         'password_confirmation' => 'P@ssword12345',
         'token' => '123456789',
-    ])
-    ->assertStatus(422)
-    ->assertJsonValidationErrors(['token']);
+    ])->assertUnauthorized();
 });
 
 test('Should successfully reset the password', function() {
-    Notification::fake();
+    $token = bin2hex(random_bytes(16));
+    $email = $this->user->email;
+    $cacheKey = "password-reset.{$token}";
     
-    $this->postJson(route('auth.forgot-password'), $this->user->only('email'))
-        ->assertOk();
-    
-    $passwordReset = DB::table('password_resets')->where('email', $this->user->email)->first();
+    DB::table('password_resets')->insert(compact('email', 'token'));
+
+    Cache::shouldReceive('has')->once()->with($cacheKey)->andReturn(true);
+    Cache::shouldReceive('get')->once()->with($cacheKey)->andReturn($email);
+    Cache::shouldReceive('forget')->once()->with($cacheKey);
 
     $this->putJson(route('auth.reset-password'), [
         'password' => 'P@ssword12345',
         'password_confirmation' => 'P@ssword12345',
-        'token' => $passwordReset->token,
+        'token' => $token,
     ])->assertOk();
 
-    $user = DB::table('users')->where('email', $this->user->email)->first();
+    $user = DB::table('users')->where('email', $email)->first();
 
     $this->assertTrue(Hash::check('P@ssword12345', $user->password));
 });

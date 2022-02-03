@@ -7,27 +7,10 @@ afterAll(function() {
     (new self(function() {}, '', []))->setUp();
 
     DB::table('users')->truncate();
+    DB::table('personal_access_tokens')->truncate();
 });
 
-test('Should throw an error if the username and password fields are not set', function() {
-    $this->postJson(route('auth.login'))
-        ->assertStatus(422)
-        ->assertJsonValidationErrors(['username', 'password']);
-});
-
-test('Should throw an error if the username is not set', function() {
-    $this->postJson(route('auth.login'), ['password' => 'password'])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors(['username']);
-});
-
-test('Should throw an error if the password is not set', function() {
-    $this->postJson(route('auth.login'), ['username' => 'username'])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors(['password']);
-});
-
-test('Should throw an error if the entered credentials don\'t exist', function() {
+test("Should throw an error if the entered credentials don't exist", function() {
     $this->postJson(route('auth.login'), [
         'username' => 'username',
         'password' => 'password'
@@ -50,6 +33,6 @@ test('Should return an auth token if successful', function() {
         'username' => $user->username,
         'password' => 'P@ssword123'
     ])
-        ->assertOk()
-        ->assertJsonStructure(['token', 'message', 'status']);
+    ->assertOk()
+    ->assertJsonStructure(['token', 'message']);
 });

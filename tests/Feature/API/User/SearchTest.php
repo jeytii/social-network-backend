@@ -23,7 +23,6 @@ test('Should throw a validation error if search query is not set or null', funct
         ->getJson(route('users.search'))
         ->assertOk()
         ->assertExactJson([
-            'status' => 200,
             'data' => [],
         ]);
 });
@@ -33,7 +32,6 @@ test('Should return empty list if user doesn\'t exist', function() {
         ->getJson(route('users.search', ['query' => 'unknownuser']))
         ->assertOk()
         ->assertExactJson([
-            'status' => 200,
             'data' => [],
         ]);
 });

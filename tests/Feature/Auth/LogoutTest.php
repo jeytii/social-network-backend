@@ -1,18 +1,16 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Auth\Events\Login;
-use Illuminate\Support\Facades\{DB, Event};
+use Illuminate\Support\Facades\DB;
 
 afterAll(function() {
     (new self(function() {}, '', []))->setUp();
+    
     DB::table('users')->truncate();
     DB::table('personal_access_tokens')->truncate();
 });
 
 test('Should return an auth token if successful', function() {
-    Event::fake([Login::class]);
-
     $user = User::factory()->create();
     
     $this->postJson(route('auth.login'), [

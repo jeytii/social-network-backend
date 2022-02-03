@@ -44,7 +44,6 @@ test('Should successfully create a post', function() {
                 'is_bookmarked',
                 'user' => config('api.response.user.basic')
             ],
-            'status',
         ]);
 
     $this->assertTrue($this->user->posts()->where('body', 'Sample post')->exists());

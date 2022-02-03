@@ -10,7 +10,6 @@ afterAll(function() {
     DB::table('users')->truncate();
     DB::table('password_resets')->truncate();
     DB::table('jobs')->truncate();
-    Cache::flush();
 });
 
 test('Should throw an error if the entered email address doesn\'t exist', function() {

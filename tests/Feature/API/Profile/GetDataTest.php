@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 $userBody = ['slug', 'name', 'username', 'gender', 'image_url'];
 
-$miscBody = ['has_more', 'next_offset', 'status'];
+$miscBody = ['has_more', 'next_offset'];
 
 $postBody = [
     'slug',

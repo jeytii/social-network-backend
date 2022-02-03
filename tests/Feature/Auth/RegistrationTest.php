@@ -9,7 +9,6 @@ afterAll(function() {
 
     DB::table('users')->truncate();
     DB::table('jobs')->truncate();
-    Cache::flush();
 });
 
 test('Should throw an error if passwords don\'t match', function() {

@@ -54,7 +54,6 @@ test('Should successfully create a comment', function() {
         ])
         ->assertCreated()
         ->assertJsonStructure([
-            'status',
             'data' => [
                 'slug',
                 'post_slug',
