@@ -4,11 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
-use App\Rules\{
-    ExistsInEmailOrUsername,
-    VerifiedEmailAddress,
-    PasswordResetToken
-};
+use App\Rules\{ExistsInEmailOrUsername, VerifiedEmailAddress};
 
 class AuthRequest extends FormRequest
 {
@@ -59,7 +55,7 @@ class AuthRequest extends FormRequest
             return [
                 'password' => ['required', Password::defaults()],
                 'password_confirmation' => ['required', 'same:password'],
-                'token' => ['required', 'string', new PasswordResetToken],
+                'token' => ['required', 'string'],
             ];
         }
 
