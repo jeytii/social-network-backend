@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{Post, Notification};
 use Illuminate\Http\Request;
-use App\Http\Requests\PostAndCommentRequest;
+use App\Http\Requests\PostRequest;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\NotifyUponAction;
 use Exception;
@@ -39,10 +39,10 @@ class PostController extends Controller
     /**
      * Create a new post.
      * 
-     * @param \App\Http\Requests\PostAndCommentRequest  $request
+     * @param \App\Http\Requests\PostRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(PostAndCommentRequest $request)
+    public function store(PostRequest $request)
     {
         $data = $request->user()->posts()->create($request->only('body'))->first();
         
@@ -52,12 +52,12 @@ class PostController extends Controller
     /**
      * Update an existing post.
      * 
-     * @param \App\Http\Requests\PostAndCommentRequest  $request
+     * @param \App\Http\Requests\PostRequest  $request
      * @param \App\Models\Post  $post
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(PostAndCommentRequest $request, Post $post)
+    public function update(PostRequest $request, Post $post)
     {
         $this->authorize('update', $post);
 
@@ -105,7 +105,7 @@ class PostController extends Controller
                 $liker->likedPosts()->attach($post);
                 
                 if ($post->user->isNot(auth()->user())) {
-                    $post->user->notify(new NotifyUponAction($liker, Notification::LIKED_POST, "/posts/{$post->slug}"));
+                    $post->user->notify(new NotifyUponAction($liker, Notification::LIKED_POST, "/post/{$post->slug}"));
                 }
             });
 

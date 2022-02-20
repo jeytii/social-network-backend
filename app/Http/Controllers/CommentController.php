@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{Post, Comment, Notification};
 use Illuminate\Http\Request;
-use App\Http\Requests\PostAndCommentRequest;
+use App\Http\Requests\CommentRequest;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\NotifyUponAction;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -34,10 +34,10 @@ class CommentController extends Controller
     /**
      * Store a new comment.
      * 
-     * @param \App\Http\Requests\PostAndCommentRequest  $request
+     * @param \App\Http\Requests\CommentRequest  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(PostAndCommentRequest $request)
+    public function store(CommentRequest $request)
     {
         $post = Post::firstWhere('slug', $request->input('post'));
         $user = $request->user();
@@ -53,7 +53,7 @@ class CommentController extends Controller
                     $post->user->notify(new NotifyUponAction(
                         $user,
                         Notification::COMMENTED_ON_POST,
-                        "/posts/{$post->slug}"
+                        "/post/{$post->slug}"
                     ));
                 }
 
@@ -70,12 +70,12 @@ class CommentController extends Controller
     /**
      * Update a comment.
      * 
-     * @param \App\Http\Requests\PostAndCommentRequest  $request
+     * @param \App\Http\Requests\CommentRequest  $request
      * @param \App\Models\Comment  $comment
      * @return \Illuminate\Http\JsonResponse
      * @throws \Illuminate\Auth\Access\AuthorizationException
      */
-    public function update(PostAndCommentRequest $request, Comment $comment)
+    public function update(CommentRequest $request, Comment $comment)
     {
         $this->authorize('update', $comment);
         
@@ -126,7 +126,7 @@ class CommentController extends Controller
                     $comment->user->notify(new NotifyUponAction(
                         $liker,
                         Notification::LIKED_COMMENT,
-                        "/posts/{$comment->post->slug}"
+                        "/post/{$comment->post->slug}"
                     ));
                 }
             });
