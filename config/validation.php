@@ -2,8 +2,8 @@
 
 return [
     'formats' => [
-        'username' => '/^[a-zA-Z0-9_]+$/',
-    ],
+        'username' => '/^([a-zA-Z0-9])([a-zA-Z0-9_.]+)([a-zA-Z0-9])$/',
+     ],
     
     'max_lengths' => [
         'username' => 30,
