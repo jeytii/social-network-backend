@@ -29,8 +29,8 @@ class ProfileRepository
     public function getPostsOrComments(Request $request, string $type): array
     {
         return $request->user()->{$type}()
-                    ->orderByPivot('created_at', 'desc')
-                    ->withPaginated();
+            ->orderByPivot('created_at', 'desc')
+            ->withPaginated();
     }
 
     /**
@@ -43,7 +43,7 @@ class ProfileRepository
     public function getUserConnections(User $user, string $type): array
     {
         return $user->{$type}()
-                    ->orderByPivot('created_at', 'desc')
-                    ->withPaginated(20, config('api.response.user.basic'));
+            ->orderByPivot('created_at', 'desc')
+            ->withPaginated(20, config('response.user'));
     }
 }

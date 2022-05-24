@@ -13,4 +13,4 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-Broadcast::channel('notify.user.{slug}', fn($user, $slug) => $user->slug === $slug);
+Broadcast::channel('notify.user.{slug}', fn ($user, $slug) => $user->slug === $slug);

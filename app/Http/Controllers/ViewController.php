@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Post;
 use Illuminate\Http\Request;
 
 class ViewController extends Controller
@@ -16,7 +15,7 @@ class ViewController extends Controller
     public function authenticateUser(Request $request)
     {
         $data = $request->user()->only(array_merge(
-            config('api.response.user.basic'),
+            config('response.user'),
             ['email', 'bio', 'color', 'dark_mode']
         ));
 
@@ -28,12 +27,11 @@ class ViewController extends Controller
     /**
      * Check if a specific post exists.
      * 
-     * @param \App\Models\Post  $post
      * @return \Illuminate\Http\JsonResponse
      */
-    public function authenticatePost(Post $post)
+    public function authenticatePost()
     {
-        return response()->json(['status' => 200]);
+        return response()->success();
     }
 
     /**
