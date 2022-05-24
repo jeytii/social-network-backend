@@ -64,7 +64,7 @@ class CommentPolicy
      */
     public function delete(User $user, Comment $comment)
     {
-        return $user->comments()->whereKey($comment->id)->exists();
+        return $user->is($comment->user);
     }
 
     /**

@@ -64,7 +64,7 @@ class PostPolicy
      */
     public function delete(User $user, Post $post)
     {
-        return $user->posts()->whereKey($post->id)->exists();
+        return $user->is($post->user);
     }
 
     /**
