@@ -3,11 +3,11 @@
 namespace App\Notifications;
 
 use App\Models\User;
-use Illuminate\Notifications\Notification;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
-use Illuminate\Notifications\Messages\{DatabaseMessage, BroadcastMessage};
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\{DatabaseMessage, BroadcastMessage};
+use Illuminate\Notifications\Notification;
 
 class NotifyUponAction extends Notification implements ShouldBroadcast
 {

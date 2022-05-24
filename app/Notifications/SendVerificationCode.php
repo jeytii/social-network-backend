@@ -3,9 +3,9 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class SendVerificationCode extends Notification implements ShouldQueue
 {
@@ -48,12 +48,12 @@ class SendVerificationCode extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         return (new MailMessage) 
-                    ->from(config('mail.from.address'))
-                    ->subject('Account verification')
-                    ->markdown('email.verification', [
-                        'name' => $notifiable->name,
-                        'code' => $this->code,
-                        'url' => $this->url,
-                    ]);
+            ->from(config('mail.from.address'))
+            ->subject('Account verification')
+            ->markdown('email.verification', [
+                'name' => $notifiable->name,
+                'code' => $this->code,
+                'url' => $this->url,
+            ]);
     }
 }

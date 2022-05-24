@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\{ExistsInEmailOrUsername, VerifiedEmailAddress};
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
-use App\Rules\{ExistsInEmailOrUsername, VerifiedEmailAddress};
 
 class AuthRequest extends FormRequest
 {

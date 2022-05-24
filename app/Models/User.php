@@ -3,20 +3,15 @@
 namespace App\Models;
 
 use App\Models\Notification;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\{Str, Carbon};
-use Illuminate\Support\Facades\DB;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\{
-    HasMany,
-    BelongsToMany,
-    MorphToMany,
-    MorphMany
-};
+use Illuminate\Database\Eloquent\Relations\{HasMany, BelongsToMany, MorphToMany, MorphMany};
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\{Str, Carbon};
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -173,9 +168,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function scopeFirstWithBasicOnly(Builder $query)
     {
-        return $query->first(
-                    array_merge(config('api.response.user.basic'), ['id', 'email'])
-                )->setHidden(['id', 'is_followed', 'is_self']);
+        return $query->first(array_merge(config('response.user'), ['id', 'email']))
+            ->setHidden(['id', 'is_followed', 'is_self']);
     }
 
     // =============================
@@ -227,7 +221,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return null;
         }
 
-        return (bool) $this->followers()->find(auth()->id());
+        return $this->followers()->whereKey(auth()->id())->exists();
     }
 
     // =============================

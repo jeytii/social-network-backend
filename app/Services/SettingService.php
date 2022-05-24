@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Exception;
 
 class SettingService
 {

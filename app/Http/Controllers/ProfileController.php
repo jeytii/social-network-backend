@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
 use App\Http\Requests\UserRequest;
+use App\Models\User;
 use App\Repositories\ProfileRepository;
 use Carbon\Carbon;
 use Cloudinary\Cloudinary;
+use Illuminate\Http\Request;
 
 class ProfileController extends Controller
 {

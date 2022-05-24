@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Rules\{ValidDate, NotCurrentPassword};
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Foundation\Http\FormRequest;
 
 class UserRequest extends FormRequest
 {

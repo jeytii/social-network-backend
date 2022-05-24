@@ -3,9 +3,9 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Notifications\Notification;
 
 class ResetPassword extends Notification implements ShouldQueue
 {
@@ -44,11 +44,11 @@ class ResetPassword extends Notification implements ShouldQueue
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->from(config('mail.from.address'))
-                    ->subject('Request to reset password')
-                    ->markdown('password.reset', [
-                        'name' => $notifiable->name,
-                        'url' => $this->url,
-                    ]);
+            ->from(config('mail.from.address'))
+            ->subject('Request to reset password')
+            ->markdown('password.reset', [
+                'name' => $notifiable->name,
+                'url' => $this->url,
+            ]);
     }
 }
