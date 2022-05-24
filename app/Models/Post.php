@@ -2,15 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Traits\HasUuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\{
-    BelongsTo,
-    BelongsToMany,
-    HasMany,
-    MorphToMany
-};
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\{BelongsTo, BelongsToMany, HasMany, MorphToMany};
 
 class Post extends Model
 {
@@ -128,7 +123,7 @@ class Post extends Model
      */
     public function getIsLikedAttribute(): bool
     {
-        return (bool) $this->likers()->find(auth()->id());
+        return $this->likers()->whereKey(auth()->id())->exists();
     }
 
     /**
@@ -148,7 +143,7 @@ class Post extends Model
      */
     public function getIsBookmarkedAttribute(): bool
     {
-        return (bool) $this->bookmarkers()->find(auth()->id());
+        return $this->bookmarkers()->whereKey(auth()->id())->exists();
     }
 
     /**

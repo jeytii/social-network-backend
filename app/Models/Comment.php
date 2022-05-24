@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, MorphToMany};
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use App\Traits\HasUuid;
 
 class Comment extends Model
 {
@@ -146,7 +146,7 @@ class Comment extends Model
      */
     public function getIsLikedAttribute(): bool
     {
-        return (bool) $this->likers()->find(auth()->id());
+        return $this->likers()->whereKey(auth()->id())->exists();
     }
 
     /**
