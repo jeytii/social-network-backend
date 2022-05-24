@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Http\Request;
 use App\Http\Requests\{AuthRequest, UserRequest};
-use Illuminate\Support\Facades\{DB, Hash};
+use App\Models\User;
 use App\Notifications\ResetPassword;
 use App\Services\AuthService;
-use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\{DB, Hash};
 
 class AuthController extends Controller
 {
@@ -65,18 +64,13 @@ class AuthController extends Controller
         $body = $request->except('password', 'password_confirmation');
         $password = Hash::make($request->input('password'));
         
-        try {
-            DB::transaction(function() use ($request, $body, $password) {
-                $user = User::create(array_merge($body, compact('password')));
-                
-                $this->auth->sendVerificationCode($user);
-            });
-    
-            return response()->success(201);
-        }
-        catch (Exception $exception) {
-            return response()->somethingWrong();
-        }
+        DB::transaction(function() use ($request, $body, $password) {
+            $user = User::create(array_merge($body, compact('password')));
+            
+            $this->auth->sendVerificationCode($user);
+        });
+
+        return response()->success(201);
     }
 
     /**
@@ -100,20 +94,15 @@ class AuthController extends Controller
             return response()->error('You have already verified your account.', 409);
         }
         
-        try {
-            $response = DB::transaction(function() use ($user) {
-                $user->markEmailAsVerified();
+        $response = DB::transaction(function() use ($user) {
+            $user->markEmailAsVerified();
 
-                return $this->auth->authenticate($user, 'You have successfully verified your account.');
-            });
+            return $this->auth->authenticate($user, 'You have successfully verified your account.');
+        });
 
-            cache()->forget($cacheKey);
+        cache()->forget($cacheKey);
 
-            return response()->json($response);
-        }
-        catch (Exception $exception) {
-            return response()->somethingWrong();
-        }
+        return response()->json($response);
     }
 
     /**
@@ -152,30 +141,24 @@ class AuthController extends Controller
 
         $token = bin2hex(random_bytes(16));
 
-        try {
-            DB::transaction(function() use ($user, $token) {
-                DB::table('password_resets')->updateOrInsert(
-                    [
-                        'email' => $user->email,
-                        'completed_at' => null
-                    ],
-                    compact('token')
-                );
-
-                $user->notify(new ResetPassword(config('app.frontend_url') . "/reset-password/{$token}"));
-            });
-
-            cache(
-                ["password-reset.{$token}" => $emailAddress],
-                60 * config('validation.expiration.password_reset')
+        DB::transaction(function() use ($user, $token) {
+            DB::table('password_resets')->updateOrInsert(
+                [
+                    'email' => $user->email,
+                    'completed_at' => null
+                ],
+                compact('token')
             );
-    
-            // "Please check for the link that has been sent to your email address."
-            return response()->success();
-        }
-        catch (Exception $exception) {
-            return response()->somethingWrong();
-        }
+
+            $user->notify(new ResetPassword(config('app.frontend_url') . "/reset-password/{$token}"));
+        });
+
+        cache(
+            ["password-reset.{$token}" => $emailAddress],
+            60 * config('validation.expiration.password_reset')
+        );
+
+        return response()->success();
     }
 
      /**
@@ -195,24 +178,19 @@ class AuthController extends Controller
 
         $user = User::firstWhere('email', cache($cacheKey));
 
-        try {
-            $response = DB::transaction(function() use ($request, $user, $token) {
-                $user->update(['password' => Hash::make($request->input('password'))]);
+        $response = DB::transaction(function() use ($request, $user, $token) {
+            $user->update(['password' => Hash::make($request->input('password'))]);
 
-                DB::table('password_resets')
-                    ->where('token', $token)
-                    ->update(['completed_at' => now()]);
+            DB::table('password_resets')
+                ->where('token', $token)
+                ->update(['completed_at' => now()]);
 
-                return $this->auth->authenticate($user, 'You have successfully reset your password.');
-            });
+            return $this->auth->authenticate($user, 'You have successfully reset your password.');
+        });
 
-            cache()->forget($cacheKey);
-    
-            return response()->json($response);
-        }
-        catch (Exception $exception) {
-            return response()->somethingWrong();
-        }
+        cache()->forget($cacheKey);
+
+        return response()->json($response);
     }
 
     /**

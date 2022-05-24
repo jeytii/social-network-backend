@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\{User, Notification};
+use App\Notifications\NotifyUponAction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Notifications\NotifyUponAction;
-use Exception;
 
 class UserController extends Controller
 {
@@ -21,14 +20,14 @@ class UserController extends Controller
         $id = auth()->id();
 
         $data = User::when(!$request->isPresent('query'), fn($query) => (
-                    $query->whereKeyNot($id)->whereDoesntHave('followers', fn($q) => $q->whereKey($id))
-                ))
-                ->when($request->isPresent('query'), fn($q) => $q->searchUser($request->query('query')))
-                ->when($request->isPresent('month'), fn($q) => $q->whereMonth('birth_date', $request->query('month')))
-                ->when($request->isPresent('year'), fn($q) => $q->whereYear('birth_date', $request->query('year')))
-                ->when($request->isPresent('gender'), fn($q) => $q->where('gender', $request->query('gender')))
-                ->orderBy('name')
-                ->withPaginated(20, config('api.response.user.basic'));
+                $query->whereKeyNot($id)->whereDoesntHave('followers', fn($q) => $q->whereKey($id))
+            ))
+            ->when($request->isPresent('query'), fn($q) => $q->searchUser($request->query('query')))
+            ->when($request->isPresent('month'), fn($q) => $q->whereMonth('birth_date', $request->query('month')))
+            ->when($request->isPresent('year'), fn($q) => $q->whereYear('birth_date', $request->query('year')))
+            ->when($request->isPresent('gender'), fn($q) => $q->where('gender', $request->query('gender')))
+            ->orderBy('name')
+            ->withPaginated(20, config('response.user'));
 
         return response()->json($data);
     }
@@ -45,9 +44,9 @@ class UserController extends Controller
             $exceptIds = $request->user()->following()->pluck('id')->toArray();
 
             return User::whereNotIn('id', [auth()->id(), ...$exceptIds])
-                        ->inRandomOrder()
-                        ->limit(3)
-                        ->get(config('api.response.user.basic'));
+                ->inRandomOrder()
+                ->limit(3)
+                ->get(config('response.user'));
         });
 
         return response()->json(compact('data'));
@@ -65,9 +64,9 @@ class UserController extends Controller
 
         if ($request->isPresent('query')) {
             $data = DB::table('users')
-                        ->searchUser($request->query('query'))
-                        ->limit(5)
-                        ->get(config('api.response.user.basic'));
+                ->searchUser($request->query('query'))
+                ->limit(5)
+                ->get(config('response.user'));
         }
 
         return response()->json(compact('data'));
@@ -87,17 +86,12 @@ class UserController extends Controller
 
         $follower = $request->user();
 
-        try {
-            DB::transaction(function() use ($follower, $user) {
-                $follower->following()->sync([$user->id]);
-                $user->notify(new NotifyUponAction($follower, Notification::FOLLOWED, "/{$follower->username}"));
-            });
+        DB::transaction(function() use ($follower, $user) {
+            $follower->following()->sync([$user->id]);
+            $user->notify(new NotifyUponAction($follower, Notification::FOLLOWED, "/{$follower->username}"));
+        });
 
-            return response()->success();
-        }
-        catch (Exception $exception) {
-            return response()->somethingWrong();
-        }
+        return response()->success();
     }
 
     /**

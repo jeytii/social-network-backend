@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UserRequest;
+use App\Services\SettingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{DB, Hash};
-use App\Services\SettingService;
-use App\Http\Requests\UserRequest;
-use Exception;
 
 class SettingController extends Controller
 {
@@ -64,21 +63,16 @@ class SettingController extends Controller
             return response()->error("You're doing too much. Try again later.", 429);
         }
 
-        try {
-            DB::transaction(function() use ($user, $newPassword) {
-                $user->update(['password' => Hash::make($newPassword)]);
+        DB::transaction(function() use ($user, $newPassword) {
+            $user->update(['password' => Hash::make($newPassword)]);
 
-                DB::table('password_resets')->insert([
-                    'email' => $user->email,
-                    'completed_at' => now(),
-                ]);
-            });
+            DB::table('password_resets')->insert([
+                'email' => $user->email,
+                'completed_at' => now(),
+            ]);
+        });
 
-            return response()->success();
-        }
-        catch (Exception $exception) {
-            return response()->somethingWrong();
-        }
+        return response()->success();
     }
 
     /**

@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Post, Notification};
-use Illuminate\Http\Request;
 use App\Http\Requests\PostRequest;
-use Illuminate\Support\Facades\DB;
+use App\Models\{Post, Notification};
 use App\Notifications\NotifyUponAction;
-use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
@@ -20,7 +19,9 @@ class PostController extends Controller
     public function index(Request $request)
     {
         $ids = $request->user()->following()->pluck('id')->merge(auth()->id());
-        $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))->latest()->withPaginated();
+        $data = Post::whereHas('user', fn($q) => $q->whereIn('id', $ids))
+            ->latest()
+            ->withPaginated();
 
         return response()->json($data);
     }
@@ -100,22 +101,17 @@ class PostController extends Controller
 
         $liker = $request->user();
 
-        try {
-            DB::transaction(function() use ($liker, $post) {
-                $liker->likedPosts()->attach($post);
-                
-                if ($post->user->isNot(auth()->user())) {
-                    $post->user->notify(new NotifyUponAction($liker, Notification::LIKED_POST, "/post/{$post->slug}"));
-                }
-            });
+        DB::transaction(function() use ($liker, $post) {
+            $liker->likedPosts()->attach($post);
+            
+            if ($post->user->isNot(auth()->user())) {
+                $post->user->notify(new NotifyUponAction($liker, Notification::LIKED_POST, "/post/{$post->slug}"));
+            }
+        });
 
-            return response()->json([
-                'data' => $post->likers()->count(),
-            ]);
-        }
-        catch (Exception $exception) {
-            return response()->somethingWrong();
-        }
+        return response()->json([
+            'data' => $post->likers()->count(),
+        ]);
     }
 
     /**
