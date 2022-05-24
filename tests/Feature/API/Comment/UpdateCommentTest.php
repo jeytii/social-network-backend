@@ -1,43 +1,42 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\{DB, Cache};
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(2)->hasPosts(2)->hasComments(2)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
+    $this->user = User::first();
 
-    DB::table('users')->truncate();
-    DB::table('posts')->truncate();
-    DB::table('comments')->truncate();
-    DB::table('jobs')->truncate();
-    Cache::flush();
+    authenticate();
 });
 
 test('Should successfully update a comment', function() {
-    $comment = $this->user->comments()->first()->slug;
+    $comment = $this->user->comments()->first();
 
-    $this->response
-        ->putJson(route('comments.update', compact('comment')), [
-            'body' => 'Hello World'
-        ])
-        ->assertOk();
+    $this->putJson(
+        route('comments.update', ['comment' => $comment->slug]),
+        ['body' => 'Hello World']
+    )->assertOk();
 
-    $this->assertTrue($this->user->comments()->whereBody('Hello World')->exists());
+    $this->assertDatabaseMissing('comments', $comment->only('id', 'body'));
+    $this->assertDatabaseHas('comments', [
+        'id' => $comment->id,
+        'body' => 'Hello World',
+    ]);
 });
 
 test('Should throw an error for attempting to update other user\'s comment', function() {
     $user = User::has('comments')->firstWhere('id', '!=', $this->user->id);
-    $comment = $user->comments()->first()->slug;
+    $comment = $user->comments()->first();
     
-    $this->response
-        ->putJson(route('comments.update', compact('comment')), [
-            'body' => 'This comment has been edited'
-        ])
-        ->assertForbidden();
+    $this->putJson(
+        route('comments.update', ['comment' => $comment->slug]),
+        ['body' => 'This comment has been edited']
+    )->assertForbidden();
 
-    $this->assertTrue($user->comments()->whereBody('This comment has been edited')->doesntExist());
+    $this->assertDatabaseHas('comments', $comment->only('id', 'body'));
+    $this->assertDatabaseMissing('comments', [
+        'id' => $comment->id,
+        'body' => 'This comment has been edited',
+    ]);
 });

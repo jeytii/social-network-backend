@@ -1,38 +1,36 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\{DB, Cache};
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(2)->hasPosts(3)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-    
-    DB::table('users')->truncate();
-    DB::table('posts')->truncate();
-    DB::table('jobs')->truncate();
-    Cache::flush();
+    $this->user = User::first();
+
+    authenticate();
 });
 
 test('Should successfully delete a post', function() {
     $post = $this->user->posts()->first()->slug;
 
-    $this->response
-        ->deleteJson(route('posts.destroy', compact('post')))
+    $this->deleteJson(route('posts.destroy', compact('post')))
         ->assertOk();
 
-    $this->assertTrue($this->user->posts()->where('slug', $post)->doesntExist());
+    $this->assertDatabaseMissing('posts', [
+        'user_id' => $this->user->id,
+        'slug' => $post,
+    ]);
 });
 
 test('Should not be able to delete other user\'s post', function() {
     $user = User::firstWhere('id', '!=', $this->user->id);
     $post = $user->posts()->first()->slug;
 
-    $this->response
-        ->deleteJson(route('posts.destroy', compact('post')))
+    $this->deleteJson(route('posts.destroy', compact('post')))
         ->assertForbidden();
 
-    $this->assertTrue($user->posts()->where('slug', $post)->exists());
+    $this->assertDatabaseHas('posts', [
+        'user_id' => $user->id,
+        'slug' => $post,
+    ]);
 });

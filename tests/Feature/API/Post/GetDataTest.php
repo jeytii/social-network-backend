@@ -1,26 +1,21 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(10)->hasPosts(5)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-    
-    DB::table('users')->truncate();
-    DB::table('posts')->truncate();
+    $this->user = User::first();
+
+    authenticate();
 });
 
 test('Should return the paginated list of own posts and posts from followed users', function() {
-    $followingIds = DB::table('users')->where('id', '!=', $this->user->id)->inRandomOrder()->limit(5)->pluck('id');
+    $followingIds = User::whereKeyNot($this->user->id)->inRandomOrder()->limit(5)->pluck('id');
 
     $this->user->following()->sync($followingIds);
     
-    $this->response
-        ->getJson(route('posts.index'))
+    $this->getJson(route('posts.index'))
         ->assertOk()
         ->assertJsonCount(20, 'items')
         ->assertJsonPath('has_more', true)
@@ -37,22 +32,20 @@ test('Should return the paginated list of own posts and posts from followed user
                     'is_liked',
                     'is_edited',
                     'is_bookmarked',
-                    'user' => config('api.response.user.basic')
+                    'user' => config('response.user')
                 ],
             ],
             'has_more',
             'next_offset',
         ]);
 
-    $this->response
-        ->getJson(route('posts.index', ['page' => 2]))
+    $this->getJson(route('posts.index', ['page' => 2]))
         ->assertOk()
         ->assertJsonCount(10, 'items')
         ->assertJsonPath('has_more', false)
         ->assertJsonPath('next_offset', null);
 
-    $this->response
-        ->getJson(route('posts.index', ['page' => 3]))
+    $this->getJson(route('posts.index', ['page' => 3]))
         ->assertOk()
         ->assertJsonCount(0, 'items')
         ->assertJsonPath('has_more', false)

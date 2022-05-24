@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 
 /*
@@ -14,18 +15,7 @@ use Laravel\Sanctum\Sanctum;
 |
 */
 
-uses(Tests\TestCase::class)->in('Feature');
-
-uses()->beforeAll(function() {
-    (new self(function() {}, '', []))->setUp();
-})->in('Feature/API', 'Feature/Auth');
-
-uses()->beforeEach(function() {
-    $this->user = User::first();
-    $this->response = $this->actingAs($this->user);
-    
-    Sanctum::actingAs($this->user, ['*']);
-})->in('Feature/API');
+uses(Tests\TestCase::class, RefreshDatabase::class)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -53,7 +43,7 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
-{
-    // ..
+function authenticate()
+{   
+    Sanctum::actingAs(User::first(), ['*']);
 }

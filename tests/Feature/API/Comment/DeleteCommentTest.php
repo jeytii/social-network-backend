@@ -1,39 +1,39 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\{DB, Cache};
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(2)->hasPosts(2)->hasComments(2)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
+    $this->user = User::first();
 
-    DB::table('users')->truncate();
-    DB::table('posts')->truncate();
-    DB::table('comments')->truncate();
-    DB::table('jobs')->truncate();
-    Cache::flush();
+    authenticate();
 });
 
 test('Should successfully delete a comment', function() {
-    $comment = $this->user->comments()->first()->slug;
+    $comment = $this->user->comments()->first();
+    $data = [
+        'id' => $comment->id,
+        'user_id' => $this->user->id,
+    ];
 
-    $this->response
-        ->deleteJson(route('comments.destroy', compact('comment')))
+    $this->assertDatabaseHas('comments', $data);
+
+    $this->deleteJson(route('comments.destroy', ['comment' => $comment->slug]))
         ->assertOk();
 
-    $this->assertTrue($this->user->comments()->whereSlug($comment)->doesntExist());
+    $this->assertDatabaseMissing('comments', $data);
 });
 
 test('Should not be able to delete other user\'s comment', function() {
     $user = User::has('comments')->firstWhere('id', '!=', $this->user->id);
-    $comment = $user->comments()->first()->slug;
+    $comment = $user->comments()->first();
     
-    $this->response
-        ->deleteJson(route('comments.destroy', compact('comment')))
+    $this->deleteJson(route('comments.destroy', ['comment' => $comment->slug]))
         ->assertForbidden();
-    
-    $this->assertTrue($user->comments()->whereSlug($comment)->exists());
+
+    $this->assertDatabaseHas('comments', [
+        'id' => $comment->id,
+        'user_id' => $user->id,
+    ]);
 });

@@ -1,25 +1,20 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
-beforeAll(function() {
-    User::factory()->create();
-});
+beforeEach(function() {
+    $this->user = User::factory()->create();
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-
-    DB::table('users')->truncate();
-    DB::table('settings_updates')->truncate();
+    authenticate();
 });
 
 test('Should throw errors for invalid inputs', function() {
-    $this->response
-        ->putJson(route('settings.change.username'), [
-            'username' => '$ampleusername',
-            'password' => 'wrongpassword',
-        ])
+    $data = [
+        'username' => '$ampleusername',
+        'password' => 'wrongpassword',
+    ];
+
+    $this->putJson(route('settings.change.username'), $data)
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
@@ -35,11 +30,12 @@ test('Should throw errors for invalid inputs', function() {
 });
 
 test('Should throw an error if the length is out of range', function() {
-    $this->response
-        ->putJson(route('settings.change.username'), [
-            'username' => 'user',
-            'password' => 'P@ssword123',
-        ])
+    $data = [
+        'username' => 'user',
+        'password' => 'P@ssword123',
+    ];
+
+    $this->putJson(route('settings.change.username'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.username', ['Username must be between 6 and 30 characters long.']);
 
@@ -50,11 +46,12 @@ test('Should throw an error if the length is out of range', function() {
 });
 
 test('Should throw an error for entering the current username', function() {
-    $this->response
-        ->putJson(route('settings.change.username'), [
-            'username' => $this->user->username,
-            'password' => 'P@ssword123',
-        ])
+    $data = [
+        'username' => $this->user->username,
+        'password' => 'P@ssword123',
+    ];
+
+    $this->putJson(route('settings.change.username'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.username', ['Username already taken.']);
 
@@ -65,11 +62,12 @@ test('Should throw an error for entering the current username', function() {
 });
 
 test('Should successfully update the username', function() {
-    $this->response
-        ->putJson(route('settings.change.username'), [
-            'username' => 'user012345',
-            'password' => 'P@ssword123',
-        ])
+    $data = [
+        'username' => 'user012345',
+        'password' => 'P@ssword123',
+    ];
+    
+    $this->putJson(route('settings.change.username'), $data)
         ->assertOk();
 
     $this->assertDatabaseHas('settings_updates', [

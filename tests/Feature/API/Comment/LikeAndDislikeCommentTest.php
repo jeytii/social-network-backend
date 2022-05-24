@@ -2,51 +2,47 @@
 
 use App\Models\{User, Comment, Notification as NotificationModel};
 use App\Notifications\NotifyUponAction;
-use Illuminate\Support\Facades\{DB, Notification, Cache};
+use Illuminate\Support\Facades\Notification;
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(2)->hasPosts(2)->hasComments(2)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
+    $this->user = User::first();
+    $this->comment = Comment::firstWhere('user_id', '!=', $this->user->id);
 
-    DB::table('users')->truncate();
-    DB::table('posts')->truncate();
-    DB::table('comments')->truncate();
-    DB::table('jobs')->truncate();
-    Cache::flush();
+    authenticate();
 });
 
 test('Should be able to like a comment', function() {
-    $comment = Comment::firstWhere('user_id', '!=', $this->user->id);
-    
     Notification::fake();
 
-    $this->response
-        ->postJson(route('comments.like', ['comment' => $comment->slug]))
-        ->assertOk();
+    $this->postJson(
+        route('comments.like', ['comment' => $this->comment->slug])
+    )->assertOk();
 
     Notification::assertSentTo(
-        $comment->user,
+        $this->comment->user,
         NotifyUponAction::class,
-        fn($notification) => (
+        fn ($notification) => (
             $notification->action === NotificationModel::LIKED_COMMENT
         )
     );
 
-    $this->assertTrue($this->user->likedComments()->whereKey($comment->id)->exists());
+    $this->assertDatabaseHas('likables', [
+        'user_id' => $this->user->id,
+        'likable_id' => $this->comment->id,
+        'likable_type' => Comment::class,
+    ]);
 });
 
 test('Should not be able to like a comment that has already been liked', function() {
-    $comment = DB::table('comments')->where('user_id', '!=', $this->user->id)->first()->slug;
-
     Notification::fake();
 
-    // Suppose the user has already liked the selected comment based from the test above.
-    $this->response
-        ->postJson(route('comments.like', compact('comment')))
-        ->assertForbidden();
+    $this->user->likedComments()->attach($this->comment);
+
+    $this->postJson(
+        route('comments.like', ['comment' => $this->comment->slug])
+    )->assertForbidden();
 
     Notification::assertNothingSent();
 
@@ -54,22 +50,31 @@ test('Should not be able to like a comment that has already been liked', functio
 });
 
 test('Should be able to dislike a comment', function() {
-    $comment = DB::table('comments')->where('user_id', '!=', $this->user->id)->first();
+    $data = [
+        'user_id' => $this->user->id,
+        'likable_id' => $this->comment->id,
+        'likable_type' => Comment::class,
+    ];
 
-    // Suppose the selected comment has already been liked based on the test above.
-    $this->response
-        ->deleteJson(route('comments.dislike', ['comment' => $comment->slug]))
-        ->assertOk();
+    $this->user->likedComments()->attach($this->comment);
 
-    $this->assertTrue($this->user->likedComments()->whereKey($comment->id)->doesntExist());
+    $this->assertDatabaseHas('likables', $data);
+
+    $this->deleteJson(
+        route('comments.dislike', ['comment' => $this->comment->slug])
+    )->assertOk();
+
+    $this->assertDatabaseMissing('likables', $data);
 });
 
 test('Should not be able to dislike a comment that is not liked', function() {
-    $comment = DB::table('comments')->where('user_id', '!=', $this->user->id)->first();
+    $this->deleteJson(
+        route('comments.dislike', ['comment' => $this->comment->slug])
+    )->assertForbidden();
 
-    $this->response
-        ->deleteJson(route('comments.dislike', ['comment' => $comment->slug]))
-        ->assertForbidden();
-
-    $this->assertTrue($this->user->likedComments()->whereKey($comment->id)->doesntExist());
+    $this->assertDatabaseMissing('likables', [
+        'user_id' => $this->user->id,
+        'likable_id' => $this->comment->id,
+        'likable_type' => Comment::class,
+    ]);
 });

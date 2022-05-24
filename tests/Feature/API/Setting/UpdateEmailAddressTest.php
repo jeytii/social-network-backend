@@ -1,25 +1,20 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
-beforeAll(function() {
-    User::factory()->create();
-});
+beforeEach(function() {
+    $this->user = User::factory()->create();
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-    
-    DB::table('users')->truncate();
-    DB::table('settings_updates')->truncate();
+    authenticate();
 });
 
 test('Should throw errors for invalid inputs', function() {
-    $this->response
-        ->putJson(route('settings.change.email'), [
-            'email' => $this->user->email,
-            'password' => 'wrongpassword',
-        ])
+    $data = [
+        'email' => $this->user->email,
+        'password' => 'wrongpassword',
+    ];
+
+    $this->putJson(route('settings.change.email'), $data)
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
@@ -35,11 +30,12 @@ test('Should throw errors for invalid inputs', function() {
 });
 
 test('Should throw an error for entering the current email address', function() {
-    $this->response
-        ->putJson(route('settings.change.email'), [
-            'email' => $this->user->email,
-            'password' => 'P@ssword123',
-        ])
+    $data = [
+        'email' => $this->user->email,
+        'password' => 'P@ssword123',
+    ];
+
+    $this->putJson(route('settings.change.email'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.email', ['Email address already taken.']);
 
@@ -50,11 +46,12 @@ test('Should throw an error for entering the current email address', function() 
 });
 
 test('Should successfully update the email address', function() {
-    $this->response
-        ->putJson(route('settings.change.email'), [
-            'email' => 'johndoe@email.com',
-            'password' => 'P@ssword123',
-        ])
+    $data = [
+        'email' => 'johndoe@email.com',
+        'password' => 'P@ssword123',
+    ];
+    
+    $this->putJson(route('settings.change.email'), $data)
         ->assertOk();
 
     $this->assertDatabaseHas('settings_updates', [

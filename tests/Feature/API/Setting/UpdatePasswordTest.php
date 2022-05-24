@@ -1,54 +1,59 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\{DB, Hash};
+use Illuminate\Support\Facades\Hash;
 
-beforeAll(function() {
-    User::factory()->create();
-});
+beforeEach(function() {
+    $this->user = User::factory()->create();
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-    DB::table('users')->truncate();
+    authenticate();
 });
 
 test('Should throw an error for incorrect current password', function() {
-    $this->response
-        ->putJson(route('settings.change.password'), [
-            'current_password' => 'password123'
-        ])
+    $data = [
+        'current_password' => 'password123'
+    ];
+
+    $this->putJson(route('settings.change.password'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.current_password', ['Incorrect password.']);
 });
 
 test('Should throw an error for confirmation does not match with new password', function() {
-    $this->response
-        ->putJson(route('settings.change.password'), [
-            'new_password' => 'P@ssword12345',
-            'new_password_confirmation' => 'wrongpassword',
-        ])
+    $data = [
+        'new_password' => 'P@ssword12345',
+        'new_password_confirmation' => 'wrongpassword',
+    ];
+
+    $this->putJson(route('settings.change.password'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.new_password_confirmation', ['Does not match with the password above.']);
 });
 
 test('Should throw an error for entering the current password as the new one', function() {
-    $this->response
-        ->putJson(route('settings.change.password'), [
-            'new_password' => 'P@ssword123',
-            'new_password_confirmation' => 'P@ssword123',
-        ])
+    $data = [
+        'new_password' => 'P@ssword123',
+        'new_password_confirmation' => 'P@ssword123',
+    ];
+
+    $this->putJson(route('settings.change.password'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.new_password', ['Please enter a password other than your current one.']);
 });
 
 test('Should successfully update the password', function() {
-    $this->response
-        ->putJson(route('settings.change.password'), [
-            'current_password' => 'P@ssword123',
-            'new_password' => 'P@ssword12345',
-            'new_password_confirmation' => 'P@ssword12345',
-        ])
+    $oldPassword = 'P@ssword123';
+    $newPassword = 'P@ssword12345';
+    $data = [
+        'current_password' => $oldPassword,
+        'new_password' => $newPassword,
+        'new_password_confirmation' => $newPassword,
+    ];
+
+    $this->assertTrue(Hash::check($oldPassword, $this->user->password));
+
+    $this->putJson(route('settings.change.password'), $data)
         ->assertOk();
 
-    $this->assertTrue(Hash::check('P@ssword12345', $this->user->password));
+    $this->assertTrue(Hash::check($newPassword, $this->user->refresh()->password));
 });

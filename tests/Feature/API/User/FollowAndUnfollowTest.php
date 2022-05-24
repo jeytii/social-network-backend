@@ -1,78 +1,69 @@
 <?php
 
 use App\Models\{User, Notification as NotificationModel};
-use Illuminate\Support\Facades\{DB, Notification, Cache};
 use App\Notifications\NotifyUponAction;
+use Illuminate\Support\Facades\Notification;
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(3)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
+    $this->user = User::first();
+    $this->user2 = User::firstWhere('id', '!=', $this->user->id);
     
-    DB::table('users')->truncate();
-    DB::table('notifications')->truncate();
-    DB::table('jobs')->truncate();
-    Cache::flush();
+    authenticate();
 });
 
 test('Should successfully follow a user', function() {
-    $userToFollow = User::firstWhere('id', '!=', $this->user->id);
-
     Notification::fake();
     
-    $this->response
-        ->postJson(route('users.follow', ['user' => $userToFollow->slug]))
+    $this->postJson(route('users.follow', ['user' => $this->user2->slug]))
         ->assertOk();
 
     Notification::assertSentTo(
-        $userToFollow,
+        $this->user2,
         NotifyUponAction::class,
-        fn($notification) => (
+        fn ($notification) => (
             $notification->action === NotificationModel::FOLLOWED
         )
     );
 
-    $this->assertTrue($this->user->following()->whereKey($userToFollow->id)->exists());
-    $this->assertTrue($userToFollow->followers()->whereKey($this->user->id)->exists());
+    $this->assertDatabaseHas('connections', [
+        'follower_id' => $this->user->id,
+        'following_id' => $this->user2->id,
+    ]);
 });
 
 test('Should throw an error for following a user that has been already followed', function() {
-    // Suppose the auth user already follows another user with the ID of 2 based on the test above.
-    $userToFollow = User::firstWhere('id', '!=', $this->user->id);
+    $this->user->following()->attach($this->user2);
 
     Notification::fake();
 
-    $this->response
-        ->postJson(route('users.follow', ['user' => $userToFollow->slug]))
+    $this->postJson(route('users.follow', ['user' => $this->user2->slug]))
         ->assertForbidden();
 
     Notification::assertNothingSent();
-    
-    $this->assertTrue($this->user->following()->whereKey($userToFollow->id)->count() === 1);
-    $this->assertTrue($userToFollow->followers()->whereKey($this->user->id)->count() === 1);
+
+    $this->assertDatabaseCount('connections', 1);
 });
 
 test('Should successfully unfollow a user', function() {
-    // Suppose the auth user already follows another user with the ID of 2 based on the test above.
-    $userToUnfollow = User::firstWhere('id', '!=', $this->user->id);
+    $this->user->following()->attach($this->user2);
     
-    $this->response
-        ->deleteJson(route('users.unfollow', ['user' => $userToUnfollow->slug]))
+    $this->deleteJson(route('users.unfollow', ['user' => $this->user2->slug]))
         ->assertOk();
 
-    $this->assertTrue($this->user->following()->whereKey($userToUnfollow->id)->doesntExist());
-    $this->assertTrue($userToUnfollow->followers()->whereKey($this->user->id)->doesntExist());
+    $this->assertDatabaseMissing('connections', [
+        'follower_id' => $this->user->id,
+        'following_id' => $this->user2->id,
+    ]);
 });
 
 test('Should throw an error for unfollowing a user that is not followed', function() {
-    $userToUnfollow = User::firstWhere('id', '!=', $this->user->id);
-
-    $this->response
-        ->deleteJson(route('users.unfollow', ['user' => $userToUnfollow->slug]))
+    $this->deleteJson(route('users.unfollow', ['user' => $this->user2->slug]))
         ->assertForbidden();
 
-    $this->assertTrue($this->user->following()->whereKey($userToUnfollow->id)->doesntExist());
-    $this->assertTrue($userToUnfollow->followers()->whereKey($this->user->id)->doesntExist());
+    $this->assertDatabaseMissing('connections', [
+        'follower_id' => $this->user->id,
+        'following_id' => $this->user2->id,
+    ]);
 });

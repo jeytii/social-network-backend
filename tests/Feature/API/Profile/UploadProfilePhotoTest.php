@@ -2,16 +2,12 @@
 
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\{DB, Storage};
+use Illuminate\Support\Facades\Storage;
 
-beforeAll(function() {
-    User::factory()->create();
-});
+beforeEach(function() {
+    $this->user = User::factory()->create();
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-
-    DB::table('users')->truncate();
+    authenticate();
 });
 
 test('Should throw an error for uploading a non-image file', function() {
@@ -19,8 +15,7 @@ test('Should throw an error for uploading a non-image file', function() {
 
     $file = UploadedFile::fake()->create('sample.pdf', 1500, 'application/pdf');
 
-    $this->response
-        ->postJson(route('profile.upload.profile-photo'), ['image' => $file])
+    $this->postJson(route('profile.upload.profile-photo'), ['image' => $file])
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
@@ -37,8 +32,7 @@ test('Should throw an error for uploading an image with out-of-range resolution'
 
     $image = UploadedFile::fake()->image('sample.jpg', 900, 900);
 
-    $this->response
-        ->postJson(route('profile.upload.profile-photo'), compact('image'))
+    $this->postJson(route('profile.upload.profile-photo'), compact('image'))
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
@@ -52,7 +46,6 @@ test('Should successfully upload a profile photo', function() {
 
     $image = UploadedFile::fake()->image('sample.png', 200, 200);
 
-    $this->response
-        ->postJson(route('profile.upload.profile-photo'), compact('image'))
+    $this->postJson(route('profile.upload.profile-photo'), compact('image'))
         ->assertOk();
 });

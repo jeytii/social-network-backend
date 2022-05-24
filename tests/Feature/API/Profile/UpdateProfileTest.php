@@ -2,26 +2,22 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\WithFaker;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 uses(WithFaker::class);
 
-beforeAll(function() {
-    User::factory()->create();
-});
+beforeEach(function() {
+    $this->user = User::factory()->create();
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-
-    DB::table('users')->truncate();
+    authenticate();
 });
 
 test('Should throw validation errors if input values are incorrect in update profile form', function() {
-    $this->response
-        ->putJson(route('profile.update'), [
-            'bio' => $this->faker->paragraphs(5, true)
-        ])
+    $data = [
+        'bio' => $this->faker->paragraphs(5, true)
+    ];
+
+    $this->putJson(route('profile.update'), $data)
         ->assertStatus(422)
         ->assertJsonFragment([
             'errors' => [
@@ -33,20 +29,19 @@ test('Should throw validation errors if input values are incorrect in update pro
 });
 
 test('Can update the profile successfully', function() {
-    $this->response
-        ->putJson(route('profile.update'), [
-            'name' => 'John Doe',
-            'bio' => 'Hello World',
-            'birth_date' => '1995-05-05',
-        ])
+    $data = [
+        'name' => 'John Doe',
+        'bio' => 'Hello World',
+        'birth_date' => '1995-05-05',
+    ];
+
+    $this->putJson(route('profile.update'), $data)
         ->assertOk();
    
-    $updatedUser = DB::table('users')->where([
-        ['id', '=', $this->user->id],
-        ['name', '=', 'John Doe'],
-        ['bio', '=', 'Hello World'],
-        ['birth_date', '=', Carbon::create(1995, 5, 5)],
+    $this->assertDatabaseHas('users', [
+        'id' => $this->user->id,
+        'name' => 'John Doe',
+        'bio' => 'Hello World',
+        'birth_date' => Carbon::create(1995, 5, 5),
     ]);
-
-    $this->assertTrue($updatedUser->exists());
 });

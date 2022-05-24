@@ -1,52 +1,45 @@
 <?php
 
-use App\Models\{User, Notification as NotificationModel};
-use Illuminate\Support\Facades\{DB, Notification, Cache};
+use App\Models\{User, Post, Notification as NotificationModel};
+use Illuminate\Support\Facades\Notification;
 use App\Notifications\NotifyUponAction;
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(2)->hasPosts(2)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-    
-    DB::table('users')->truncate();
-    DB::table('posts')->truncate();
-    DB::table('notifications')->truncate();
-    DB::table('jobs')->truncate();
-    Cache::flush();
+    $this->user = User::first();
+    $this->post = Post::firstWhere('user_id', '!=', $this->user->id);
+
+    authenticate();
 });
 
 test('Should be able to like a post', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
-    $poster = User::firstWhere('id', $post->user_id);
-
     Notification::fake();
 
-    $this->response
-        ->postJson(route('posts.like', ['post' => $post->slug]))
+    $this->postJson(route('posts.like', ['post' => $this->post->slug]))
         ->assertOk();
 
     Notification::assertSentTo(
-        $poster,
+        $this->post->user,
         NotifyUponAction::class,
-        fn($notification) => (
+        fn ($notification) => (
             $notification->action === NotificationModel::LIKED_POST
         )
     );
 
-    $this->assertTrue($this->user->likedPosts()->whereKey($post->id)->exists());
+    $this->assertDatabaseHas('likables', [
+        'user_id' => $this->user->id,
+        'likable_id' => $this->post->id,
+        'likable_type' => Post::class,
+    ]);
 });
 
 test('Should not be able to like a post that has already been liked', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
-
     Notification::fake();
 
-    // Suppose the user has already liked the selected post based from the test above.
-    $this->response
-        ->postJson(route('posts.like', ['post' => $post->slug]))
+    $this->user->likedPosts()->attach($this->post);
+
+    $this->postJson(route('posts.like', ['post' => $this->post->slug]))
         ->assertForbidden();
 
     Notification::assertNothingSent();
@@ -55,22 +48,25 @@ test('Should not be able to like a post that has already been liked', function()
 });
 
 test('Should be able to dislike a post', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
+    $this->user->likedPosts()->attach($this->post);
 
-    // Suppost the selected post has already been liked based on the test above.
-    $this->response
-        ->deleteJson(route('posts.dislike', ['post' => $post->slug]))
+    $this->deleteJson(route('posts.dislike', ['post' => $this->post->slug]))
         ->assertOk();
 
-    $this->assertTrue($this->user->likedPosts()->whereKey($post->id)->doesntExist());
+    $this->assertDatabaseMissing('likables', [
+        'user_id' => $this->user->id,
+        'likable_id' => $this->post->id,
+        'likable_type' => Post::class,
+    ]);
 });
 
 test('Should not be able to dislike a post that is not liked', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
-
-    $this->response
-        ->deleteJson(route('posts.dislike', ['post' => $post->slug]))
+    $this->deleteJson(route('posts.dislike', ['post' => $this->post->slug]))
         ->assertForbidden();
 
-    $this->assertTrue($this->user->likedPosts()->whereKey($post->id)->doesntExist());
+    $this->assertDatabaseMissing('likables', [
+        'user_id' => $this->user->id,
+        'likable_id' => $this->post->id,
+        'likable_type' => Post::class,
+    ]);
 });

@@ -2,22 +2,17 @@
 
 use App\Models\User;
 use App\Notifications\SendVerificationCode;
-use Illuminate\Support\Facades\{DB, Notification, Cache};
-
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-
-    DB::table('users')->truncate();
-    DB::table('jobs')->truncate();
-});
+use Illuminate\Support\Facades\{Notification, Cache};
 
 test('Should throw an error if passwords don\'t match', function() {
     Notification::fake();
-    
-    $this->postJson(route('auth.register'), [
+
+    $data = [
         'password' => 'User@123',
         'password_confirmation' => 'asdasdasd'
-    ])
+    ];
+    
+    $this->postJson(route('auth.register'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.password_confirmation', ['Does not match with the password above.']);
     
@@ -26,13 +21,14 @@ test('Should throw an error if passwords don\'t match', function() {
 
 test('Should throw an error if the character length is less than minimum', function() {
     Notification::fake();
-    
-    $this->postJson(route('auth.register'), [
+    $data = [
         'name' => 'z',
         'username' => 'abc',
         'password' => 'abc',
         'password_confirmation' => 'abc',
-    ])
+    ];
+
+    $this->postJson(route('auth.register'), $data)
         ->assertStatus(422)
         ->assertJsonStructure([
             'errors' => ['name', 'username', 'password']
@@ -43,10 +39,11 @@ test('Should throw an error if the character length is less than minimum', funct
 
 test('Should throw an error if the character length is out of range', function() {
     Notification::fake();
-    
-    $this->postJson(route('auth.register'), [
+    $data = [
         'username' => 'thebigbrownfoxjumpsoverthelazydog'
-    ])
+    ];
+
+    $this->postJson(route('auth.register'), $data)
         ->assertStatus(422)
         ->assertJsonPath('errors.username', ['Username must be between 6 and 30 characters long.']);
 
@@ -100,19 +97,23 @@ test('Should throw an error for invalid birth date format', function() {
 });
 
 test('Should throw an error for entering a birth date earlier than 100 years ago', function() {
-    $this->postJson(route('auth.register'), [
+    $data = [
         'birth_date' => now()->subYears(101)->format('Y-m-d')
-    ])
-    ->assertStatus(422)
-    ->assertJsonPath('errors.birth_date', ['You must be 18 to 100 years old.']);
+    ];
+
+    $this->postJson(route('auth.register'), $data)
+        ->assertStatus(422)
+        ->assertJsonPath('errors.birth_date', ['You must be 18 to 100 years old.']);
 });
 
 test('Should throw an error for entering a birth date later than 18 years ago', function() {
-    $this->postJson(route('auth.register'), [
+    $data = [
         'birth_date' => now()->subYears(16)->format('Y-m-d')
-    ])
-    ->assertStatus(422)
-    ->assertJsonPath('errors.birth_date', ['You must be 18 to 100 years old.']);
+    ];
+
+    $this->postJson(route('auth.register'), $data)
+        ->assertStatus(422)
+        ->assertJsonPath('errors.birth_date', ['You must be 18 to 100 years old.']);
 });
 
 test('Should successfully register an account', function() {
@@ -120,23 +121,20 @@ test('Should successfully register an account', function() {
         'birth_date' => '1998-05-05'
     ]);
     
-    $body = $user->only(['name', 'email', 'username', 'gender', 'birth_date']);
+    $data = array_merge(
+        $user->only(['name', 'email', 'username', 'gender', 'birth_date']),
+        [
+            'password' => 'P@ssword123',
+            'password_confirmation' => 'P@ssword123',
+        ]
+    );
 
     Notification::fake();
     Cache::spy();
     
-    $this->postJson(
-        route('auth.register'),
-        array_merge($body, [
-            'password' => 'P@ssword123',
-            'password_confirmation' => 'P@ssword123',
-        ])
-    )->assertCreated();
+    $this->postJson(route('auth.register'), $data)->assertCreated();
 
-    $this->assertDatabaseHas('users', [
-        'username' => $user->username,
-        'email' => $user->email,
-    ]);
+    $this->assertDatabaseHas('users', $user->only('email', 'username'));
 
     Cache::shouldHaveReceived('put')->once();
     Notification::assertSentTo(User::firstWhere('username', $user->username), SendVerificationCode::class);

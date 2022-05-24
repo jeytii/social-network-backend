@@ -1,59 +1,53 @@
 <?php
 
-use App\Models\User;
-use Illuminate\Support\Facades\{DB, Cache};
+use App\Models\{User, Post};
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(2)->hasPosts(2)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
+    $this->user = User::first();
+    $this->post = Post::doesntHave('bookmarkers')->first();
 
-    DB::table('users')->truncate();
-    DB::table('posts')->truncate();
-    DB::table('jobs')->truncate();
-    Cache::flush();
+    authenticate();
 });
 
 test('Should be able to bookmark a post', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
-
-    $this->response
-        ->postJson(route('posts.bookmark', ['post' => $post->slug]))
+    $this->postJson(route('posts.bookmark', ['post' => $this->post->slug]))
         ->assertOk();
 
-    $this->assertTrue($this->user->bookmarks()->whereKey($post->id)->exists());
+    $this->assertDatabaseHas('bookmarks', [
+        'user_id' => $this->user->id,
+        'bookmark_id' => $this->post->id,
+    ]);
 });
 
 test('Should not be able to bookmark a post that has already been bookmarked', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
+    $this->user->bookmarks()->attach($this->post);
 
-    // Suppost the selected post has already been bookmarked based on the test above.
-    $this->response
-        ->postJson(route('posts.bookmark', ['post' => $post->slug]))
+    $this->postJson(route('posts.bookmark', ['post' => $this->post->slug]))
         ->assertForbidden();
 
     $this->assertDatabaseCount('bookmarks', 1);
 });
 
 test('Should be able to unbookmark a post', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
-
-    // Suppost the selected post has already been bookmarked based on the test above.
-    $this->response
-        ->deleteJson(route('posts.unbookmark', ['post' => $post->slug]))
+    $this->user->bookmarks()->attach($this->post);
+    
+    $this->deleteJson(route('posts.unbookmark', ['post' => $this->post->slug]))
         ->assertOk();
 
-    $this->assertTrue($this->user->bookmarks()->whereKey($post->id)->doesntExist());
+    $this->assertDatabaseMissing('bookmarks', [
+        'user_id' => $this->user->id,
+        'bookmark_id' => $this->post->id,
+    ]);
 });
 
 test('Should not be able to unbookmark a post that is not bookmarked', function() {
-    $post = DB::table('posts')->where('user_id', '!=', $this->user->id)->first();
-
-    $this->response
-        ->deleteJson(route('posts.unbookmark', ['post' => $post->slug]))
+    $this->deleteJson(route('posts.unbookmark', ['post' => $this->post->slug]))
         ->assertForbidden();
 
-    $this->assertTrue($this->user->bookmarks()->whereKey($post->id)->doesntExist());
+    $this->assertDatabaseMissing('bookmarks', [
+        'user_id' => $this->user->id,
+        'bookmark_id' => $this->post->id,
+    ]);
 });

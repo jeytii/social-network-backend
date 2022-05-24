@@ -1,38 +1,35 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
-
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-
-    DB::table('users')->truncate();
-    DB::table('personal_access_tokens')->truncate();
-});
 
 test("Should throw an error if the entered credentials don't exist", function() {
-    $this->postJson(route('auth.login'), [
+    $data = [
         'username' => 'username',
         'password' => 'password'
-    ])->assertNotFound();
+    ];
+    
+    $this->postJson(route('auth.login'), $data)->assertNotFound();
 });
 
 test('Should throw an error if a user is not yet verified', function() {
-    $user = User::factory()->create(['email_verified_at' => null]);
-
-    $this->postJson(route('auth.login'), [
+    $user = User::factory()->unverified()->create();
+    $data = [
         'username' => $user->username,
         'password' => 'P@ssword123'
-    ])->assertUnauthorized();
+    ];
+
+    $this->postJson(route('auth.login'), $data)
+        ->assertUnauthorized();
 });
 
 test('Should return an auth token if successful', function() {
     $user = User::factory()->create();
-
-    $this->postJson(route('auth.login'), [
+    $data = [
         'username' => $user->username,
         'password' => 'P@ssword123'
-    ])
-    ->assertOk()
-    ->assertJsonStructure(['token', 'message']);
+    ];
+
+    $this->postJson(route('auth.login'), $data)
+        ->assertOk()
+        ->assertJsonStructure(['token', 'message']);
 });

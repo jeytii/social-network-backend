@@ -1,22 +1,15 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
-beforeAll(function() {
+beforeEach(function() {
     User::factory(3)->hasNotifications(4)->create();
-});
 
-afterAll(function() {
-    (new self(function() {}, '', []))->setUp();
-
-    DB::table('users')->truncate();
-    DB::table('notifications')->truncate();
+    authenticate();
 });
 
 test('Should return a paginated list of notifications', function() {
-    $this->response
-        ->getJson(route('notifications.index'))
+    $this->getJson(route('notifications.index'))
         ->assertOk()
         ->assertJsonCount(4, 'items')
         ->assertJsonStructure([
