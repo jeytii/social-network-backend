@@ -40,24 +40,19 @@ class AppServiceProvider extends ServiceProvider
         Builder::mixin(new PaginationMixin);
         Relation::mixin(new PaginationMixin);
 
-        QueryBuilder::macro('searchUser', function(string $query) {
-            return $this->where('name', 'ilike', "%$query%")->orWhere('username', 'like', "%$query%");
+        QueryBuilder::macro('searchUser', function (string $query) {
+            $nameWhereOperator = config('app.env') === 'testing' ? 'like' : 'ilike';
+            return $this->where('name', $nameWhereOperator, "%$query%")->orWhere('username', 'like', "%$query%");
         });
         
-        Request::macro('isPresent', fn(string $key) => $this->has($key) && $this->filled($key));
+        Request::macro('isPresent', fn (string $key) => $this->has($key) && $this->filled($key));
 
-        Response::macro('success', fn(int $statusCode = 200) => (
+        Response::macro('success', fn (int $statusCode = 200) => (
             Response::json(['status' => $statusCode], $statusCode)
         ));
 
-        Response::macro('error', fn(string $message, int $statusCode) => (
+        Response::macro('error', fn (string $message, int $statusCode) => (
             Response::json(compact('message'), $statusCode)
-        ));
-        
-        Response::macro('somethingWrong', fn() => (
-            Response::json([
-                'message' => 'Something went wrong. Please check your connection then try again.'
-            ], 500)
         ));
     }
 }
